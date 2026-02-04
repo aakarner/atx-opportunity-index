@@ -47,3 +47,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Generated output files
+*.png
+*.rds
+*.csv
+austin_opportunity_data.*
+example_custom_map.*
