@@ -6,7 +6,7 @@
 # CENSUS_API_KEY <- "YOUR_API_KEY_HERE"
 
 # Geographic Scope
-YEAR <- 2021              # Year of ACS data (2009-2021 available)
+YEAR <- 2021              # Year of ACS data (check tidycensus for available years)
 SURVEY <- "acs5"          # "acs1" (1-year) or "acs5" (5-year estimates)
 STATE <- "TX"             # State abbreviation
 COUNTIES <- c("Travis")   # County or counties to analyze

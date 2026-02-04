@@ -117,7 +117,7 @@ cat("Creating visualizations...\n")
 
 # 1. Elbow plot for cluster selection
 elbow_plot <- ggplot(data.frame(k = 1:10, wss = wss), aes(x = k, y = wss)) +
-  geom_line(color = "steelblue", size = 1) +
+  geom_line(color = "steelblue", linewidth = 1) +
   geom_point(color = "steelblue", size = 3) +
   labs(
     title = "Elbow Method for Optimal K",
@@ -156,7 +156,7 @@ opportunity_map <- ggplot(census_data_clustered) +
 
 # 3. K-means Cluster Map
 cluster_map <- ggplot(census_data_clustered) +
-  geom_sf(aes(fill = cluster), color = "white", size = 0.1) +
+  geom_sf(aes(fill = cluster), color = "white", linewidth = 0.1) +
   scale_fill_brewer(
     palette = "Set2",
     name = "Cluster"
