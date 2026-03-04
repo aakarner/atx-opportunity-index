@@ -15,9 +15,9 @@ wac <- grab_lodes(
 )
 
 # Manually download crosswalk
-dir.create("data/processed/lehd", recursive = TRUE, showWarnings = FALSE)
+dir.create("accessibility/data/processed/lehd", recursive = TRUE, showWarnings = FALSE)
 xwalk_url <- "https://lehd.ces.census.gov/data/lodes/LODES8/tx/tx_xwalk.csv.gz"
-xwalk_gz <- "data/processed/lehd/tx_xwalk.csv.gz"
+xwalk_gz <- "accessibility/data/processed/lehd/tx_xwalk.csv.gz"
 download.file(xwalk_url, xwalk_gz, mode = "wb", quiet = FALSE)
 
 xwalk <- read_csv(xwalk_gz, col_types = cols(.default = col_character())) %>%
@@ -37,7 +37,7 @@ travis_lodes <- wac %>%
   )
 
 # Save output
-readr::write_csv(travis_lodes, "data/processed/lehd/travis_lodes.csv")
+readr::write_csv(travis_lodes, "accessibility/data/processed/lehd/travis_lodes.csv")
 
 message("WAC Travis tracts: ", nrow(travis_lodes))
-message("File saved: data/processed/lehd/travis_lodes.csv")
+message("File saved: accessibility/data/processed/lehd/travis_lodes.csv")

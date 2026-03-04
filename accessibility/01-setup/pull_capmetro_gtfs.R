@@ -41,7 +41,6 @@ writeBin(bin, output_file)
 # === Success Summary ===
 cat(sprintf("✓ Downloaded (%0.1f MB)\n", length(bin) / 1024^2))
 cat(sprintf("Output: %s\n", output_file))
-cat(sprintf("Feed info: %s\n", feed_date_info))
 cat("✓ Ready for r5r accessibility analysis\n\n")
 
 
