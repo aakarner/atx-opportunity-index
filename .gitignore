@@ -54,3 +54,8 @@ rsconnect/
 *.csv
 austin_opportunity_data.*
 example_custom_map.*
+
+# Keep accessibility deliverable outputs versioned
+!accessibility/output/
+!accessibility/output/*.csv
+!accessibility/output/*.png
