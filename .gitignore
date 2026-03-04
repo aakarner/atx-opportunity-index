@@ -57,5 +57,6 @@ example_custom_map.*
 
 # Keep accessibility deliverable outputs versioned
 !accessibility/output/
-!accessibility/output/*.csv
-!accessibility/output/*.png
+!accessibility/output/accessibility_maps_by_job_type.png
+!accessibility/output/rac_weighted_accessibility_job_full.csv
+!accessibility/output/rac_weighted_job_accessibility_summary.csv
