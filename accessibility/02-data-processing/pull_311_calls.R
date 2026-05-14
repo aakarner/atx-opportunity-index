@@ -9,19 +9,21 @@ library(jsonlite)
 #install soda library
 #
 library(socratadata)
+#install.packages("socratadata") #install if you don't have it
 #
 # spatial stuff to make some maps
 #
-library(ggspatial)
-library(osmdata)
-library(sf)
+library(ggspatial) # for plotting
+library(osmdata) #open street map data
+library(sf) # all GIS 
 library(ggplot2)
 library(tidycensus)
-library(tigris)
+library(tigris) # for grabbing TIGER shapefiles
+library(tidyverse)
 #
 # source some useful functions
 #
-source("./atx-opportunity-index/accessibility/02-data-processing/utilities.R")
+source("./accessibility/02-data-processing/utilities.R")
 #
 # api codes don't really need unless we want some of the synthesized data.
 #
