@@ -1,5 +1,6 @@
 #
 # add this function to cut out water from geos
+# st - GIS function in sf package
 #
 cut_polygons_rmapshaper <- function(polygons, cutters) {
   require("rmapshaper")
