@@ -3,7 +3,7 @@ library(janitor)
 setwd("./accessibility/02-data-processing")
 
 #open school accountability csv file
-school_q <- read_csv("2025-accountability.csv")
+school_q <- read_csv("C:\\Users\\JHage.CNTPROJECTS\\OneDrive - CNT\\CNT Team Site - 1684 Austin Housing\\data\\2025-accountability.csv")
 
 view(school_q)
 colnames(school_q)
