@@ -87,7 +87,7 @@ ggplot() +
 #
 blkgrps<-block_groups(state='48',county=c('453','491','209'),year=2024)
 water<-area_water(state='48',county=c('453','491','209'),year=2024)
-blkgrps<-cut_polygons_rmapshaper(atx_blkgrps, atx_water)
+blkgrps<-cut_polygons_rmapshaper(blkgrps, water)
 tx_places<-places(state='48',year=2024)
 atx<-subset(tx_places,tx_places$NAME=='Austin')
 atx_blkgrps<-blkgrps[st_intersects(blkgrps, atx, sparse = FALSE), ]
