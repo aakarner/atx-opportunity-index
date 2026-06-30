@@ -204,11 +204,11 @@ cluster_labels <- c(
 )
 
 cluster_palette <- c(
-  "High-Income Family Enclaves" = "#66c2a5",
-  "Transit-Rich Lower-Income Corridors" = "#fc8d62",
-  "Transit-Rich Educated Core" = "#8da0cb",
-  "Middle-Income Mixed Neighborhoods" = "#e78ac3",
-  "Large-Household Lower-Cost Areas" = "#a6d854",
+  "High-Income Family Enclaves" = "#1b9e77",
+  "Transit-Rich Lower-Income Corridors" = "#d95f02",
+  "Transit-Rich Educated Core" = "#7570b3",
+  "Middle-Income Mixed Neighborhoods" = "#e7298a",
+  "Large-Household Lower-Cost Areas" = "#66a61e",
   "Not clustered / missing ACS estimate" = "#d9d9d9"
 )
 
@@ -299,7 +299,10 @@ cluster_map <- ggplot(census_data_clustered) +
     plot.caption = element_text(hjust = 1, size = 8),
     axis.text = element_blank(),
     axis.ticks = element_blank(),
-    panel.grid = element_blank()
+    panel.grid = element_blank(),
+    legend.position = c(0.04, 0.08),
+    legend.justification = c(0, 0),
+    legend.background = element_rect(fill = "white", color = NA)
   )
 
 # 4. Median Income Map
