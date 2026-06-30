@@ -12,6 +12,8 @@ library(sf)
 options(tigris_use_cache = TRUE)
 
 acs_year <- 2019
+city_boundary_year <- 2024
+analysis_counties <- c("Travis", "Williamson", "Hays")
 transit_year <- 2021
 transit_threshold_seconds <- 2700
 transit_threshold_minutes <- transit_threshold_seconds / 60
@@ -51,21 +53,46 @@ census_vars <- c(
   no_vehicle_households = "B08201_002" # Households with no vehicle available
 )
 
-# Pull census data for Travis County (Austin's primary county).
+# Pull census data for the three counties that contain the City of Austin.
 # The 2021 Observatory file uses 2010-vintage tract GEOIDs; 2019 ACS 5-year
 # estimates are the most recent ACS release here that align to that geography.
-cat("Pulling ACS data for Travis County, TX...\n")
-
-census_data <- get_acs(
-  geography = "tract",
-  variables = census_vars,
-  state = "TX",
-  county = "Travis",
-  year = acs_year,
-  survey = "acs5",
-  geometry = TRUE,
-  output = "wide"
+cat(
+  "Pulling ACS data for ",
+  str_c(analysis_counties, collapse = ", "),
+  " counties, TX...\n",
+  sep = ""
 )
+
+census_data <- map(
+  analysis_counties,
+  ~ get_acs(
+    geography = "tract",
+    variables = census_vars,
+    state = "TX",
+    county = .x,
+    year = acs_year,
+    survey = "acs5",
+    geometry = TRUE,
+    output = "wide"
+  )
+) %>%
+  bind_rows()
+
+# Use a recent municipal boundary so the analysis covers the full City of
+# Austin, including portions in Williamson and Hays counties.
+cat("Pulling City of Austin boundary...\n")
+
+austin_boundary <- places(
+  state = "TX",
+  year = city_boundary_year
+) %>%
+  filter(NAME == "Austin") %>%
+  st_transform(4326) %>%
+  st_make_valid()
+
+if (nrow(austin_boundary) != 1) {
+  stop("Expected exactly one City of Austin boundary; found ", nrow(austin_boundary), ".")
+}
 
 cat("Reading University of Minnesota Accessibility Observatory transit data...\n")
 
@@ -87,6 +114,26 @@ census_data_clean <- census_data %>%
   rename_with(~str_remove(., "E$"), ends_with("E") & !all_of("NAME")) %>%
   st_transform(4326) %>%  # Transform to WGS84 for mapping
   left_join(transit_access, by = "GEOID")
+
+county_tract_count <- nrow(census_data_clean)
+
+# Clipping changes tract geometry only; ACS attributes remain tract-level
+# estimates and are not re-estimated for the portion inside the city.
+census_data_clean <- suppressWarnings(
+  census_data_clean %>%
+    st_filter(austin_boundary, .predicate = st_intersects) %>%
+    st_intersection(st_geometry(austin_boundary))
+) %>%
+  st_make_valid()
+
+cat(
+  "Clipped ",
+  county_tract_count,
+  " three-county tracts to ",
+  nrow(census_data_clean),
+  " tracts intersecting the City of Austin boundary.\n",
+  sep = ""
+)
 
 cat(
   "Transit access matched ",
@@ -196,11 +243,11 @@ kmeans_result <- kmeans(cluster_data_scaled, centers = 5, nstart = 25)
 # Plausible descriptive labels for the 5-cluster solution. These are based on
 # the observed 2021 ACS cluster profiles and preserve the numeric cluster IDs.
 cluster_labels <- c(
-  "1" = "High-Income Family Enclaves",
-  "2" = "Transit-Rich Lower-Income Corridors",
-  "3" = "Transit-Rich Educated Core",
-  "4" = "Middle-Income Mixed Neighborhoods",
-  "5" = "Large-Household Lower-Cost Areas"
+  "1" = "Middle-Income Mixed Neighborhoods",
+  "2" = "Transit-Rich Educated Core",
+  "3" = "Large-Household Lower-Cost Areas",
+  "4" = "Transit-Rich Lower-Income Corridors",
+  "5" = "High-Income Family Enclaves"
 )
 
 cluster_palette <- c(
@@ -316,7 +363,7 @@ income_map <- ggplot(census_data_clustered) +
   ) +
   labs(
     title = "Median Household Income by Census Tract",
-    subtitle = "Travis County, Texas",
+    subtitle = "City of Austin, Texas",
     caption = paste0("Data: ACS ", acs_year, " 5-Year Estimates")
   ) +
   theme_minimal() +
