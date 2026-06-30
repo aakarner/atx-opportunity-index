@@ -17,7 +17,7 @@ The opportunity index combines multiple indicators:
 This script requires R and the following packages:
 
 ```r
-install.packages(c("tidycensus", "tidyverse", "tigris", "sf"))
+install.packages(c("tidycensus", "tidyverse", "tigris", "sf", "h3jsr"))
 ```
 
 You'll also need a Census API key. Get one for free at: https://api.census.gov/data/key_signup.html
@@ -49,14 +49,17 @@ The script generates:
 
 The tract proof of concept pulls Travis, Williamson, and Hays County ACS data
 and clips intersecting tract geometry to the City of Austin boundary. Its 2019
-ACS vintage is retained temporarily because the original 2021 Accessibility
-Observatory file uses 2010-vintage tract identifiers.
+ACS vintage is retained temporarily as a controlled comparison while the
+legacy accessibility input is replaced.
 
 The replacement accessibility pipeline calculates job access directly at H3
 resolution 8 using 2023 LODES jobs and pinned 2026 CapMetro/OSM network data.
 See [`accessibility/README.md`](accessibility/README.md) for methodology,
-requirements, and reproduction steps. The final opportunity-index integration
-will move demographics and accessibility onto this common H8 geography.
+requirements, and reproduction steps. The tract proof of concept now aggregates
+those H8 results using area-apportioned resident-worker weights, with an
+area-weighted or nearest-H8 fallback where necessary. The final
+opportunity-index integration will move 2024 ACS demographics and accessibility
+onto the common H8 geography.
 
 ## License
 

@@ -7,6 +7,7 @@ library(tidycensus)
 library(tidyverse)
 library(tigris)
 library(sf)
+library(h3jsr)
 
 # Set options
 options(tigris_use_cache = TRUE)
@@ -14,11 +15,9 @@ options(tigris_use_cache = TRUE)
 acs_year <- 2019
 city_boundary_year <- 2024
 analysis_counties <- c("Travis", "Williamson", "Hays")
-transit_year <- 2021
-transit_threshold_seconds <- 2700
-transit_threshold_minutes <- transit_threshold_seconds / 60
-transit_file <- "data/Texas_transit_2021.zip"
-transit_member <- "Texas_transit_2021/Texas_48_transit_census_tract_2021.csv"
+transit_threshold_minutes <- 45
+accessibility_file <- "accessibility/output/h8_job_accessibility.csv"
+accessibility_equal_area_crs <- 5070
 output_dir <- "output"
 
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
@@ -54,8 +53,9 @@ census_vars <- c(
 )
 
 # Pull census data for the three counties that contain the City of Austin.
-# The 2021 Observatory file uses 2010-vintage tract GEOIDs; 2019 ACS 5-year
-# estimates are the most recent ACS release here that align to that geography.
+# The tract proof of concept retains its 2019 ACS vintage for a controlled
+# comparison while replacing only the legacy accessibility measure. The final
+# H8 analysis will use the 2024 ACS integration target.
 cat(
   "Pulling ACS data for ",
   str_c(analysis_counties, collapse = ", "),
@@ -94,17 +94,51 @@ if (nrow(austin_boundary) != 1) {
   stop("Expected exactly one City of Austin boundary; found ", nrow(austin_boundary), ".")
 }
 
-cat("Reading University of Minnesota Accessibility Observatory transit data...\n")
+cat("Reading H8 job accessibility results...\n")
 
-transit_access <- read_csv(
-  unz(transit_file, transit_member),
-  col_types = cols(geoid = col_character(), .default = col_guess())
-) %>%
-  filter(threshold == transit_threshold_seconds) %>%
-  transmute(
-    GEOID = str_pad(geoid, 11, pad = "0"),
-    transit_jobs_45min = weighted_average
+if (!file.exists(accessibility_file)) {
+  stop(
+    "Missing ", accessibility_file,
+    ". Run the accessibility pipeline through weighted_job_accessibility.R first."
   )
+}
+
+h8_access <- read_csv(accessibility_file, show_col_types = FALSE)
+
+required_access_columns <- c(
+  "h3_id", "access_total_jobs", "workers_all",
+  "network_snapshot", "gtfs_snapshot", "jobs_year"
+)
+missing_access_columns <- setdiff(required_access_columns, names(h8_access))
+
+if (length(missing_access_columns) > 0) {
+  stop(
+    "The H8 accessibility output is missing: ",
+    str_c(missing_access_columns, collapse = ", "),
+    ". Rerun accessibility/03-analysis/weighted_job_accessibility.R."
+  )
+}
+
+access_jobs_year <- unique(h8_access$jobs_year)
+network_snapshot <- unique(h8_access$network_snapshot)
+gtfs_snapshot <- unique(h8_access$gtfs_snapshot)
+
+if (
+  length(access_jobs_year) != 1 ||
+  length(network_snapshot) != 1 ||
+  length(gtfs_snapshot) != 1
+) {
+  stop("Expected one jobs year and one network/GTFS snapshot in the H8 output.")
+}
+
+access_snapshot_label <- if_else(
+  network_snapshot == gtfs_snapshot,
+  paste0("GTFS/OSM snapshot ", network_snapshot),
+  paste0(
+    "GTFS snapshot ", gtfs_snapshot,
+    "; OSM snapshot ", network_snapshot
+  )
+)
 
 # Clean column names and prepare data
 cat("Cleaning and preparing data...\n")
@@ -112,8 +146,7 @@ cat("Cleaning and preparing data...\n")
 census_data_clean <- census_data %>%
   select(-ends_with("M")) %>%  # Remove margin of error columns
   rename_with(~str_remove(., "E$"), ends_with("E") & !all_of("NAME")) %>%
-  st_transform(4326) %>%  # Transform to WGS84 for mapping
-  left_join(transit_access, by = "GEOID")
+  st_transform(4326)  # Transform to WGS84 for mapping
 
 county_tract_count <- nrow(census_data_clean)
 
@@ -135,12 +168,110 @@ cat(
   sep = ""
 )
 
+# Aggregate origin-level H8 accessibility to clipped census tracts. H8
+# resident-worker counts are apportioned to tract intersections by area and
+# used as weights. If an intersecting tract has no resident-worker weight, use
+# overlap area instead. Because the H8 origin set is center-in-polygon, a small
+# number of City-boundary tract fragments may not intersect an origin hex;
+# assign those the nearest H8 origin as a transparent validation fallback.
+cat("Aggregating H8 accessibility to census tracts...\n")
+
+h8_access_sf <- st_sf(
+  h8_access,
+  geometry = cell_to_polygon(h8_access$h3_id),
+  crs = 4326
+) %>%
+  st_make_valid() %>%
+  st_transform(accessibility_equal_area_crs) %>%
+  mutate(h8_area_m2 = as.numeric(st_area(geometry)))
+
+tracts_equal_area <- census_data_clean %>%
+  select(GEOID) %>%
+  st_transform(accessibility_equal_area_crs)
+
+tract_h8_overlap <- suppressWarnings(
+  st_intersection(
+    tracts_equal_area,
+    h8_access_sf %>%
+      select(h3_id, access_total_jobs, workers_all, h8_area_m2)
+  )
+) %>%
+  mutate(
+    overlap_area_m2 = as.numeric(st_area(geometry)),
+    h8_area_share = overlap_area_m2 / h8_area_m2,
+    allocated_workers = workers_all * h8_area_share
+  )
+
+tract_access <- tract_h8_overlap %>%
+  st_drop_geometry() %>%
+  group_by(GEOID) %>%
+  summarise(
+    access_h8_cells = n_distinct(h3_id),
+    access_worker_weight = sum(allocated_workers, na.rm = TRUE),
+    access_overlap_area_m2 = sum(overlap_area_m2, na.rm = TRUE),
+    worker_weighted_access = if_else(
+      access_worker_weight > 0,
+      sum(access_total_jobs * allocated_workers, na.rm = TRUE) /
+        access_worker_weight,
+      NA_real_
+    ),
+    area_weighted_access = weighted.mean(
+      access_total_jobs,
+      overlap_area_m2,
+      na.rm = TRUE
+    ),
+    transit_jobs_45min = coalesce(
+      worker_weighted_access,
+      area_weighted_access
+    ),
+    access_aggregation_method = if_else(
+      access_worker_weight > 0,
+      "area-apportioned resident-worker weighted H8 mean",
+      "area-weighted H8 mean"
+    ),
+    .groups = "drop"
+  ) %>%
+  select(
+    GEOID, access_h8_cells, access_worker_weight,
+    access_overlap_area_m2, transit_jobs_45min,
+    access_aggregation_method
+  )
+
+tracts_without_h8_overlap <- tracts_equal_area %>%
+  anti_join(tract_access, by = "GEOID")
+
+if (nrow(tracts_without_h8_overlap) > 0) {
+  nearest_h8_index <- st_nearest_feature(
+    tracts_without_h8_overlap,
+    h8_access_sf
+  )
+
+  nearest_h8_access <- h8_access_sf[nearest_h8_index, ] %>%
+    st_drop_geometry()
+
+  nearest_tract_access <- tibble(
+    GEOID = tracts_without_h8_overlap$GEOID,
+    access_h8_cells = 1L,
+    access_worker_weight = nearest_h8_access$workers_all,
+    access_overlap_area_m2 = 0,
+    transit_jobs_45min = nearest_h8_access$access_total_jobs,
+    access_aggregation_method = "nearest H8 origin fallback"
+  )
+
+  tract_access <- bind_rows(tract_access, nearest_tract_access)
+}
+
+census_data_clean <- census_data_clean %>%
+  left_join(tract_access, by = "GEOID")
+
 cat(
-  "Transit access matched ",
+  "H8 access assigned to ",
   sum(!is.na(census_data_clean$transit_jobs_45min)),
   " of ",
   nrow(census_data_clean),
-  " ACS tracts.\n",
+  " ACS tracts; ",
+  sum(census_data_clean$access_aggregation_method == "nearest H8 origin fallback"),
+  " used the boundary fallback.\n",
   sep = ""
 )
 
@@ -241,13 +372,13 @@ set.seed(123)
 kmeans_result <- kmeans(cluster_data_scaled, centers = 5, nstart = 25)
 
 # Plausible descriptive labels for the 5-cluster solution. These are based on
-# the observed 2021 ACS cluster profiles and preserve the numeric cluster IDs.
+# the observed tract proof-of-concept profiles and preserve the numeric IDs.
 cluster_labels <- c(
-  "1" = "Middle-Income Mixed Neighborhoods",
-  "2" = "Transit-Rich Educated Core",
-  "3" = "Large-Household Lower-Cost Areas",
-  "4" = "Transit-Rich Lower-Income Corridors",
-  "5" = "High-Income Family Enclaves"
+  "1" = "High-Income Family Enclaves",
+  "2" = "Large-Household Lower-Cost Areas",
+  "3" = "Transit-Rich Lower-Income Corridors",
+  "4" = "Transit-Rich Educated Core",
+  "5" = "Middle-Income Mixed Neighborhoods"
 )
 
 cluster_palette <- c(
@@ -309,8 +440,7 @@ opportunity_map <- ggplot(census_data_clustered) +
     subtitle = "Based on economic, educational, housing, family, and transit access indicators",
     caption = paste0(
       "Data: ACS ", acs_year, " 5-Year Estimates; ",
-      "University of Minnesota Accessibility Observatory ", transit_year,
-      " transit access, ", transit_threshold_minutes, "-minute threshold"
+      access_jobs_year, " LODES jobs; CapMetro ", access_snapshot_label
     )
   ) +
   theme_minimal() +
@@ -335,8 +465,7 @@ cluster_map <- ggplot(census_data_clustered) +
     subtitle = "Five-cluster solution based on income, education, housing, family, vehicle, and transit indicators",
     caption = paste0(
       "Data: ACS ", acs_year, " 5-Year Estimates; ",
-      "University of Minnesota Accessibility Observatory ", transit_year,
-      " transit access, ", transit_threshold_minutes, "-minute threshold"
+      access_jobs_year, " LODES jobs; CapMetro ", access_snapshot_label
     )
   ) +
   theme_minimal() +
@@ -387,11 +516,13 @@ transit_access_map <- ggplot(census_data_clustered) +
   ) +
   labs(
     title = "Transit Access to Jobs by Census Tract",
-    subtitle = paste0("Worker-weighted reachable jobs within ", transit_threshold_minutes, " minutes by transit"),
+    subtitle = paste0(
+      "H8 access aggregated primarily with resident-worker weights; ",
+      transit_threshold_minutes, "-minute walk-plus-transit threshold"
+    ),
     caption = paste0(
-      "Data: University of Minnesota Accessibility Observatory ",
-      transit_year,
-      " transit access"
+      "Data: ", access_jobs_year,
+      " LODES jobs; CapMetro ", access_snapshot_label
     )
   ) +
   theme_minimal() +

@@ -70,7 +70,7 @@ unless the GTFS, OSM, or `r5r` version recorded in the input manifest changes.
 ## Outputs
 
 - `h8_job_accessibility.csv`: H8 access to all, low-, middle-, and high-wage
-  jobs
+  jobs, plus resident-worker weights for downstream aggregation
 - `h8_job_accessibility_summary.csv`: resident-worker-weighted and unweighted
   summaries
 - `h8_job_accessibility_map.png`: four-panel accessibility map
@@ -92,6 +92,8 @@ unless the GTFS, OSM, or `r5r` version recorded in the input manifest changes.
   scheduled trips, versus a feed maximum of 4,609, so the warning does not
   indicate materially reduced weekday service.
 
-The current tract-based `austin_opportunity_index.R` does not yet consume this
-H8 output. That integration belongs with the demographic tract-to-hex
-allocation so that all components share the same target geography.
+The tract-based `austin_opportunity_index.R` uses this H8 output for an interim
+validation. It aggregates H8 access to clipped tracts with area-apportioned
+resident-worker weights and retains the 2019 ACS inputs so the accessibility
+change can be evaluated in isolation. The final integration will allocate 2024
+ACS demographics to H8 so every component shares the same target geography.

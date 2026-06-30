@@ -17,9 +17,18 @@ if (!file.exists(accessibility_output_path) || !file.exists(lodes_workers_path))
 access <- read_csv(accessibility_output_path, show_col_types = FALSE)
 workers <- read_csv(lodes_workers_path, show_col_types = FALSE)
 
+worker_columns <- c(
+  "workers_all", "workers_low", "workers_middle", "workers_high"
+)
+
 access_workers <- access %>%
+  select(-any_of(worker_columns)) %>%
   left_join(workers, by = "h3_id") %>%
   mutate(across(starts_with("workers_"), ~ replace_na(.x, 0)))
+
+# Keep the resident-worker weights with the committed H8 results so downstream
+# tract validation does not depend on an ignored intermediate file.
+write_csv(access_workers, accessibility_output_path)
 
 measure_config <- tibble(
   access_column = c(
@@ -117,5 +126,6 @@ map_path <- file.path(output_dir, paste0("h", h3_resolution, "_job_accessibility
 ggsave(map_path, access_map, width = 13, height = 10, dpi = 300, bg = "white")
 
 print(summary_table)
+message("Updated H8 accessibility output with resident-worker weights at ", accessibility_output_path)
 message("Saved summary to ", summary_path)
 message("Saved map to ", map_path)
