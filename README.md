@@ -5,10 +5,12 @@ This project creates an opportunity index for Austin, Texas using census data. T
 ## Overview
 
 The opportunity index combines multiple indicators:
-- **Economic Opportunity**: Median household income, employment rates
-- **Educational Opportunity**: Bachelor's and graduate degree attainment
-- **Housing Opportunity**: Home values and rental costs
-- **Access**: Vehicle access and health insurance coverage
+
+- **Economic opportunity**: Income, poverty, and employment
+- **Educational opportunity**: Bachelor's and graduate degree attainment
+- **Housing opportunity**: Home values and rental costs
+- **Family context**: Household size and households with children
+- **Access**: Transit access to jobs and households without a vehicle
 
 ## Requirements
 
@@ -45,7 +47,16 @@ The script generates:
 
 ## Data Source
 
-Data is pulled from the U.S. Census Bureau's American Community Survey (ACS) 5-year estimates using the tidycensus package. The analysis focuses on Travis County, Texas, which contains Austin.
+The tract proof of concept pulls Travis, Williamson, and Hays County ACS data
+and clips intersecting tract geometry to the City of Austin boundary. Its 2019
+ACS vintage is retained temporarily because the original 2021 Accessibility
+Observatory file uses 2010-vintage tract identifiers.
+
+The replacement accessibility pipeline calculates job access directly at H3
+resolution 8 using 2023 LODES jobs and pinned 2026 CapMetro/OSM network data.
+See [`accessibility/README.md`](accessibility/README.md) for methodology,
+requirements, and reproduction steps. The final opportunity-index integration
+will move demographics and accessibility onto this common H8 geography.
 
 ## License
 

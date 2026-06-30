@@ -1,194 +1,141 @@
+# Calculate City of Austin H8 access to 2023 jobs on the pinned 2026 network.
 
+source("accessibility/config.R")
 
-# Network-based Job Accessibility Analysis using r5r
-# Calculates accessibility to jobs via walking and transit in Travis County
+Sys.setenv(R_USER_CACHE_DIR = cache_dir)
+options(java.parameters = "-Xmx12G")
+Sys.setenv(TZ = "America/Chicago")
 
-options(java.parameters = '-Xmx12G')
-Sys.setenv(TZ = 'America/Chicago')
-
-library(r5r)
-library(sf)
 library(dplyr)
+library(h3jsr)
 library(readr)
+library(sf)
+library(tidyr)
 library(tigris)
+library(r5r)
 
-set.seed(732)
+if (!file.exists(lodes_jobs_path)) {
+  stop("Missing LODES destinations. Run pull_lodes_wac_jobs.R first.")
+}
 
-output_dir <- "accessibility/data/processed/accessibility"
+jobs <- read_csv(lodes_jobs_path, show_col_types = FALSE)
+job_points <- cell_to_point(jobs$h3_id)
+job_coordinates <- st_coordinates(job_points)
 
-
-dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-
-# ===== DATA PREP =====
-
-# Load job data by tract (ensure trct is character)
-travis_lodes <- read_csv("accessibility/data/processed/lehd/travis_lodes.csv") %>%
-  mutate(trct = as.character(trct))
-
-# Get tract centroids for origin points
-tracts <- tracts(state = "TX", county = "Travis", year = 2020, class = "sf")
-
-origins <- tracts %>%
-  st_transform(4326) %>%
-  st_centroid() %>%
-  st_coordinates() %>%
-  as.data.frame() %>%
-  rename(lon = X, lat = Y) %>%
-  mutate(id = as.character(tracts$GEOID))
-
-destinations <- origins %>%
-  left_join(travis_lodes %>% rename(id = trct), by = "id") %>%
-  select(id, lon, lat, jobs = totjobs)
-
-
-# ===== ACCESSIBILITY CALCULATION =====
-
-departure_datetime <- as.POSIXct("2020-11-09 09:00:00", format = "%Y-%m-%d %H:%M:%S")
-
-# Set parameters
-mode <- c("WALK", "TRANSIT")
-max_walk_time <- 30  # Max walking to transit
-max_trip_duration <- 60  # Max total travel time (minutes)
-decay_function <- "step"
-cutoff_time <- 45  # Accessibility cutoff (minutes)
-percentiles <- c(50, 75, 90)
-
-# --- 1. TOTAL JOBS ACCESSIBILITY ---
-message("\n=== Calculating TOTAL JOBS accessibility ===")
-
-destinations_total <- origins %>%
-  left_join(travis_lodes %>% rename(id = trct), by = "id") %>%
-  select(id, lon, lat, jobs = totjobs)
-
-acc_total <- accessibility(
-  r5r_core,
-  origins = origins,
-  destinations = destinations_total,
-  opportunities_colnames = "jobs",
-  mode = mode,
-  departure_datetime = departure_datetime,
-  time_window = 120,
-  percentiles = percentiles,
-  decay_function = decay_function,
-  cutoffs = cutoff_time,
-  max_walk_time = max_walk_time,
-  max_trip_duration = max_trip_duration,
-  n_threads = 8,
-  progress = TRUE
-)
-
-# --- 2. LOW-WAGE JOBS ACCESSIBILITY ---
-message("\n=== Calculating LOW-WAGE JOBS accessibility ===")
-
-destinations_low <- origins %>%
-  left_join(travis_lodes %>% rename(id = trct), by = "id") %>%
-  select(id, lon, lat, jobs = lowjobs)
-
-acc_low <- accessibility(
-  r5r_core,
-  origins = origins,
-  destinations = destinations_low,
-  opportunities_colnames = "jobs",
-  mode = mode,
-  departure_datetime = departure_datetime,
-  time_window = 120,
-  percentiles = percentiles,
-  decay_function = decay_function,
-  cutoffs = cutoff_time,
-  max_walk_time = max_walk_time,
-  max_trip_duration = max_trip_duration,
-  n_threads = 8,
-  progress = TRUE
-)
-
-# --- 3. MEDIUM-WAGE JOBS ACCESSIBILITY ---
-message("\n=== Calculating MEDIUM-WAGE JOBS accessibility ===")
-
-destinations_med <- origins %>%
-  left_join(travis_lodes %>% rename(id = trct), by = "id") %>%
-  select(id, lon, lat, jobs = medjobs)
-
-acc_med <- accessibility(
-  r5r_core,
-  origins = origins,
-  destinations = destinations_med,
-  opportunities_colnames = "jobs",
-  mode = mode,
-  departure_datetime = departure_datetime,
-  time_window = 120,
-  percentiles = percentiles,
-  decay_function = decay_function,
-  cutoffs = cutoff_time,
-  max_walk_time = max_walk_time,
-  max_trip_duration = max_trip_duration,
-  n_threads = 8,
-  progress = TRUE
-)
-
-# --- 4. HIGH-WAGE JOBS ACCESSIBILITY ---
-message("\n=== Calculating HIGH-WAGE JOBS accessibility ===")
-
-destinations_high <- origins %>%
-  left_join(travis_lodes %>% rename(id = trct), by = "id") %>%
-  select(id, lon, lat, jobs = highjobs)
-
-acc_high <- accessibility(
-  r5r_core,
-  origins = origins,
-  destinations = destinations_high,
-  opportunities_colnames = "jobs",
-  mode = mode,
-  departure_datetime = departure_datetime,
-  time_window = 120,
-  percentiles = percentiles,
-  decay_function = decay_function,
-  cutoffs = cutoff_time,
-  max_walk_time = max_walk_time,
-  max_trip_duration = max_trip_duration,
-  n_threads = 8,
-  progress = TRUE
-)
-
-# ===== RESULTS PROCESSING =====
-# Combine all accessibility measures into one result
-
-accessibility_results <- acc_total %>%
-  rename(trct = id, access_total = accessibility) %>%
-  select(trct, percentile, cutoff, access_total) %>%
-  left_join(
-    acc_low %>% rename(trct = id, access_low = accessibility) %>% 
-      select(trct, percentile, access_low),
-    by = c("trct", "percentile")
-  ) %>%
-  left_join(
-    acc_med %>% rename(trct = id, access_med = accessibility) %>% 
-      select(trct, percentile, access_med),
-    by = c("trct", "percentile")
-  ) %>%
-  left_join(
-    acc_high %>% rename(trct = id, access_high = accessibility) %>% 
-      select(trct, percentile, access_high),
-    by = c("trct", "percentile")
-  ) %>%
-  # Add original job counts
-  left_join(
-    travis_lodes %>% select(trct, totjobs, lowjobs, medjobs, highjobs),
-    by = "trct"
+destinations <- jobs %>%
+  transmute(
+    id = h3_id,
+    lon = job_coordinates[, "X"],
+    lat = job_coordinates[, "Y"],
+    total_jobs,
+    low_wage_jobs,
+    middle_wage_jobs,
+    high_wage_jobs
   )
 
-write_csv(accessibility_results, file.path(output_dir, "unweighted_job_accessibility.csv"))
+if (file.exists(origins_path)) {
+  origins <- read_csv(origins_path, show_col_types = FALSE)
+  if (
+    any(origins$h3_resolution != h3_resolution) ||
+    any(origins$city_boundary_year != city_boundary_year)
+  ) {
+    stop("Cached H8 origins do not match the configured resolution/boundary year.")
+  }
+  origins <- select(origins, id, lon, lat)
+} else {
+  austin_boundary <- places(
+    state = "TX",
+    year = city_boundary_year,
+    class = "sf"
+  ) %>%
+    filter(NAME == "Austin") %>%
+    st_transform(4326) %>%
+    st_make_valid()
 
-message("\n====== RESULTS SAVED ======")
-message("Output: ", file.path(output_dir, "unweighted_job_accessibility.csv"))
-message("Jobs reachable within ", cutoff_time, " min by walk+transit")
-message("Accessibility measures:")
-message("  - access_total: All jobs")
-message("  - access_low: Low-wage jobs")
-message("  - access_med: Medium-wage jobs")
-message("  - access_high: High-wage jobs")
+  if (nrow(austin_boundary) != 1) {
+    stop("Expected exactly one City of Austin boundary.")
+  }
 
-cat("\n")
-summary(accessibility_results)
+  origin_ids <- polygon_to_cells(
+    st_geometry(austin_boundary),
+    res = h3_resolution
+  ) %>%
+    unlist(use.names = FALSE) %>%
+    unique()
+  origin_points <- cell_to_point(origin_ids)
+  origin_coordinates <- st_coordinates(origin_points)
 
-# ===== STOP R5 =====
-stop_r5()
+  origins <- data.frame(
+    id = origin_ids,
+    lon = origin_coordinates[, "X"],
+    lat = origin_coordinates[, "Y"]
+  )
+
+  write_csv(
+    mutate(
+      origins,
+      h3_resolution = h3_resolution,
+      city_boundary_year = city_boundary_year
+    ),
+    origins_path
+  )
+}
+
+source("accessibility/01-setup/R5R-setup.R")
+on.exit(stop_r5(r5r_network), add = TRUE)
+
+departure_datetime <- as.POSIXct(
+  departure_datetime_text,
+  format = "%Y-%m-%d %H:%M:%S",
+  tz = "America/Chicago"
+)
+
+message(
+  "Calculating H8 accessibility for ", nrow(origins), " City of Austin cells ",
+  "to ", nrow(destinations), " job cells..."
+)
+
+available_cores <- parallel::detectCores(logical = FALSE)
+if (is.na(available_cores) || available_cores < 1) {
+  available_cores <- 1L
+}
+
+access_long <- accessibility(
+  r5r_network = r5r_network,
+  origins = origins,
+  destinations = destinations,
+  opportunities_colnames = c(
+    "total_jobs", "low_wage_jobs", "middle_wage_jobs", "high_wage_jobs"
+  ),
+  mode = c("WALK", "TRANSIT"),
+  departure_datetime = departure_datetime,
+  time_window = time_window_minutes,
+  percentiles = travel_time_percentile,
+  decay_function = "step",
+  cutoffs = access_cutoff_minutes,
+  max_walk_time = max_walk_minutes,
+  max_trip_duration = max_trip_minutes,
+  n_threads = available_cores,
+  progress = TRUE
+)
+
+access_results <- access_long %>%
+  as_tibble() %>%
+  select(id, opportunity, percentile, cutoff, accessibility) %>%
+  pivot_wider(
+    names_from = opportunity,
+    values_from = accessibility,
+    names_prefix = "access_"
+  ) %>%
+  left_join(origins, by = "id") %>%
+  rename(h3_id = id) %>%
+  mutate(
+    network_snapshot = osm_snapshot_date,
+    gtfs_snapshot = gtfs_snapshot_date,
+    jobs_year = lodes_year,
+    departure_datetime = departure_datetime_text
+  )
+
+write_csv(access_results, accessibility_output_path)
+
+message("Saved ", nrow(access_results), " H8 accessibility records to ", accessibility_output_path)

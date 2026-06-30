@@ -60,4 +60,10 @@ example_custom_map.*
 !accessibility/output/accessibility_maps_by_job_type.png
 !accessibility/output/rac_weighted_accessibility_job_full.csv
 !accessibility/output/rac_weighted_job_accessibility_summary.csv
+!accessibility/output/h8_job_accessibility.csv
+!accessibility/output/h8_job_accessibility_summary.csv
+!accessibility/output/h8_job_accessibility_map.png
+
+# Large reproducible inputs and intermediate routing files
+accessibility/data/
 .positai

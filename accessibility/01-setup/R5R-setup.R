@@ -1,45 +1,39 @@
+# Build the R5 network from the pinned GTFS and OSM snapshots.
 
+source("accessibility/config.R")
 
-# ======== About r5r ===========
-
-# r5r is an R package for rapid realistic routing on multimodal transport networks (walk, bike, public transport and car). 
-# It provides a simple and friendly interface to R5, the Rapid Realistic Routing on Real-world and Reimagined networks, the routing engine developed independently by Conveyal.
-# r5r is a simple way to run R5 locally, allowing R users to generate detailed routing analysis or calculate travel time matrices and accessibility using seamless parallel computing.
-
-#Installation: You can install r5r from CRAN
-#install.packages("r5r")
-
-
-#Please bear in mind that you need to have Java Development Kit (JDK) 21 installed on your computer to use r5r. 
-#No worries, you don't have to pay for it. There are numerous open-source JDK implementations, any of which should work with r5r. 
-#If you don't already have a preferred JDK, we recommend Adoptium/Eclipse Temurin. Other open-source JDK implementations include Amazon Corretto, and Oracle OpenJDK. 
-#You only need to install one JDK.
-#The easiest way to install JDK is using the new {rJavaEnv} package in R:
-  # install.packages('rJavaEnv')
-  
-  # check version of Java currently installed (if any) 
-  #rJavaEnv::java_check_version_rjava()
-
-# install Java 21
-#rJavaEnv::java_quick_install(version = 21)
-#==============================
-
-
-
-options(java.parameters = '-Xmx12G')
-Sys.setenv(TZ = 'America/Chicago')
+Sys.setenv(R_USER_CACHE_DIR = cache_dir)
+options(java.parameters = "-Xmx12G")
 
 library(r5r)
 
-# ===== SETUP =====
-set.seed(732)
+missing_inputs <- c(gtfs_path, osm_path)[!file.exists(c(gtfs_path, osm_path))]
+if (length(missing_inputs) > 0) {
+  stop(
+    "Missing routing inputs. Run the GTFS and OSM setup scripts first: ",
+    paste(missing_inputs, collapse = ", ")
+  )
+}
 
+network_manifest_path <- file.path(r5_data_dir, "network_input_manifest.csv")
+current_inputs <- data.frame(
+  gtfs_sha256 = digest::digest(gtfs_path, algo = "sha256", file = TRUE),
+  osm_sha256 = digest::digest(osm_path, algo = "sha256", file = TRUE),
+  r5r_version = as.character(packageVersion("r5r"))
+)
 
-data_path <- "accessibility/data/r5_setup"  # Where GTFS and OSM data stored
+rebuild_network <- !file.exists(file.path(r5_data_dir, "network.dat")) ||
+  !file.exists(network_manifest_path)
 
-#https://download.geofabrik.de/north-america/us/texas.html (this website for downloading latest OSM data)
+if (!rebuild_network) {
+  previous_inputs <- read.csv(network_manifest_path, stringsAsFactors = FALSE)
+  rebuild_network <- !identical(previous_inputs, current_inputs)
+}
 
-r5r_core <- setup_r5(data_path = data_path, verbose = FALSE)
+r5r_network <- build_network(
+  data_path = r5_data_dir,
+  verbose = TRUE,
+  overwrite = rebuild_network
+)
 
-dir.create(data_path, recursive = TRUE, showWarnings = FALSE)
-
+write.csv(current_inputs, network_manifest_path, row.names = FALSE)
