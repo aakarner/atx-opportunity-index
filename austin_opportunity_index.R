@@ -12,7 +12,7 @@ library(h3jsr)
 # Set options
 options(tigris_use_cache = TRUE)
 
-acs_year <- 2019
+acs_year <- 2024
 city_boundary_year <- 2024
 analysis_counties <- c("Travis", "Williamson", "Hays")
 transit_threshold_minutes <- 45
@@ -53,9 +53,10 @@ census_vars <- c(
 )
 
 # Pull census data for the three counties that contain the City of Austin.
-# The tract proof of concept retains its 2019 ACS vintage for a controlled
-# comparison while replacing only the legacy accessibility measure. The final
-# H8 analysis will use the 2024 ACS integration target.
+# This tract-level proof of concept now uses the most recent ACS 5-year tract
+# data supported by tidycensus so the demonstration reflects 2024 ACS tract
+# geography, based on 2020 Census tract definitions, while the final H8
+# integration is still being developed.
 cat(
   "Pulling ACS data for ",
   str_c(analysis_counties, collapse = ", "),
@@ -158,6 +159,11 @@ census_data_clean <- suppressWarnings(
     st_intersection(st_geometry(austin_boundary))
 ) %>%
   st_make_valid()
+
+nonempty_positive_area <- !st_is_empty(census_data_clean) &
+  as.numeric(st_area(st_transform(census_data_clean, accessibility_equal_area_crs))) > 0
+
+census_data_clean <- census_data_clean[nonempty_positive_area, ]
 
 cat(
   "Clipped ",
@@ -374,11 +380,11 @@ kmeans_result <- kmeans(cluster_data_scaled, centers = 5, nstart = 25)
 # Plausible descriptive labels for the 5-cluster solution. These are based on
 # the observed tract proof-of-concept profiles and preserve the numeric IDs.
 cluster_labels <- c(
-  "1" = "High-Income Family Enclaves",
-  "2" = "Large-Household Lower-Cost Areas",
-  "3" = "Transit-Rich Lower-Income Corridors",
-  "4" = "Transit-Rich Educated Core",
-  "5" = "Middle-Income Mixed Neighborhoods"
+  "1" = "Middle-Income Mixed Neighborhoods",
+  "2" = "Transit-Rich Lower-Income Corridors",
+  "3" = "Transit-Rich Educated Core",
+  "4" = "Large-Household Lower-Cost Areas",
+  "5" = "High-Income Family Enclaves"
 )
 
 cluster_palette <- c(

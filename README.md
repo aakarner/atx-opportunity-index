@@ -48,9 +48,9 @@ The script generates:
 ## Data Source
 
 The tract proof of concept pulls Travis, Williamson, and Hays County ACS data
-and clips intersecting tract geometry to the City of Austin boundary. Its 2019
-ACS vintage is retained temporarily as a controlled comparison while the
-legacy accessibility input is replaced.
+and clips intersecting tract geometry to the City of Austin boundary. It now
+uses 2024 ACS 5-year estimates with 2024 ACS tract geography, based on 2020
+Census tract definitions.
 
 The replacement accessibility pipeline calculates job access directly at H3
 resolution 8 using 2023 LODES jobs and pinned 2026 CapMetro/OSM network data.
@@ -58,8 +58,8 @@ See [`accessibility/README.md`](accessibility/README.md) for methodology,
 requirements, and reproduction steps. The tract proof of concept now aggregates
 those H8 results using area-apportioned resident-worker weights, with an
 area-weighted or nearest-H8 fallback where necessary. The final
-opportunity-index integration will move 2024 ACS demographics and accessibility
-onto the common H8 geography.
+opportunity-index integration will move these demographic and accessibility
+inputs onto the common H8 geography.
 
 ## License
 
