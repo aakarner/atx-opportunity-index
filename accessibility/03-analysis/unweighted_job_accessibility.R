@@ -6,13 +6,10 @@ Sys.setenv(R_USER_CACHE_DIR = cache_dir)
 options(java.parameters = "-Xmx12G")
 Sys.setenv(TZ = "America/Chicago")
 
-library(dplyr)
-library(h3jsr)
-library(readr)
-library(sf)
-library(tidyr)
-library(tigris)
-library(r5r)
+source("setup_packages.R")
+setup_project_packages(c(
+  "dplyr", "h3jsr", "readr", "sf", "tidyr", "tigris", "r5r"
+))
 
 if (!file.exists(lodes_jobs_path)) {
   stop("Missing LODES destinations. Run pull_lodes_wac_jobs.R first.")

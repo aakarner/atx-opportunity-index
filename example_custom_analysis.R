@@ -4,11 +4,9 @@
 # Load configuration
 source("config.R")
 
-# Load required libraries
-library(tidycensus)
-library(tidyverse)
-library(tigris)
-library(sf)
+# Install missing packages and load this script's dependencies.
+source("setup_packages.R")
+setup_project_packages(c("tidycensus", "tidyverse", "tigris", "sf"))
 
 # Set options
 options(tigris_use_cache = TRUE)

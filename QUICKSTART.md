@@ -16,10 +16,12 @@
 
 2. Open R or RStudio and set your working directory to the project folder.
 
-3. Install required packages:
-   ```r
-   source("setup.R")
+3. Install and validate required packages:
+   ```sh
+   Rscript setup_packages.R
    ```
+
+   Individual analysis scripts also source this package setup automatically.
 
 4. Set your Census API key:
    ```r

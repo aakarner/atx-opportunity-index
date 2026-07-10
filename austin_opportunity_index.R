@@ -2,12 +2,11 @@
 # This script pulls census data for Austin, TX, performs k-means clustering,
 # and creates visualizations using ggplot and tigris
 
-# Load required libraries
-library(tidycensus)
-library(tidyverse)
-library(tigris)
-library(sf)
-library(h3jsr)
+# Install missing packages and load this script's dependencies.
+source("setup_packages.R")
+setup_project_packages(c(
+  "tidycensus", "tidyverse", "tigris", "sf", "h3jsr", "scales"
+))
 
 # Set options
 options(tigris_use_cache = TRUE)

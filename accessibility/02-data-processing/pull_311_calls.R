@@ -1,34 +1,15 @@
-#
-# SOP libraries
-#
-library(readr)
-library(dplyr)
-library(httr)
-library(jsonlite)
-#
-#install soda library
-#
-library(socratadata)
-#install.packages("socratadata") #install if you don't have it
-#
-# spatial stuff to make some maps
-#
-library(ggspatial) # for plotting
-library(osmdata) #open street map data
-library(sf) # all GIS 
-library(ggplot2)
-library(tidycensus)
-library(tigris) # for grabbing TIGER shapefiles
-library(tidyverse)
+source("setup_packages.R")
+setup_project_packages(c(
+  "tidyverse", "httr", "jsonlite", "socratadata", "ggspatial",
+  "osmdata", "sf", "tidycensus", "tigris", "rmapshaper"
+))
 #
 # source some useful functions
 #
 source("./accessibility/02-data-processing/utilities.R")
-#
-# api codes don't really need unless we want some of the synthesized data.
-#
-api_secret='4gsr7tsc10qttzlduvoetlfhjofyetmev44w76rij1yhdp1wbn'
-app_token='dy6ckwt4mxigot5hii89m60s4'
+# Optional Socrata credentials should be supplied through the
+# soc_api_key_id and soc_api_key_secret environment variables. Public queries
+# do not require credentials.
 #
 # base url for Austin's 311 data
 #

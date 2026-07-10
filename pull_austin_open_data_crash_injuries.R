@@ -24,12 +24,8 @@
 # The full CRIS public-extract workflow is retained separately in
 # pull_txdot_cris_public_extract.R for future validation or regional expansion.
 
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(sf)
-  library(tigris)
-  library(httr2)
-})
+source("setup_packages.R")
+setup_project_packages(c("tidyverse", "sf", "tigris", "httr2", "scales"))
 
 options(tigris_use_cache = TRUE)
 options(timeout = max(300, getOption("timeout")))

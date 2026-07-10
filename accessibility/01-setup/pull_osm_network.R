@@ -2,8 +2,8 @@
 
 source("accessibility/config.R")
 
-library(digest)
-library(readr)
+source("setup_packages.R")
+setup_project_packages(c("digest", "readr"))
 
 if (Sys.which("osmium") == "") {
   stop("The osmium command-line tool is required to clip the OSM snapshot.")

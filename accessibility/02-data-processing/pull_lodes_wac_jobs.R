@@ -4,10 +4,8 @@ source("accessibility/config.R")
 
 Sys.setenv(R_USER_CACHE_DIR = cache_dir)
 
-library(dplyr)
-library(h3jsr)
-library(lehdr)
-library(readr)
+source("setup_packages.R")
+setup_project_packages(c("dplyr", "h3jsr", "lehdr", "readr"))
 
 lodes_cache_dir <- file.path(cache_dir, "lehdr")
 dir.create(lodes_cache_dir, recursive = TRUE, showWarnings = FALSE)

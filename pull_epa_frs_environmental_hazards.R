@@ -11,11 +11,8 @@
 # affiliations such as Brownfields/ACRES, TRI, RCRA, RMP, SEMS/Superfund, and
 # NPDES.
 
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(sf)
-  library(tigris)
-})
+source("setup_packages.R")
+setup_project_packages(c("tidyverse", "sf", "tigris"))
 
 options(tigris_use_cache = TRUE)
 options(timeout = max(300, getOption("timeout")))

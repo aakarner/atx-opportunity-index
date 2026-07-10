@@ -19,12 +19,8 @@
 # TXDOT_CRIS_PUBLIC_EXTRACT_URL before running the script and it will download
 # that file into data/raw/txdot_cris.
 
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(sf)
-  library(tigris)
-  library(readxl)
-})
+source("setup_packages.R")
+setup_project_packages(c("tidyverse", "sf", "tigris", "readxl"))
 
 options(tigris_use_cache = TRUE)
 options(timeout = max(300, getOption("timeout")))

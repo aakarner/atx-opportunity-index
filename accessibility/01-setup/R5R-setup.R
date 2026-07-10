@@ -2,10 +2,11 @@
 
 source("accessibility/config.R")
 
+source("setup_packages.R")
+setup_project_packages(c("r5r", "digest"))
+
 Sys.setenv(R_USER_CACHE_DIR = cache_dir)
 options(java.parameters = "-Xmx12G")
-
-library(r5r)
 
 missing_inputs <- c(gtfs_path, osm_path)[!file.exists(c(gtfs_path, osm_path))]
 if (length(missing_inputs) > 0) {

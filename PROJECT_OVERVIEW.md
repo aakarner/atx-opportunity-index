@@ -38,19 +38,22 @@ This document provides a comprehensive overview of all files in the Austin Oppor
 
 ## Setup and Configuration
 
-### setup.R
-**Purpose**: Installation helper for required R packages.
+### setup_packages.R
+**Purpose**: Central installation and loading helper for required R packages.
 
 **What it does**:
-1. Checks for installed packages
+1. Defines the complete package requirements for all current R workflows
 2. Installs missing packages from CRAN
-3. Verifies Census API key is configured
-4. Provides instructions if API key is missing
+3. Loads either the complete set or a script-specific subset
+4. Reports external Census API, Java, and osmium requirements
 
-**Usage**: Run once before first analysis
-```r
-source("setup.R")
+**Usage**: Run from the repository root before the first analysis
+```sh
+Rscript setup_packages.R
 ```
+
+Runnable R scripts source this file automatically and request their own package
+subsets in the active session.
 
 ### config.R
 **Purpose**: Centralized configuration file for customizing the analysis.

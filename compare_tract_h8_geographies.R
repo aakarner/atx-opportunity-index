@@ -5,16 +5,11 @@
 # consideration. The tract side uses 2024 ACS 5-year geometry, based on 2020
 # Census tract definitions.
 
-library(dplyr)
-library(ggplot2)
-library(h3jsr)
-library(patchwork)
-library(readr)
-library(scales)
-library(sf)
-library(tibble)
-library(tidycensus)
-library(tigris)
+source("setup_packages.R")
+setup_project_packages(c(
+  "tidyverse", "h3jsr", "patchwork", "scales", "sf",
+  "tidycensus", "tigris"
+))
 
 options(tigris_use_cache = TRUE)
 sf_use_s2(FALSE)

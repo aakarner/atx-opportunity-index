@@ -1,10 +1,10 @@
-library(h3r)         # H3 spatial indexing
-library(sf)         # Spatial data handling
-library(leaflet)    # Interactive mapping
-library(dplyr)      # Data manipulation
-library(tidycensus)
-library(ggplot2)
-library(units)
+source("setup_packages.R")
+setup_project_packages(c(
+  "h3r", "sf", "leaflet", "dplyr", "tidycensus", "ggplot2",
+  "units", "tigris", "osmdata", "ggspatial", "socratadata",
+  "rmapshaper"
+))
+source("accessibility/02-data-processing/utilities.R")
 
 #
 # now get Austin

@@ -33,14 +33,15 @@ are reproducible and intentionally excluded from Git.
 - R packages: `r5r`, `lehdr`, `h3jsr`, `tidyverse`, `sf`, `tigris`,
   `digest`, `patchwork`, and `zip`
 
-Install the R dependencies:
+Install and validate the complete project R dependency set from the repository
+root:
 
-```r
-install.packages(c(
-  "r5r", "lehdr", "h3jsr", "tidyverse", "sf", "tigris",
-  "digest", "patchwork", "zip", "rJavaEnv"
-))
+```sh
+Rscript setup_packages.R
 ```
+
+Accessibility scripts also source the central setup file and load their own
+package subsets automatically.
 
 Install project-local JDK 21:
 

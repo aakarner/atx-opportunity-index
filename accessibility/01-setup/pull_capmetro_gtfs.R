@@ -2,9 +2,8 @@
 
 source("accessibility/config.R")
 
-library(digest)
-library(dplyr)
-library(readr)
+source("setup_packages.R")
+setup_project_packages(c("digest", "dplyr", "readr", "zip"))
 
 if (!file.exists(gtfs_source_path)) {
   message("Downloading pinned CapMetro GTFS snapshot...")

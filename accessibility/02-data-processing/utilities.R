@@ -3,7 +3,9 @@
 # st - GIS function in sf package
 #
 cut_polygons_rmapshaper <- function(polygons, cutters) {
-  require("rmapshaper")
+  if (!requireNamespace("rmapshaper", quietly = TRUE)) {
+    stop("rmapshaper is required; run Rscript setup_packages.R first.")
+  }
   
   # 1. Align Coordinate Reference Systems (CRS)
   if (st_crs(polygons) != st_crs(cutters)) {
@@ -15,10 +17,10 @@ cut_polygons_rmapshaper <- function(polygons, cutters) {
   cutters <- st_make_valid(cutters)
   
   # 3. Combine the water polygons into a single mask [st_union is a big bottleneck!]
-  cutters_combined <- ms_dissolve(cutters)
+  cutters_combined <- rmapshaper::ms_dissolve(cutters)
   
   # 4. Use ms_erase to punch out the water
-  result <- ms_erase(target = polygons, erase = cutters_combined)
+  result <- rmapshaper::ms_erase(target = polygons, erase = cutters_combined)
   
   # 5. Fix invalid geometries that result from the cutting
   result <- st_make_valid(result)

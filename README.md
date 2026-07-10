@@ -14,11 +14,14 @@ The opportunity index combines multiple indicators:
 
 ## Requirements
 
-This script requires R and the following packages:
+Install and validate all R package dependencies from the repository root:
 
-```r
-install.packages(c("tidycensus", "tidyverse", "tigris", "sf", "h3jsr"))
+```sh
+Rscript setup_packages.R
 ```
+
+Each runnable R script also sources `setup_packages.R`, installs any missing
+packages in its own dependency subset, and loads them in the current session.
 
 You'll also need a Census API key. Get one for free at: https://api.census.gov/data/key_signup.html
 

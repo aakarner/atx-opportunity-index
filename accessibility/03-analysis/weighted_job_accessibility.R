@@ -2,13 +2,11 @@
 
 source("accessibility/config.R")
 
-library(dplyr)
-library(ggplot2)
-library(h3jsr)
-library(patchwork)
-library(readr)
-library(sf)
-library(tidyr)
+source("setup_packages.R")
+setup_project_packages(c(
+  "dplyr", "ggplot2", "h3jsr", "patchwork", "purrr", "readr",
+  "scales", "sf", "tidyr"
+))
 
 if (!file.exists(accessibility_output_path) || !file.exists(lodes_workers_path)) {
   stop("Run the LODES preparation and unweighted accessibility scripts first.")
