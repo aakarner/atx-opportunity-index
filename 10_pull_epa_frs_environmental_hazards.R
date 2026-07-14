@@ -11,7 +11,7 @@
 # affiliations such as Brownfields/ACRES, TRI, RCRA, RMP, SEMS/Superfund, and
 # NPDES.
 
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c("tidyverse", "sf", "tigris"))
 
 options(tigris_use_cache = TRUE)

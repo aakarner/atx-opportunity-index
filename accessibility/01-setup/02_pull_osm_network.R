@@ -2,7 +2,7 @@
 
 source("accessibility/config.R")
 
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c("digest", "readr"))
 
 if (Sys.which("osmium") == "") {

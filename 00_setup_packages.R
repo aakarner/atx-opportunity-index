@@ -3,7 +3,7 @@
 # Run this file directly from the repository root to install and validate the
 # complete package set:
 #
-#   Rscript setup_packages.R
+#   Rscript 00_setup_packages.R
 #
 # Analysis scripts source this file and call setup_project_packages() with the
 # subset they use. This keeps installation logic centralized while avoiding
@@ -11,6 +11,7 @@
 
 project_required_packages <- c(
   # Core analysis and spatial data
+  "cluster",
   "dplyr",
   "ggplot2",
   "h3jsr",
@@ -27,11 +28,13 @@ project_required_packages <- c(
   "tigris",
 
   # Data access and cleaning
+  "curl",
   "httr",
   "httr2",
   "janitor",
   "jsonlite",
   "lehdr",
+  "lubridate",
   "socratadata",
 
   # Mapping and exploratory spatial workflows

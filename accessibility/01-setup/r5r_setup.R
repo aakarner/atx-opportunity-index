@@ -2,7 +2,7 @@
 
 source("accessibility/config.R")
 
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c("r5r", "digest"))
 
 Sys.setenv(R_USER_CACHE_DIR = cache_dir)

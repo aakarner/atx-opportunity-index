@@ -74,6 +74,10 @@ lodes_workers_path <- file.path(
   lodes_data_dir,
   paste0("austin_h", h3_resolution, "_workers_", lodes_year, ".csv")
 )
+lodes_tract_function_path <- file.path(
+  lodes_data_dir,
+  paste0("austin_tract_functional_role_", lodes_year, ".csv")
+)
 accessibility_output_path <- file.path(
   output_dir,
   paste0("h", h3_resolution, "_job_accessibility.csv")

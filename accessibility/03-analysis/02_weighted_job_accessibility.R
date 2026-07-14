@@ -2,7 +2,7 @@
 
 source("accessibility/config.R")
 
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c(
   "dplyr", "ggplot2", "h3jsr", "patchwork", "purrr", "readr",
   "scales", "sf", "tidyr"

@@ -1,4 +1,4 @@
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c(
   "h3r", "sf", "leaflet", "dplyr", "tidycensus", "ggplot2",
   "units", "tigris", "osmdata", "ggspatial", "socratadata",

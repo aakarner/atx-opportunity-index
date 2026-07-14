@@ -6,13 +6,18 @@ Sys.setenv(R_USER_CACHE_DIR = cache_dir)
 options(java.parameters = "-Xmx12G")
 Sys.setenv(TZ = "America/Chicago")
 
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c(
   "dplyr", "h3jsr", "readr", "sf", "tidyr", "tigris", "r5r"
 ))
 
 if (!file.exists(lodes_jobs_path)) {
-  stop("Missing LODES destinations. Run pull_lodes_wac_jobs.R first.")
+  stop(
+    paste0(
+      "Missing LODES destinations. Run accessibility/02-data-processing/",
+      "01_pull_lodes_wac_jobs.R first."
+    )
+  )
 }
 
 jobs <- read_csv(lodes_jobs_path, show_col_types = FALSE)
@@ -78,7 +83,7 @@ if (file.exists(origins_path)) {
   )
 }
 
-source("accessibility/01-setup/R5R-setup.R")
+source("accessibility/01-setup/r5r_setup.R")
 on.exit(stop_r5(r5r_network), add = TRUE)
 
 departure_datetime <- as.POSIXct(

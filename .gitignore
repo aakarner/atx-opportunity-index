@@ -21,6 +21,9 @@
 # RStudio files
 .Rproj.user/
 
+# macOS metadata
+.DS_Store
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
@@ -66,4 +69,5 @@ example_custom_map.*
 
 # Large reproducible inputs and intermediate routing files
 accessibility/data/
+data/
 .positai

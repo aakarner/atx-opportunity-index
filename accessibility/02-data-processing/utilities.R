@@ -4,7 +4,7 @@
 #
 cut_polygons_rmapshaper <- function(polygons, cutters) {
   if (!requireNamespace("rmapshaper", quietly = TRUE)) {
-    stop("rmapshaper is required; run Rscript setup_packages.R first.")
+    stop("rmapshaper is required; run Rscript 00_setup_packages.R first.")
   }
   
   # 1. Align Coordinate Reference Systems (CRS)

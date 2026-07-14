@@ -1,7 +1,7 @@
 # Ingest and QA/QC a TxDOT CRIS public extract for Austin
 #
 # BACKUP WORKFLOW: The project's primary crash-injury pull now uses the City of
-# Austin Open Data API; see pull_austin_open_data_crash_injuries.R. Retain this script
+# Austin Open Data API; see 11_pull_austin_open_data_crash_injuries.R. Retain this script
 # for future validation, regional expansion, or full CRIS extract ingestion.
 #
 # TxDOT CRIS is the authoritative source for Texas crash records. Unlike EPA
@@ -19,7 +19,7 @@
 # TXDOT_CRIS_PUBLIC_EXTRACT_URL before running the script and it will download
 # that file into data/raw/txdot_cris.
 
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c("tidyverse", "sf", "tigris", "readxl"))
 
 options(tigris_use_cache = TRUE)

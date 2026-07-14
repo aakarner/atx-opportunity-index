@@ -1,4 +1,4 @@
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c("tidyverse", "janitor", "httr2"))
 setwd("./accessibility/02-data-processing")
 
@@ -17,4 +17,3 @@ view(school_q_austin)
 req <- request("https://schoolsdata2-tea-texas.opendata.arcgis.com/api/search/v1/catalog")
 resp <- req |> req_perform()
 data <- resp_body_json(resp)
-

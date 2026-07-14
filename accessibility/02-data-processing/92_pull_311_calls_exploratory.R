@@ -1,4 +1,4 @@
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c(
   "tidyverse", "httr", "jsonlite", "socratadata", "ggspatial",
   "osmdata", "sf", "tidycensus", "tigris", "rmapshaper"

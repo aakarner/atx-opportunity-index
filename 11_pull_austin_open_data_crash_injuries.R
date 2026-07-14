@@ -22,9 +22,9 @@
 #   Never place the token or secret directly in this script or commit them.
 #
 # The full CRIS public-extract workflow is retained separately in
-# pull_txdot_cris_public_extract.R for future validation or regional expansion.
+# 94_pull_txdot_cris_public_extract.R for future validation or regional expansion.
 
-source("setup_packages.R")
+source("00_setup_packages.R")
 setup_project_packages(c("tidyverse", "sf", "tigris", "httr2", "scales"))
 
 options(tigris_use_cache = TRUE)

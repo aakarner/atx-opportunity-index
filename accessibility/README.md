@@ -37,7 +37,7 @@ Install and validate the complete project R dependency set from the repository
 root:
 
 ```sh
-Rscript setup_packages.R
+Rscript 00_setup_packages.R
 ```
 
 Accessibility scripts also source the central setup file and load their own
@@ -58,12 +58,24 @@ rJavaEnv::java_quick_install(
 Run from the repository root:
 
 ```sh
-Rscript accessibility/01-setup/pull_capmetro_gtfs.R
-Rscript accessibility/01-setup/pull_osm_network.R
-Rscript accessibility/02-data-processing/pull_lodes_wac_jobs.R
-Rscript accessibility/03-analysis/unweighted_job_accessibility.R
-Rscript accessibility/03-analysis/weighted_job_accessibility.R
+Rscript accessibility/01-setup/01_pull_capmetro_gtfs.R
+Rscript accessibility/01-setup/02_pull_osm_network.R
+Rscript accessibility/02-data-processing/01_pull_lodes_wac_jobs.R
+Rscript accessibility/03-analysis/01_unweighted_job_accessibility.R
+Rscript accessibility/03-analysis/02_weighted_job_accessibility.R
 ```
+
+The directory prefixes identify the accessibility phase; filename prefixes
+give the order within each phase. Unnumbered files such as `config.R`,
+`r5r_setup.R`, and `utilities.R` are sourced helpers and should not be run as
+pipeline steps.
+
+The LODES processing script writes three products: H8 job destinations, H8
+resident-worker weights, and
+`austin_tract_functional_role_2023.csv`. The tract file directly aggregates
+2023 block-level WAC jobs and RAC resident workers to 2020-vintage tracts for
+the opportunity-index functional-role experiment; it is not derived by
+allocating H8 values back to tracts.
 
 The first routing run builds and caches the R5 network. Later runs reuse it
 unless the GTFS, OSM, or `r5r` version recorded in the input manifest changes.
@@ -75,6 +87,9 @@ unless the GTFS, OSM, or `r5r` version recorded in the input manifest changes.
 - `h8_job_accessibility_summary.csv`: resident-worker-weighted and unweighted
   summaries
 - `h8_job_accessibility_map.png`: four-panel accessibility map
+- `austin_tract_functional_role_2023.csv`: tract jobs, resident workers,
+  job-worker balance, and total local activity for the experimental clustering
+  analysis
 
 ## Validation notes
 
@@ -93,8 +108,12 @@ unless the GTFS, OSM, or `r5r` version recorded in the input manifest changes.
   scheduled trips, versus a feed maximum of 4,609, so the warning does not
   indicate materially reduced weekday service.
 
-The tract-based `austin_opportunity_index.R` uses this H8 output for an interim
-validation. It aggregates H8 access to clipped tracts with area-apportioned
-resident-worker weights and retains the 2019 ACS inputs so the accessibility
-change can be evaluated in isolation. The final integration will allocate 2024
-ACS demographics to H8 so every component shares the same target geography.
+The tract-based `20_austin_opportunity_index.R` uses this H8 output for an interim
+proof of concept. It aggregates H8 access to clipped tracts with
+area-apportioned resident-worker weights and combines it with 2024 ACS,
+environmental-hazard, and KSI crash inputs in the primary five-input baseline.
+It separately tests the direct tract LODES activity and job-worker-balance
+measures alongside development pressure and ACS built form. These experimental
+specifications do not replace the baseline result pending review. The final
+integration will allocate the relevant ACS indicators to H8 so every component
+shares the same target geography.
