@@ -5,6 +5,19 @@ Texas. It uses k-means clustering to describe different combinations of
 people/service-fit, place, exposure, and access conditions across census
 tracts, then applies social and economic indicators as post-clustering overlays.
 
+## Submission scope
+
+The Methods and Data Report submitted with this project documents the compact
+five-cluster demonstration implemented in
+`22_policy_typology_proof_of_concept.R` and written to
+`output/proof_of_concept/`. Step 22 reads the common tract-level analytical
+file produced by step 20, but it independently fits the reported clusters and
+does not reuse step-20 assignments. The accessibility workflow and steps 10
+and 11 supply reported inputs through that tract file. The remaining step-20
+models and steps 12–15, 21, 30–31, and 80–94 are supporting, sensitivity,
+supplemental, or exploratory work retained for continued method development;
+their results are not presented as findings of the submitted report.
+
 ## Overview
 
 The submission-ready policy typology produced by step 22 uses:
@@ -39,7 +52,7 @@ The workflow now also tests a clearly labeled unified
 older, age-standardized disability prevalence, and—in three bounded-weight
 specifications—poverty. Resident context is prespecified to account for 20%,
 25%, or 33% of total squared clustering distance. These models are diagnostic
-experiments, not replacements for the primary map.
+experiments, not replacements for the submitted step-22 map.
 
 A separate mixed-data family evaluates the City parcel land-use inventory and
 the City-updated displacement-risk categories using Gower distance and
@@ -82,7 +95,8 @@ intentionally unnumbered because they are sourced by other scripts rather than
 run directly. See [`RUN_ORDER.md`](RUN_ORDER.md) for the complete hierarchy,
 including optional and exploratory workflows.
 
-For a complete first-time reproduction of the current analysis, run:
+For a first-time reproduction of the submitted proof of concept from source
+data, run:
 
 ```sh
 Rscript 00_setup_packages.R
@@ -96,11 +110,16 @@ Rscript 11_pull_austin_open_data_crash_injuries.R
 Rscript 12_pull_austin_open_data_development_pressure.R
 Rscript 13_pull_austin_open_data_land_use.R
 Rscript 14_pull_austin_open_data_displacement_risk.R
-Rscript 15_pull_austin_flood_hazard.R
 Rscript 20_austin_opportunity_index.R
 Rscript 22_policy_typology_proof_of_concept.R
-Rscript 31_test_flood_hazard_kmeans.R
 ```
+
+Step 20 currently builds the shared tract file and the broader research
+outputs in one workflow, so steps 12–14 remain operational prerequisites even
+though their experimental measures are not used by the report's step-22
+clusters. If a current `output/austin_opportunity_data.rds` already exists,
+rerunning step 22 alone reproduces the report-specific analysis. Step 15 and
+step 31 form a separate flood-hazard experiment.
 
 The Austin Open Data crash pull requires `AUSTIN_OPEN_DATA_APP_TOKEN` in the
 process environment. The LODES processing step creates both the H8 job/worker
@@ -108,24 +127,29 @@ inputs and the 2023 tract functional-role file. Previously generated inputs can
 be reused when their source vintages and checksums remain appropriate.
 
 Steps 13 and 14 prepare the land-use and displacement-risk inputs used only by
-the mixed-data experiments. The main analysis keeps low-coverage and unknown
+the mixed-data experiments. Those experiments keep low-coverage and unknown
 records distinct rather than treating them as substantive categories.
 Step 15 prepares probability-based FEMA flood-hazard polygons. Step 31 uses
 them in a focused comparison of the five-input baseline with an otherwise
-identical six-input model; it does not replace the primary cluster map.
+identical six-input model; it is not part of the submitted report analysis.
 Step 22 independently estimates the submission-ready five-cluster typology
 from the tract analytical inputs. It writes poverty and race/ethnicity
-demonstration overlays, a disability service-planning cross-tab, and controlled
-input-form sensitivity comparisons under `output/proof_of_concept/`.
+demonstration overlays, population-weighted overlay summaries, a
+disability service-planning cross-tab, and controlled input-form sensitivity
+comparisons under `output/proof_of_concept/`.
 
 ## Output
 
-Principal outputs include:
+Report-specific outputs include:
 
 - **output/proof_of_concept/**: Compact submission-ready five-cluster maps,
   profiles, diagnostics, assignments, QA/QC, poverty and race/ethnicity
-  cross-tabs, a disability service-planning cross-tab, and specification
-  sensitivities produced by step 22
+  cross-tabs and population-weighted summaries, a disability service-planning
+  cross-tab, and specification sensitivities produced by step 22
+
+The following are broader step-20 or supplemental outputs and are retained for
+method development rather than reported as results of the submitted proof of
+concept:
 
 - **cluster_map.png**: K-means place profiles
 - **place_access_conditions_map.png**: Directional access/exposure index
@@ -177,10 +201,10 @@ Principal outputs include:
 
 ## Data Source
 
-The tract proof of concept pulls Travis, Williamson, and Hays County ACS data
-and clips intersecting tract geometry to the City of Austin boundary. It now
-uses 2024 ACS 5-year estimates with 2024 ACS tract geography, based on 2020
-Census tract definitions.
+The step-20 tract workflow pulls Travis, Williamson, and Hays County ACS data
+and clips intersecting tract geometry to the City of Austin boundary. Step 22
+uses the resulting 2024 ACS 5-year estimates with 2024 ACS tract geography,
+based on 2020 Census tract definitions.
 
 Clipping changes geometry only: ACS attributes remain published whole-tract
 estimates for every tract intersecting Austin. Consequently, aggregated ACS
@@ -190,9 +214,9 @@ must not be read as an Austin city population estimate.
 The replacement accessibility pipeline calculates job access directly at H3
 resolution 8 using 2023 LODES jobs and pinned 2026 CapMetro/OSM network data.
 See [`accessibility/README.md`](accessibility/README.md) for methodology,
-requirements, and reproduction steps. The tract proof of concept now aggregates
-those H8 results using area-apportioned resident-worker weights, with an
-area-weighted or nearest-H8 fallback where necessary. A later implementation
+requirements, and reproduction steps. Step 20 aggregates those H8 results
+using area-apportioned resident-worker weights, with an area-weighted or
+nearest-H8 fallback where necessary. A later implementation
 will move the relevant demographic and accessibility inputs onto the common H8
 geography.
 
@@ -205,11 +229,12 @@ an interim proof of concept designed to translate directly to an H8 workflow.
 
 The step-22 built-form domain uses two transparent 2024 ACS shares: housing
 units in one-unit detached or attached structures, and housing units built in
-2010 or later. The primary model uses the observed shares directly before
-standardization. Resident service needs use observed disability prevalence and
-older-adult share; estimated residents with disabilities are retained as a
-post-clustering planning overlay. The former log-ratio/logit built-form inputs
-and age-standardized disability rate remain in controlled sensitivity models.
+2010 or later. The submitted specification uses the observed shares directly
+before standardization. Resident service needs use observed disability
+prevalence and older-adult share; estimated residents with disabilities are
+retained as a post-clustering planning overlay. The former log-ratio/logit
+built-form inputs and age-standardized disability rate remain in controlled
+sensitivity models.
 
 The experimental development measure combines 2020–2024 new-housing units and
 residential-demolition permits, normalized by the existing housing stock. The

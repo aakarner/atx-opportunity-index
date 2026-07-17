@@ -1,8 +1,9 @@
 # Ingest and QA/QC a TxDOT CRIS public extract for Austin
 #
-# BACKUP WORKFLOW: The project's primary crash-injury pull now uses the City of
-# Austin Open Data API; see 11_pull_austin_open_data_crash_injuries.R. Retain this script
-# for future validation, regional expansion, or full CRIS extract ingestion.
+# BACKUP WORKFLOW: The project's current crash-injury pull uses the City of
+# Austin Open Data API; see 11_pull_austin_open_data_crash_injuries.R. Retain
+# this script for future validation, regional expansion, or full CRIS extract
+# ingestion.
 #
 # TxDOT CRIS is the authoritative source for Texas crash records. Unlike EPA
 # FRS, the public bulk crash extract is not an anonymous one-click API download:
@@ -32,9 +33,9 @@ state_abbr <- "TX"
 city_boundary_year <- 2024
 analysis_equal_area_crs <- 5070
 
-# The current proof-of-concept uses 2024 ACS 5-year data. A 2020-2024 crash
-# window aligns with that period. Update this window if the main model adopts a
-# different temporal alignment.
+# The submitted step-22 proof of concept uses 2024 ACS 5-year data. A 2020-2024
+# crash window aligns with that period. Update this backup workflow if a future
+# report adopts a different temporal alignment.
 analysis_years <- 2020:2024
 
 target_county_names <- c("HAYS", "TRAVIS", "WILLIAMSON")

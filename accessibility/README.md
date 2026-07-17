@@ -3,6 +3,14 @@
 This pipeline calculates walk-plus-transit access to jobs for H3 resolution 8
 cells whose centers fall inside the City of Austin boundary.
 
+For the submitted Methods and Data Report, this pipeline is an upstream data
+source rather than the reported cluster analysis itself. Step 20 aggregates
+the H8 results to the shared tract file, and
+`22_policy_typology_proof_of_concept.R` uses the resulting 45-minute job-access
+measure in the report's five-cluster demonstration. The additional
+accessibility outputs and tract functional-role experiment remain available for
+broader method development.
+
 ## Data bundle
 
 The pipeline uses the newest mutually defensible data available as of June
@@ -108,12 +116,12 @@ unless the GTFS, OSM, or `r5r` version recorded in the input manifest changes.
   scheduled trips, versus a feed maximum of 4,609, so the warning does not
   indicate materially reduced weekday service.
 
-The tract-based `20_austin_opportunity_index.R` uses this H8 output for an interim
-proof of concept. It aggregates H8 access to clipped tracts with
-area-apportioned resident-worker weights and combines it with 2024 ACS,
-environmental-hazard, and KSI crash inputs in the primary five-input baseline.
-It separately tests the direct tract LODES activity and job-worker-balance
-measures alongside development pressure and ACS built form. These experimental
-specifications do not replace the baseline result pending review. The final
-integration will allocate the relevant ACS indicators to H8 so every component
-shares the same target geography.
+The tract-based `20_austin_opportunity_index.R` aggregates H8 access to clipped
+tracts with area-apportioned resident-worker weights and combines it with 2024
+ACS, environmental-hazard, and KSI crash inputs. Step 22 then reads that tract
+file and independently fits the cluster solution reported in the Methods and
+Data Report. Step 20 separately tests direct tract LODES activity and
+job-worker-balance measures alongside development pressure and detailed ACS
+built form; those experiments are not report findings. A later implementation
+can allocate the relevant ACS indicators to H8 so every component shares the
+same target geography.

@@ -5,11 +5,10 @@
 # several environmental program families, and writes both processed data and
 # QA/QC summaries under data/.
 #
-# Why FRS? For the opportunity-index proof of concept, we want physical
-# environmental context rather than an EJ index that already blends hazard and
-# demographic information. FRS provides facility/site records with program
-# affiliations such as Brownfields/ACRES, TRI, RCRA, RMP, SEMS/Superfund, and
-# NPDES.
+# Why FRS? The submitted step-22 proof of concept uses physical environmental
+# context rather than an EJ index that already blends hazard and demographic
+# information. FRS provides facility/site records with program affiliations
+# such as Brownfields/ACRES, TRI, RCRA, RMP, SEMS/Superfund, and NPDES.
 
 source("00_setup_packages.R")
 setup_project_packages(c("tidyverse", "sf", "tigris"))

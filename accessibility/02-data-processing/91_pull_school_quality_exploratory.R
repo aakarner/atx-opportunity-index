@@ -1,3 +1,7 @@
+# Exploratory school-data scratch workflow. It contains a local Windows input
+# path and interactive calls, is not reproducible as written, and does not feed
+# the submitted Methods and Data Report.
+
 source("00_setup_packages.R")
 setup_project_packages(c("tidyverse", "janitor", "httr2"))
 setwd("./accessibility/02-data-processing")

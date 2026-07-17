@@ -4,6 +4,8 @@
 # Floodplain layer from its official ArcGIS service. It retains probability-
 # based physical hazard zones rather than a social-vulnerability index, clips
 # the polygons to the current City boundary, and writes source and QA/QC files.
+# The output supports the supplemental step-31 experiment and is not part of
+# the submitted step-22 analysis.
 
 source("00_setup_packages.R")
 setup_project_packages(c(

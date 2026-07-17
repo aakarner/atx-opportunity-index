@@ -1,3 +1,7 @@
+# Legacy exploratory H3 sketch. This script uses provisional H7 assumptions,
+# is not part of the reproducible accessibility pipeline, and does not produce
+# results used in the submitted Methods and Data Report.
+
 source("00_setup_packages.R")
 setup_project_packages(c(
   "h3r", "sf", "leaflet", "dplyr", "tidycensus", "ggplot2",

@@ -1,9 +1,11 @@
 # Step 31: test physical flood hazard in a simple k-means specification
 #
-# This focused experiment compares the current five-input proof-of-concept
-# model with the same model plus one physical flood-hazard coordinate: the
-# share of each City-clipped tract in FEMA's 1%-annual-chance floodplain.
-# Socioeconomic and demographic indicators remain post-clustering overlays.
+# This supplemental experiment compares the step-20 five-input reference model
+# with the same model plus one physical flood-hazard coordinate: the share of
+# each City-clipped tract in FEMA's 1%-annual-chance floodplain. It is retained
+# for method development and is not part of the submitted Methods and Data
+# Report. Socioeconomic and demographic indicators remain post-clustering
+# overlays.
 
 source("00_setup_packages.R")
 setup_project_packages(c(
@@ -539,7 +541,7 @@ diagnostic_plot <- diagnostics %>%
   scale_x_continuous(breaks = 2:max(candidate_k)) +
   labs(
     title = "Does physical flood hazard strengthen a multi-cluster solution?",
-    subtitle = "Dashed line marks the prespecified five-cluster proof of concept",
+    subtitle = "Dashed line marks the prespecified five-cluster comparison",
     x = "Number of clusters (k)",
     y = NULL,
     color = NULL

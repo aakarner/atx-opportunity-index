@@ -1,5 +1,13 @@
 # Quick Start Guide - Austin Opportunity Index
 
+## Submission scope
+
+The submitted Methods and Data Report uses the clusters, figures, and tables
+created by `22_policy_typology_proof_of_concept.R`. The rest of the repository
+prepares its inputs or preserves broader experiments and supplemental analyses.
+Step 22 reads the tract file created by step 20 but independently estimates the
+reported five-cluster solution under `output/proof_of_concept/`.
+
 ## Prerequisites
 
 1. **Install R**: Download from https://cran.r-project.org/
@@ -31,8 +39,8 @@
 
 ## Running the Analysis
 
-From the repository root, generate the accessibility, place/exposure, and
-development inputs and then run the main analysis:
+From the repository root, generate the accessibility and place/exposure
+inputs, build the shared tract file, and run the submitted proof of concept:
 
 ```sh
 Rscript 00_setup_packages.R
@@ -46,11 +54,15 @@ Rscript 11_pull_austin_open_data_crash_injuries.R
 Rscript 12_pull_austin_open_data_development_pressure.R
 Rscript 13_pull_austin_open_data_land_use.R
 Rscript 14_pull_austin_open_data_displacement_risk.R
-Rscript 15_pull_austin_flood_hazard.R
 Rscript 20_austin_opportunity_index.R
 Rscript 22_policy_typology_proof_of_concept.R
-Rscript 31_test_flood_hazard_kmeans.R
 ```
+
+Steps 12–14 are operational prerequisites of the current step-20 tract-file
+build, although their experimental measures do not enter the report's step-22
+clusters. If the tract file already exists and remains current, run step 22 by
+itself. Steps 15 and 31 are a separate flood-hazard experiment and are not part
+of the submitted report.
 
 The numeric prefixes encode the intended execution sequence. See
 [`RUN_ORDER.md`](RUN_ORDER.md) for exploratory scripts and optional
@@ -59,19 +71,20 @@ inputs used by the mixed-data experiments. Step 15 supplies physical FEMA
 flood-hazard polygons for the focused post-analysis comparison in step 31.
 Step 22 independently estimates the submission-ready five-cluster typology
 from the step-20 tract inputs using simplified one-unit-housing,
-recent-construction, and observed-disability shares. It isolates the primary
+recent-construction, and observed-disability shares. It isolates the reported
 results and controlled input-form sensitivities under `output/proof_of_concept/`.
 
 The Austin Open Data crash script reads its API token from
 `AUSTIN_OPEN_DATA_APP_TOKEN`. The LODES step also writes the 2023 tract-level
 job/resident-worker file required by the experimental functional-role model.
 
-The script will:
+The broader step-20 workflow will:
 
 1. Pull 2024 ACS data for the three counties containing Austin
 2. Aggregate H8 job access and add EPA-hazard and KSI-crash exposures
-3. Perform the primary k-means clustering without income, poverty, education,
-   employment, or vehicle availability defining the solution
+3. Perform the step-20 five-input reference clustering without income,
+   poverty, education, employment, or vehicle availability defining the
+   solution
 4. Retain that five-input baseline as the step-20 reference model
 5. Compare experimental additions for development pressure, ACS built form,
    and 2023 LODES functional role
@@ -81,10 +94,13 @@ The script will:
    PAM, including continuous-share and categorical-weight sensitivities
 8. Keep race/ethnicity out of clustering and evaluate it after clustering
 9. Apply remaining social and economic indicators as overlays and filters
-10. Generate maps, profiles, cross-tabs, diagnostics, and QA/QC outputs
+10. Generate broader research maps, profiles, cross-tabs, diagnostics, and
+    QA/QC outputs
 
 The step-22 proof of concept uses poverty and race/ethnicity as its only
 demonstration equity overlays; neither enters clustering or cluster names.
+It also exports population counts, relevant ACS universes, and cluster-wide
+shares for each overlay overall and within each policy cluster.
 Estimated residents with disabilities are exported separately as a
 service-planning cross-tab and do not enter clustering.
 
@@ -92,7 +108,14 @@ Social infrastructure is not included in the active specifications.
 
 ## Understanding the Output
 
-### Maps Generated
+### Report-specific outputs
+
+Step 22 writes the reported cluster map, equity-overlay figure, diagnostics,
+cluster profiles, assignments, cross-tabs, and QA/QC files to
+`output/proof_of_concept/`. These are the outputs described in the submitted
+Methods and Data Report.
+
+### Broader and supplemental maps
 
 1. **place_access_conditions_map.png**: Directional summary of transit access,
    environmental exposure, and KSI crash exposure
@@ -113,7 +136,7 @@ Social infrastructure is not included in the active specifications.
 6. **development_pressure_experiment_map.png**,
    **built_form_experiment_map.png**, and
    **functional_role_experiment_map.png**: Candidate measures tested without
-   changing the primary baseline map
+   changing the step-20 reference map
 
 7. **experimental_cluster_diagnostics.png** and
    **experimental_cluster_stability.png**: Separation and reproducibility
@@ -121,7 +144,8 @@ Social infrastructure is not included in the active specifications.
 
 8. **resident_context_cluster_diagnostics.png** and
    **resident_context_cluster_stability.png**: The same checks for the unified
-   demographic-inclusive experiments, kept separate from the primary model
+   demographic-inclusive experiments, kept separate from the step-20 reference
+   model
 
 9. **mixed_model_diagnostics.png**, **mixed_model_stability.png**, and
    **mixed_categorical_weight_sensitivity.png**: Separation, stability, and
@@ -136,7 +160,20 @@ Social infrastructure is not included in the active specifications.
     **flood_hazard_kmeans_diagnostics.png**: Physical flood exposure and its
     effect on the compact k-means specification
 
-### Data Files
+### Report-specific data files
+
+- **policy_typology_cluster_profiles.csv**: Cluster characteristics for the
+  submitted five-cluster typology, including population-weighted observed
+  disability prevalence
+- **policy_typology_diagnostics.csv**: Cluster-count, separation, and stability
+  diagnostics reported for the proof of concept
+- **policy_typology_assignments.csv**: Tract assignments for the submitted
+  typology
+- **policy_typology_equity_overlay_summary.csv** and the separate poverty and
+  race/ethnicity summary files: Population counts, ACS universes, and
+  cluster-wide shares used in the equity-screen demonstration
+
+### Broader step-20 data files
 
 - **austin_opportunity_data.rds**: R data file for further analysis
 - **austin_opportunity_data.csv**: Spreadsheet-compatible data export

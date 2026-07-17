@@ -1,12 +1,14 @@
 # Optional configuration for 21_example_custom_analysis.R.
-# The main proof-of-concept workflow is configured in 20_austin_opportunity_index.R.
+# This file controls only the optional step-21 reanalysis of the step-20
+# reference model. The submitted proof of concept is configured directly in
+# 22_policy_typology_proof_of_concept.R.
 
 # Census API Configuration
 # Get your API key from: https://api.census.gov/data/key_signup.html
 # CENSUS_API_KEY <- "YOUR_API_KEY_HERE"
 
 # Geographic Scope
-YEAR <- 2024              # ACS 5-year release used by the proof of concept
+YEAR <- 2024              # ACS release used by the optional step-21 example
 SURVEY <- "acs5"          # "acs1" (1-year) or "acs5" (5-year estimates)
 STATE <- "TX"             # State abbreviation
 COUNTIES <- c("Travis", "Williamson", "Hays")
@@ -16,14 +18,14 @@ NUM_CLUSTERS <- 5         # Number of k-means clusters
 RANDOM_SEED <- 123        # Random seed for reproducibility
 NSTART <- 25             # Number of random starts for k-means
 
-# Census variables shown here support the optional primary-model example; this
-# is not the complete registry used by 20_austin_opportunity_index.R. In the main
-# workflow poverty remains an overlay for the primary model but also enters the
+# Census variables shown here support the optional step-21 example; this is not
+# the complete registry used by step 20 or the submitted step-22 analysis. In
+# step 20, poverty remains an overlay for the reference model but also enters a
 # separately labeled unified resident-context sensitivity family.
 # Find variables at: https://api.census.gov/data/2024/acs/acs5/variables.html
 
 CENSUS_VARIABLES <- c(
-  # Primary-model social and economic overlays
+  # Step-20 reference-model social and economic overlays
   "median_income" = "B19013_001",        # Median household income
   "poverty_total" = "B17001_001",         # Poverty universe
   "poverty_below" = "B17001_002",         # Below poverty level

@@ -4,6 +4,8 @@
 # used by the proof-of-concept with the H3 resolution 8 geography under
 # consideration. The tract side uses 2024 ACS 5-year geometry, based on 2020
 # Census tract definitions.
+# This supplemental geography comparison informs future development but is not
+# a result of the submitted Methods and Data Report.
 
 source("00_setup_packages.R")
 setup_project_packages(c(

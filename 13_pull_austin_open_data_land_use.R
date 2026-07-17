@@ -6,6 +6,7 @@
 # transparent broad land-use category for mixed-data clustering experiments.
 # Water, streets/roads, and unknown codes remain in QA totals but are excluded
 # from the compositional denominator.
+# These step-20 experiments are not part of the submitted step-22 results.
 #
 # Authentication is optional. If available, set AUSTIN_OPEN_DATA_APP_TOKEN in
 # the process environment. Set REFRESH_AUSTIN_LAND_USE=true to replace cached

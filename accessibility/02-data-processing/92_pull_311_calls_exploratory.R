@@ -1,3 +1,7 @@
+# Exploratory 311-call workflow retained for possible future development. It
+# does not feed the submitted Methods and Data Report or the active step-22
+# clustering analysis.
+
 source("00_setup_packages.R")
 setup_project_packages(c(
   "tidyverse", "httr", "jsonlite", "socratadata", "ggspatial",

@@ -1,6 +1,6 @@
 # Pull and QA/QC crash-injury data from the City of Austin Open Data API
 #
-# PRIMARY WORKFLOW
+# CURRENT CRASH-DATA WORKFLOW
 #
 # The City of Austin publishes crash-level records derived from TxDOT's Crash
 # Records Information System (CRIS). The dataset covers crashes within current
@@ -49,8 +49,8 @@ city_name <- "Austin"
 state_abbr <- "TX"
 city_boundary_year <- 2024
 
-# This window matches the 2024 ACS five-year estimates used by the current
-# proof of concept.
+# This window matches the 2024 ACS five-year estimates used by the submitted
+# step-22 proof of concept.
 analysis_years <- 2020:2024
 
 # SODA3 permits larger pages, but 25,000 rows keeps each response manageable

@@ -5,6 +5,8 @@
 # Austin Uprooted study: resident vulnerability, demographic change, and
 # housing-market change. It should therefore be described as derived from the
 # Uprooted framework—not as the original 2016 Uprooted typology.
+# The layer is retained for step-20 mixed-data experiments and does not enter
+# the submitted step-22 clusters.
 #
 # Authentication is optional for this small public Socrata dataset. If an app
 # token is available, set AUSTIN_OPEN_DATA_APP_TOKEN in the process environment.
@@ -234,7 +236,7 @@ if (any(is.na(displacement_risk$displacement_risk_category))) {
   )
 }
 
-# ---- Check exact-GEOID coverage of the current proof of concept --------------
+# ---- Check exact-GEOID coverage of the step-20 tract universe ----------------
 
 source_geoids <- displacement_risk$GEOID
 analysis_geoids <- character()

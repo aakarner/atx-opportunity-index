@@ -2,20 +2,32 @@
 
 This document provides a comprehensive overview of all files in the Austin Opportunity Index project.
 
+## Submitted-report scope
+
+The submitted Methods and Data Report uses the policy typology estimated by
+`22_policy_typology_proof_of_concept.R` and the compact deliverables under
+`output/proof_of_concept/`. Step 20 creates the common tract-level analytical
+file used by step 22, but its cluster assignments and its broader experimental
+outputs are not the results reported in the document. The additional scripts
+remain in the repository to make upstream data preparation transparent and to
+support future sensitivity testing and method development.
+
 ## Core Analysis Scripts
 
 ### 20_austin_opportunity_index.R
-**Purpose**: Main proof-of-concept workflow for tract place profiles,
-place-and-access conditions, and post-clustering overlays.
+**Purpose**: Build the shared tract analytical file and run the repository's
+broader tract reference models, candidate-input experiments, and overlays.
 
 **What it does**:
 
 1. Pulls 2024 ACS data for Travis, Williamson, and Hays Counties and clips
    intersecting tracts to the 2024 City of Austin boundary
-2. Aggregates the H8 job-accessibility results to the tract proof-of-concept
+2. Aggregates the H8 job-accessibility results to the shared tract analytical
+   file
 3. Adds one-mile EPA environmental-hazard proximity and KSI crash-density inputs
-4. Performs five-cluster k-means using housing-market, family/service-fit,
-   transit-access, environmental-exposure, and traffic-safety dimensions
+4. Performs a five-input reference k-means analysis using housing-market,
+   family/service-fit, transit-access, environmental-exposure, and
+   traffic-safety dimensions
 5. Separately tests development pressure, ACS built form, and 2023 LODES
    functional role as experimental additions
 6. Tests a separate unified resident-context family with older-adult share,
@@ -23,14 +35,16 @@ place-and-access conditions, and post-clustering overlays.
 7. Tests land-use and displacement-risk inputs using Gower distance and PAM,
    including continuous-share and categorical-weight sensitivities
 8. Keeps income, employment, education, and no-vehicle indicators as overlays;
-   poverty remains an overlay in the primary model, while race/ethnicity is
-   reserved for a post-clustering audit
+   poverty remains an overlay in the step-20 reference model, while
+   race/ethnicity is reserved for a post-clustering audit
 9. Saves maps, tract-level data, cluster profiles, overlay cross-tabs,
    correlations, model comparisons, stability tests, and QA/QC tables
 
-The original five-input baseline remains the primary proof-of-concept model
-pending review. Experimental assignments are exported separately. Social
-infrastructure is not part of the active pipeline.
+The five-input assignment is retained as a step-20 reference for comparisons.
+It is not the cluster solution reported in the submitted Methods and Data
+Report; step 22 independently estimates that solution. Experimental
+assignments are exported separately. Social infrastructure is not part of the
+active pipeline.
 
 **Dependencies**: Managed centrally by `00_setup_packages.R`
 
@@ -92,7 +106,8 @@ subsets in the active session.
 
 ### Required Run Order
 
-For a complete first-time reproduction, run from the repository root:
+For a complete first-time repository run, including the supplemental flood
+experiment, run from the repository root:
 
 ```sh
 Rscript 00_setup_packages.R
@@ -112,11 +127,19 @@ Rscript 22_policy_typology_proof_of_concept.R
 Rscript 31_test_flood_hazard_kmeans.R
 ```
 
+The submitted-report path stops after step 22; steps 15 and 31 are supplemental
+and are not needed to reproduce the report findings.
+
 The LODES step now creates both the H8 job/resident-worker inputs and the direct
 2020-tract aggregation used by the functional-role experiment. Existing
 processed inputs can be reused when their source vintages remain appropriate.
 The full required, candidate, and exploratory hierarchy is documented in
 [`RUN_ORDER.md`](RUN_ORDER.md).
+
+Operationally, the current step-20 tract-file build also expects the step
+12–14 inputs used by its broader experiments. Those experimental measures do
+not enter the report's step-22 clusters. If the current tract RDS already
+exists, step 22 can be rerun independently.
 
 ### Stand-alone Place and Change Inputs
 
@@ -130,25 +153,26 @@ The full required, candidate, and exploratory hierarchy is documented in
   inventory with analytical tracts, preserves continuous area shares, and
   constructs broad nominal categories with explicit coverage QA.
 - `14_pull_austin_open_data_displacement_risk.R` prepares the City-updated
-  displacement-risk categories derived from the Uprooted framework. The main
-  analysis treats this as policy context because it embeds vulnerability
-  indicators.
+  displacement-risk categories derived from the Uprooted framework. The
+  mixed-data experiment treats this as policy context because it embeds
+  vulnerability indicators.
 - `15_pull_austin_flood_hazard.R` downloads and validates the official Greater
   Austin FEMA Floodplain polygons, preserves the 1% and 0.2% annual-chance
   classes, and clips them to the City boundary.
 
 ### 31_test_flood_hazard_kmeans.R
-**Purpose**: Focused post-analysis comparison of the current five-input
-k-means model with an otherwise identical model that adds the tract share in
+**Purpose**: Focused supplemental comparison of the step-20 five-input
+reference model with an otherwise identical model that adds the tract share in
 FEMA's 1%-annual-chance floodplain.
 
 The script evaluates candidate values of k, five-cluster stability and
 membership changes, correlations with the socioeconomic overlays, and mapped
-cluster differences. Its results are diagnostic and do not replace the primary
-proof-of-concept assignment.
+cluster differences. Its results are diagnostic and do not replace the
+step-22 proof-of-concept assignment or appear as submitted-report findings.
 
 ### 22_policy_typology_proof_of_concept.R
-**Purpose**: Mostly stand-alone, submission-ready proof of concept.
+**Purpose**: Mostly stand-alone, submission-ready proof of concept documented
+in the Methods and Data Report.
 
 The script reads the tract analytical file created by step 20 but independently
 estimates its own five-cluster k-means solution. Its transparent built-form
@@ -164,12 +188,15 @@ proof-of-concept formulation as controlled sensitivity specifications. Poverty
 and race/ethnicity remain the only demonstration equity overlays and neither
 enters clustering or cluster labels. Estimated residents with disabilities are
 exported separately as a service-planning cross-tab and do not enter k-means.
+The overlay tables pool population counts and ACS universes to report
+cluster-wide shares rather than averages of tract percentages.
 All deliverables are isolated under `output/proof_of_concept/`.
 
 ### config.R
 **Purpose**: Optional settings for `21_example_custom_analysis.R`. The main
-proof-of-concept workflow currently defines its settings in
-`20_austin_opportunity_index.R`.
+step-20 reference workflow defines its settings in
+`20_austin_opportunity_index.R`; the submitted proof of concept defines its
+settings in `22_policy_typology_proof_of_concept.R` and does not use this file.
 
 **Configurable parameters**:
 
@@ -188,19 +215,19 @@ proof-of-concept workflow currently defines its settings in
 ## Examples and Documentation
 
 ### 21_example_custom_analysis.R
-**Purpose**: Re-estimates the current five-input model with an alternative
-cluster count after the main workflow has run.
+**Purpose**: Re-estimates the step-20 five-input reference model with an
+alternative cluster count after the step-20 workflow has run.
 
 **Examples included**:
 
-1. Reads the complete tract output from the main workflow
+1. Reads the complete tract output from the step-20 workflow
 2. Performs k-means with a custom cluster count using the same five inputs
 3. Summarizes social and economic overlays after clustering
 4. Creates an alternative cluster map
 
 **Usage**: 
 ```r
-# First run the main workflow, then modify NUM_CLUSTERS in config.R
+# First run step 20, then modify NUM_CLUSTERS in config.R
 Rscript 21_example_custom_analysis.R
 ```
 
@@ -263,10 +290,12 @@ candidate, optional, and exploratory R workflows.
 
 ### ACS Variables Used
 
-The analysis uses 2024 American Community Survey 5-year estimates. Housing and
-family/service-fit variables help define the primary clusters. A separate
-unified experiment adds resident-needs and economic-constraint variables;
-race/ethnicity remains audit-only.
+The analysis uses 2024 American Community Survey 5-year estimates. The
+submitted step-22 model uses housing-market, family/service-fit, simplified
+built-form, older-adult, and observed-disability measures alongside the three
+access and exposure inputs. Poverty and race/ethnicity remain post-clustering
+overlays. Step 20 retains additional demographic-inclusive experiments for
+method development.
 
 ACS attributes remain whole-tract estimates after intersecting tract geometry
 is clipped to Austin. Aggregated demographic counts therefore describe the
@@ -277,46 +306,50 @@ municipal boundary.
 |------------------|-------------|---------------|
 | B25077_001, B25064_001 | Median home value and rent | Cluster input: housing-market profile |
 | B25010_001, B11005_001–002 | Household size and households with children | Cluster input: family/service fit |
-| B25024 series | Units in broad structure-size categories | Experimental input: built form |
-| B25034 series | Housing units built in 2010 or later | Experimental input: built form |
+| B25024 series | Housing units in one-unit structures | Step-22 cluster input: built form; broader composition is a step-20 sensitivity |
+| B25034 series | Housing units built in 2010 or later | Step-22 cluster input: built form |
 | B25001_001 | Total housing units | Development-rate denominator |
 | B19013_001 | Median household income | Overlay/filter |
-| B01001_001, B01001_020–025, B01001_044–049 | Population age 65 or older | Unified experimental input: resident needs |
-| B18101 series | Age-specific disability counts | Unified experimental input: age-standardized resident needs |
-| B17001_001–002 | Poverty rate numerator and denominator | Primary overlay; bounded unified experimental input |
+| B01001_001, B01001_020–025, B01001_044–049 | Population age 65 or older | Step-22 cluster input: resident service needs |
+| B18101 series | Disability counts and population universe | Step-22 observed-prevalence input; age-standardized step-20 sensitivity |
+| B17001_001–002 | Poverty rate numerator and denominator | Step-22 overlay; bounded step-20 experimental input |
 | B23025_002, B23025_004 | Employment rate numerator and denominator | Overlay/filter |
 | B15003_001, B15003_022–025 | Bachelor's degree or higher | Overlay/filter |
 | B08201_002 | Households without a vehicle | Overlay/filter |
 | B03002 series | Race and Hispanic/Latino origin | Post-clustering audit only |
 
 Transit job access, EPA hazard-facility proximity, and KSI crash density are
-additional cluster inputs produced by the project's stand-alone data pipelines.
-The development-permit, built-form, and LODES functional-role measures are
-experimental inputs only.
+additional step-22 cluster inputs produced by the project's stand-alone data
+pipelines. Development permits, detailed structure composition, and LODES
+functional role are step-20 experimental inputs only.
 
 ### K-means Clustering Method
 
-The script uses standard k-means clustering with:
+The submitted step-22 script uses standard k-means clustering with:
 
-- **Input**: Five scaled housing-market, family/service-fit, transit-access,
-  environmental-exposure, and traffic-safety measures
+- **Input**: Nine scaled coordinates representing seven balanced domains:
+  housing market, household/family profile, transit access, environmental
+  exposure, traffic safety, built form, and resident service needs
 - **Algorithm**: R's default Hartigan–Wong algorithm with multiple random starts
 - **Proof-of-concept clusters**: 5
 - **Random seed**: 123 (for reproducibility)
-- **Iterations**: 25 random starts
+- **Iterations**: 100 random starts
 
 Candidate values from 1 to 10 are evaluated using within-cluster variation;
 values from 2 to 10 are also evaluated using silhouette and
 Calinski-Harabasz statistics. A 100-simulation gap statistic provides a fourth
 check. For k = 2 through 6, 100 repeated 80% subsamples assess assignment
-stability using the adjusted Rand index. The current baseline diagnostics favor
-a two-cluster statistical solution, while five is retained as a transparent
-substantive choice to provide a more useful policy-facing typology.
+stability using the adjusted Rand index. The separation diagnostics favor a
+two-cluster statistical solution, while the gap statistic's one-standard-error
+rule supports five. Five is retained as a prespecified policy resolution and
+its reproducibility is reported transparently.
 
 ### Experimental Specifications
 
-The main workflow compares eleven specifications without changing the primary
-baseline map. Six test place-based candidates:
+The broader step-20 workflow compares eleven specifications without changing
+its five-input reference map. These experiments are retained in the repository
+but are not reported as results of the submitted proof of concept. Six test
+place-based candidates:
 
 1. Baseline five inputs
 2. Baseline plus development pressure
@@ -357,7 +390,7 @@ partition, the workflow also varies categorical-domain weight from 0.10 to
 1.00 and reports adjusted-Rand agreement between the five-cluster assignment
 and each source category. Continuous-share models provide a second check on
 whether land use adds multidimensional structure without a discrete category
-jump. The primary k-means map is not replaced by these experiments.
+jump. The submitted step-22 map is not replaced by these experiments.
 
 The land-use processor excludes water, streets/roads, and unknown codes from
 the share denominator. Tracts with less than 50% usable inventory coverage are
@@ -386,11 +419,11 @@ weight `1 / sqrt(n)`, so its total squared-distance contribution is comparable
 to a one-variable domain rather than growing mechanically with its variable
 count.
 
-Model review includes silhouette, Calinski-Harabasz, gap, cluster-size, first-PC
-variance, 80% subsample stability, and adjusted-Rand comparisons with the
-baseline. Post-clustering diagnostics also measure how strongly each candidate
-solution sorts the income, poverty, employment, education, and vehicle-access
-overlays.
+Step-20 experimental review includes silhouette, Calinski-Harabasz, gap,
+cluster size, first-PC variance, 80% subsample stability, and adjusted-Rand
+comparisons with the baseline. Post-clustering diagnostics also measure how
+strongly each candidate solution sorts the income, poverty, employment,
+education, and vehicle-access overlays.
 
 Older-adult share and poverty are empirical-logit transformed, while
 age-standardized disability is converted with a bounded logit; each is
@@ -410,6 +443,10 @@ an overlay or a direct experimental input.
 
 ### Directional Place-and-Access Conditions Index
 
+Step 20 retains the following directional diagnostic index for method
+development. It is not the submitted report's policy typology or a substitute
+for the step-22 clusters.
+
 ```
 place_access_index = mean(transit_access_score,
                           environmental_safety_score,
@@ -428,13 +465,17 @@ family.
 
 ## Expected Output Examples
 
+The terminal example below describes the broader step-20 workflow. The
+submitted report instead uses the compact files written by step 22 under
+`output/proof_of_concept/`.
+
 ### Terminal Output
 ```
 Pulling ACS data for Travis, Williamson, Hays counties, TX...
 Reading H8 job accessibility results...
 Reading place, exposure, and development inputs...
 Evaluating baseline and experimental cluster specifications...
-Retaining baseline k = 5 for primary maps.
+Retaining baseline k = 5 for step-20 reference maps.
 Creating visualizations...
 Saving plots...
 
@@ -465,8 +506,10 @@ Output files created:
 
 ## Common Use Cases
 
-1. **Basic Analysis**: Run `20_austin_opportunity_index.R` for the standard
-   Austin analysis
+1. **Submitted Proof of Concept**: Run `20_austin_opportunity_index.R` to build
+   the shared tract file and then `22_policy_typology_proof_of_concept.R` for
+   the report-specific analysis. If the tract file is current, rerun step 22
+   alone.
 2. **Alternative Cluster Count**: Change `NUM_CLUSTERS` in `config.R` and run
    `21_example_custom_analysis.R`
 3. **Overlay Screening**: Use the overlay flags in the RDS/CSV output to assess

@@ -1,6 +1,7 @@
-# Example: Explore Alternative Cluster Counts and Overlay Results
-# Run 20_austin_opportunity_index.R first. This example deliberately preserves the
-# separation between cluster inputs and post-clustering social/economic context.
+# Example: explore alternative cluster counts for the step-20 reference model.
+# Run 20_austin_opportunity_index.R first. This optional example is not the
+# submitted proof-of-concept analysis and deliberately preserves the separation
+# between cluster inputs and post-clustering social/economic context.
 
 # Load configuration
 source("config.R")
@@ -26,7 +27,7 @@ cluster_vars <- c(
   "log_annual_ksi_crash_density_cluster"
 )
 
-cat("Re-estimating the current model with", NUM_CLUSTERS, "clusters...\n")
+cat("Re-estimating the step-20 reference model with", NUM_CLUSTERS, "clusters...\n")
 
 cluster_data <- census_data %>%
   filter(cluster_complete) %>%

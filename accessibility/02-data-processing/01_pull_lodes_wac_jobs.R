@@ -101,7 +101,9 @@ h3_workers <- rac %>%
     .groups = "drop"
   )
 
-# Preserve a direct 2020-tract aggregation for the tract proof of concept.
+# Preserve a direct 2020-tract aggregation for the step-20 functional-role
+# experiment; the submitted step-22 clusters use the H8 accessibility measure,
+# not this experimental tract functional-role coordinate.
 # LODES8 block identifiers and 2024 ACS tract estimates both use 2020 Census
 # tract definitions, so this avoids unnecessarily converting block counts to
 # H8 and area-apportioning them back to tracts.

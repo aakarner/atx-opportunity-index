@@ -1,6 +1,12 @@
-# Austin Opportunity Index Analysis
-# This script pulls census data for Austin, TX, performs k-means clustering,
-# and creates visualizations using ggplot and tigris
+# Step 20: build the shared Austin tract file and broader research analyses
+#
+# This upstream workflow pulls and integrates the tract-level inputs consumed
+# by 22_policy_typology_proof_of_concept.R. It also retains step-20 reference
+# clusters and a wider set of experimental and sensitivity analyses for method
+# development. The submitted Methods and Data Report uses the clusters and
+# compact deliverables produced by step 22, not the assignments produced here.
+# Within this file, "baseline" and "primary" refer only to step-20 internal
+# comparisons.
 
 # Install missing packages and load this script's dependencies.
 source("00_setup_packages.R")
@@ -173,10 +179,10 @@ census_vars <- c(
 )
 
 # Pull census data for the three counties that contain the City of Austin.
-# This tract-level proof of concept now uses the most recent ACS 5-year tract
-# data supported by tidycensus so the demonstration reflects 2024 ACS tract
-# geography, based on 2020 Census tract definitions, while the final H8
-# integration is still being developed.
+# The shared tract file uses the most recent ACS 5-year tract data supported by
+# tidycensus: 2024 ACS tract geography based on 2020 Census tract definitions.
+# The submitted step-22 demonstration reads these attributes while a future
+# implementation may move all relevant inputs to a common H8 geography.
 cat(
   "Pulling ACS data for ",
   str_c(analysis_counties, collapse = ", "),
@@ -1615,7 +1621,7 @@ upper_overlay_threshold <- function(x) {
   as.numeric(quantile(x, 1 - overlay_tail_probability, na.rm = TRUE, names = FALSE))
 }
 
-# Preserve the current place/access/service-fit proof of concept while adding a
+# Preserve the step-20 place/access/service-fit reference while adding a
 # separately labeled unified resident-context experiment. Income, employment,
 # education, vehicle availability, and race/ethnicity remain audit overlays;
 # poverty enters only the bounded experimental family below. No demographic
@@ -1990,7 +1996,7 @@ census_data_normalized <- census_data_normalized %>%
     cluster_input_imputed = missing_cluster_input
   )
 
-# Prepare the current people/service-fit, place, and access proof-of-concept
+# Prepare the step-20 people/service-fit, place, and access reference
 # indicators. The separate unified family is defined below.
 cluster_vars <- c(
   "housing_market_profile_cluster",
@@ -2528,11 +2534,16 @@ cat(
   sep = ""
 )
 
-# Retain the baseline five-cluster assignment for the principal proof of
-# concept. Experimental assignments and diagnostics are exported separately.
-cat("Retaining baseline k = ", selected_cluster_count, " for primary maps.\n", sep = "")
+# Retain the baseline five-cluster assignment for step-20 reference maps.
+# Experimental assignments and diagnostics are exported separately; step 22
+# independently estimates the clusters used in the submitted report.
+cat(
+  "Retaining baseline k = ", selected_cluster_count,
+  " for step-20 reference maps.\n",
+  sep = ""
+)
 
-# Descriptive labels for the refactored five-cluster proof of concept. Labels
+# Descriptive labels for the step-20 five-cluster reference. Labels
 # use only cluster-defining people/service-fit, place, exposure, and access
 # characteristics; overlay variables do not enter the names.
 cluster_labels <- c(
@@ -4302,7 +4313,11 @@ transit_access_map <- ggplot(census_data_clustered) +
   geom_sf(aes(fill = transit_jobs_45min), color = NA) +
   scale_fill_viridis_c(
     option = "mako",
-    name = paste0("Jobs by Transit\nwithin ", transit_threshold_minutes, " min"),
+    name = paste0(
+      "Jobs accessible by\npublic transit within\n",
+      transit_threshold_minutes,
+      " minutes"
+    ),
     labels = scales::comma,
     na.value = "#d9d9d9"
   ) +
@@ -4322,6 +4337,10 @@ transit_access_map <- ggplot(census_data_clustered) +
     plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
     plot.subtitle = element_text(hjust = 0.5, size = 10),
     plot.caption = element_text(hjust = 1, size = 8),
+    legend.title = element_text(size = 13, face = "bold", lineheight = 1.05),
+    legend.text = element_text(size = 11),
+    legend.key.height = grid::unit(2.4, "cm"),
+    legend.key.width = grid::unit(0.65, "cm"),
     axis.text = element_blank(),
     axis.ticks = element_blank(),
     panel.grid = element_blank()
@@ -4924,8 +4943,9 @@ ggsave(file.path(output_dir, "mixed_cluster_comparison_map.png"), mixed_cluster_
 ggsave(file.path(output_dir, "land_use_category_map.png"), land_use_category_map, width = 12, height = 10, dpi = 300, bg = "white")
 ggsave(file.path(output_dir, "displacement_risk_category_map.png"), displacement_risk_category_map, width = 12, height = 10, dpi = 300, bg = "white")
 
-# Summarize cluster-defining indicators separately from post-clustering
-# overlays so the reporting structure mirrors the methodological distinction.
+# Summarize step-20 cluster-defining indicators separately from
+# post-clustering overlays. The submitted report uses the analogous compact
+# profiles and overlays written by step 22.
 cat("\n=== Cluster-Defining Profiles ===\n")
 
 cluster_stats <- census_data_clustered %>%

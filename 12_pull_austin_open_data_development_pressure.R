@@ -1,10 +1,11 @@
 # Pull and QA/QC development-pressure inputs from Austin issued permits
 #
-# This proof-of-concept measure uses geocoded Building Permit records issued
-# during 2020-2024. It retains identifiable new housing and residential
-# demolition permits while excluding trade permits, repairs, accessory
-# structures, hotels, and other records whose housing-unit fields do not
-# represent new or removed homes reliably.
+# This step-20 experimental measure uses geocoded Building Permit records
+# issued during 2020-2024. It is retained for method development but does not
+# enter the submitted step-22 clusters. The script retains identifiable new
+# housing and residential demolition permits while excluding trade permits,
+# repairs, accessory structures, hotels, and other records whose housing-unit
+# fields do not represent new or removed homes reliably.
 #
 # Authentication is optional for this public Socrata query. If available, set
 # AUSTIN_OPEN_DATA_APP_TOKEN in the process environment. Never place a token or

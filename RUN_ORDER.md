@@ -7,6 +7,15 @@ steps can be inserted without renaming the entire pipeline.
 Unnumbered R files are configuration or helper files sourced by numbered
 scripts. They are not independent pipeline steps.
 
+## Submitted-report path
+
+The submitted Methods and Data Report reports only the five-cluster analysis in
+`22_policy_typology_proof_of_concept.R` and its
+`output/proof_of_concept/` deliverables. Step 22 reads the shared tract file
+created by step 20 but estimates its own clusters. Other numbered scripts either
+prepare that tract file or retain broader experiments, sensitivity tests, and
+supplemental analyses that are not presented as report findings.
+
 ## Current reproducible pipeline
 
 ### 00 — Environment
@@ -44,15 +53,17 @@ Rscript 14_pull_austin_open_data_displacement_risk.R
 Rscript 15_pull_austin_flood_hazard.R
 ```
 
-Steps 10 and 11 are required by the current primary model. Step 12 supplies an
-active experimental specification. Steps 13 and 14 prepare the land-use and
-City-updated displacement-risk categories for the mixed-data experiments.
+Steps 10 and 11 supply environmental and crash inputs used in the report's
+step-22 model through the step-20 tract file. Step 12 supplies a step-20
+experimental specification. Steps 13 and 14 prepare the land-use and
+City-updated displacement-risk categories for step-20 mixed-data experiments.
 Step 13 downloads the large parcel inventory in checksum-tracked pages and
 reuses valid cached pages unless `REFRESH_AUSTIN_LAND_USE=true` is set.
 Step 15 prepares probability-based physical flood-hazard polygons for the
-focused post-analysis experiment in step 31.
+focused post-analysis experiment in step 31. Steps 12–15 do not define the
+submitted step-22 clusters.
 
-### 20 — Main analysis
+### 20 — Shared tract file and broader research analysis
 
 ```sh
 Rscript 20_austin_opportunity_index.R
@@ -60,6 +71,10 @@ Rscript 20_austin_opportunity_index.R
 
 Run this after the accessibility pipeline and required input scripts. Existing
 processed inputs may be reused when their vintages and QA/QC remain suitable.
+This script writes the common tract-level file consumed by step 22 and also
+runs the repository's broader reference, candidate-input, and mixed-data
+experiments. Its cluster assignments are not the ones reported in the Methods
+and Data Report.
 
 ### 21–22 and 30–31 — Post-analysis and demonstration
 
@@ -71,23 +86,25 @@ Rscript 31_test_flood_hazard_kmeans.R
 ```
 
 Step 21 requires the output from step 20 and demonstrates an alternative
-cluster count. Step 22 is the mostly stand-alone, submission-ready proof of
-concept: it reads the tract inputs produced by step 20, independently estimates
-the prespecified five-cluster policy typology, and writes a compact output
-folder with poverty and race/ethnicity as its only demonstration equity
-overlays. The primary specification uses observed one-unit-housing,
-recent-construction, and disability shares; transformed built form and
-age-standardized disability remain sensitivity models. Estimated residents
-with disabilities are exported separately for service-planning review.
+cluster count for the step-20 reference model. Step 22 is the mostly
+stand-alone, submission-ready proof of concept: it reads the tract inputs
+produced by step 20, independently estimates the prespecified five-cluster
+policy typology, and writes a compact output folder with poverty and
+race/ethnicity as its only demonstration equity overlays, including population
+counts and cluster-wide shares. The submitted specification uses observed
+one-unit-housing, recent-construction, and disability shares; transformed built
+form and age-standardized disability remain sensitivity models. Estimated
+residents with disabilities are exported separately for service-planning
+review.
 Step 30 is a stand-alone tract-versus-H8 geography comparison; it requires step
-00 but does not require the main analysis output.
-Step 31 requires outputs from steps 15 and 20 and compares the compact
+00 but does not require the step-20 tract file.
+Step 31 requires outputs from steps 15 and 20 and compares the step-20 compact
 five-input model with an otherwise identical model that adds physical flood
-hazard. It does not replace the primary cluster assignment.
+hazard. Steps 21, 30, and 31 are not reported as proof-of-concept results.
 
 ## Optional and exploratory workflows
 
-These scripts do not feed the current primary analysis. Their high numeric
+These scripts do not feed the submitted step-22 analysis. Their high numeric
 prefixes keep them visibly separate from the reproducible core.
 
 ### 80 — Candidate social infrastructure

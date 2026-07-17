@@ -1,10 +1,14 @@
 # Step 22: produce the deadline-ready five-cluster policy typology
 #
+# This is the only clustering script whose results are documented in the
+# submitted Methods and Data Report. Other clustering routines in the
+# repository are upstream references, supplemental analyses, or experiments.
+#
 # This mostly standalone analysis reads the tract-level analytical file created
 # by step 20, but it does not reuse the cluster assignments from that workflow.
 # It estimates a prespecified five-cluster k-means solution using the earlier
 # reference indicators plus simplified built-form and observed resident-needs
-# inputs. The primary specification favors transparent, policy-facing shares:
+# inputs. The submitted specification favors transparent, policy-facing shares:
 # one-unit housing, housing built since 2010, older adults, and observed
 # disability prevalence. The prior compositional/logit and age-standardized
 # inputs are retained as explicitly labeled sensitivity models.
@@ -33,6 +37,7 @@ stability_sample_share <- 0.80
 poverty_overlay_quantile <- 0.75
 minimum_acs_universe <- 100
 disability_moe_threshold <- 0.10
+overlay_cluster_boundary_linewidth <- 0.70
 
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -94,7 +99,8 @@ if (any(abs(domain_weights$squared_distance_weight - 1) > 1e-10)) {
 }
 
 # Alternative formulations isolate the effect of the two simplifications and
-# preserve the immediately preceding proof-of-concept model as a sensitivity.
+# preserve the immediately preceding step-20-derived formulation as a
+# sensitivity.
 sensitivity_specs <- list(
   primary_simplified = model_inputs,
   age_standardized_disability = model_inputs %>%
@@ -737,6 +743,86 @@ race_ethnicity_crosstab <- race_long %>%
       cluster_population_share / overall_population_share
   )
 
+# Pool each overlay's numerator and ACS universe so the summaries answer how
+# many residents are represented and what share of the relevant population
+# they comprise. These weighted summaries describe cluster populations; the
+# mapped tract rates remain unchanged and do not enter k-means.
+equity_overlay_counts_by_cluster <- policy_data %>%
+  st_drop_geometry() %>%
+  group_by(policy_cluster, policy_cluster_label) %>%
+  summarise(
+    poverty_tract_count = sum(
+      !is.na(poverty_total) & !is.na(poverty_below)
+    ),
+    poverty_universe = sum(poverty_total, na.rm = TRUE),
+    population_below_poverty = sum(poverty_below, na.rm = TRUE),
+    race_ethnicity_tract_count = sum(
+      !is.na(race_ethnicity_total) & !is.na(nh_white_alone)
+    ),
+    race_ethnicity_universe = sum(race_ethnicity_total, na.rm = TRUE),
+    people_of_color_population = sum(
+      pmax(0, race_ethnicity_total - nh_white_alone),
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  )
+
+equity_overlay_counts_overall <- policy_data %>%
+  st_drop_geometry() %>%
+  summarise(
+    poverty_tract_count = sum(
+      !is.na(poverty_total) & !is.na(poverty_below)
+    ),
+    poverty_universe = sum(poverty_total, na.rm = TRUE),
+    population_below_poverty = sum(poverty_below, na.rm = TRUE),
+    race_ethnicity_tract_count = sum(
+      !is.na(race_ethnicity_total) & !is.na(nh_white_alone)
+    ),
+    race_ethnicity_universe = sum(race_ethnicity_total, na.rm = TRUE),
+    people_of_color_population = sum(
+      pmax(0, race_ethnicity_total - nh_white_alone),
+      na.rm = TRUE
+    )
+  ) %>%
+  mutate(
+    policy_cluster = NA_integer_,
+    policy_cluster_label = "All Austin tracts",
+    .before = 1
+  )
+
+equity_overlay_counts <- bind_rows(
+  equity_overlay_counts_by_cluster,
+  equity_overlay_counts_overall
+)
+
+poverty_overlay_summary <- equity_overlay_counts %>%
+  transmute(
+    policy_cluster,
+    policy_cluster_label,
+    overlay = "Poverty",
+    tract_count = poverty_tract_count,
+    population_count = population_below_poverty,
+    population_universe = poverty_universe,
+    total_share = population_count / population_universe
+  )
+
+people_of_color_overlay_summary <- equity_overlay_counts %>%
+  transmute(
+    policy_cluster,
+    policy_cluster_label,
+    overlay = "People of color",
+    tract_count = race_ethnicity_tract_count,
+    population_count = people_of_color_population,
+    population_universe = race_ethnicity_universe,
+    total_share = population_count / population_universe
+  )
+
+equity_overlay_summary <- bind_rows(
+  poverty_overlay_summary,
+  people_of_color_overlay_summary
+) %>%
+  arrange(overlay, is.na(policy_cluster), policy_cluster)
+
 # ---- Model and role summaries -----------------------------------------------
 
 pca <- prcomp(weighted_scaled_matrix, center = FALSE, scale. = FALSE)
@@ -952,7 +1038,7 @@ poverty_map <- ggplot(policy_data) +
     data = cluster_boundaries,
     fill = NA,
     color = "white",
-    linewidth = 0.25
+    linewidth = overlay_cluster_boundary_linewidth
   ) +
   scale_fill_viridis_c(
     option = "C",
@@ -972,7 +1058,7 @@ race_map <- ggplot(policy_data) +
     data = cluster_boundaries,
     fill = NA,
     color = "white",
-    linewidth = 0.25
+    linewidth = overlay_cluster_boundary_linewidth
   ) +
   scale_fill_viridis_c(
     option = "D",
@@ -1120,6 +1206,18 @@ write_csv(
 write_csv(
   race_ethnicity_crosstab,
   file.path(output_dir, "policy_typology_race_ethnicity_crosstab.csv")
+)
+write_csv(
+  equity_overlay_summary,
+  file.path(output_dir, "policy_typology_equity_overlay_summary.csv")
+)
+write_csv(
+  poverty_overlay_summary,
+  file.path(output_dir, "policy_typology_poverty_overlay_summary.csv")
+)
+write_csv(
+  people_of_color_overlay_summary,
+  file.path(output_dir, "policy_typology_people_of_color_overlay_summary.csv")
 )
 write_csv(
   qaqc_summary,

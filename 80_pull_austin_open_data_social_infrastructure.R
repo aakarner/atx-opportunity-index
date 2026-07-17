@@ -1,9 +1,9 @@
 # Pull and QA/QC family-serving public infrastructure from Austin Open Data
 #
-# The proof-of-concept social-infrastructure measure uses three public-resource
-# categories: developed/open parkland, public libraries, and recreation centers.
-# The main analysis converts these sources to a single resource-breadth measure
-# so closely related destination counts do not enter clustering separately.
+# This retired candidate measure uses three public-resource categories:
+# developed/open parkland, public libraries, and recreation centers. It is
+# retained for possible future work but does not enter the active step-20
+# specifications or the submitted step-22 analysis.
 #
 # Authentication is optional for these public Socrata queries. If available,
 # set AUSTIN_OPEN_DATA_APP_TOKEN in the process environment. Never place a token
