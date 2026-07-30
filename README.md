@@ -20,6 +20,9 @@ their results are not presented as findings of the submitted report.
 
 ## Overview
 
+See [`GLOSSARY.md`](GLOSSARY.md) for the project's working definitions of key
+terms from the Literature and Practice Review.
+
 The submission-ready policy typology produced by step 22 uses:
 
 - **Housing-market context**: Median home value and rent
