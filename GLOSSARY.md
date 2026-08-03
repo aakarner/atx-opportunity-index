@@ -107,6 +107,15 @@ conditions, often in historically disinvested neighborhoods. Gentrification
 can bring new amenities and investment but can also contribute to displacement
 and loss of community control.
 
+## General Transit Feed Specification (GTFS)
+
+The General Transit Feed Specification (GTFS) is an Open Standard (a format 
+used by the mobility industry in order to facilitate the consistent 
+communication of information between devices). GTFS distributes relevant 
+information about transit systems to riders. It allows 
+public transit agencies to publish their transit data in a format that can be 
+consumed by a wide variety of software applications.
+
 ## High-opportunity / high-resource area
 
 A place that scores well on selected measures of opportunity or resources.
