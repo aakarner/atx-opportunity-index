@@ -33,9 +33,10 @@ such as Area Median Income.
 The obligation of federal agencies and recipients of federal housing funds to
 take proactive steps to advance the purposes of the Fair Housing Act (1968),
 including addressing patterns of segregation and unequal access to housing
-opportunity. HUD describes the Fair Housing Act as both prohibiting
-discrimination and requiring federal agencies and recipients of federal
-housing funds to affirmatively further progress toward fair housing goals.
+opportunity. The U.S. Department of Housing and Development (HUD) describes the 
+Fair Housing Act as both prohibiting discrimination and requiring federal 
+agencies and recipients of federal housing funds to affirmatively further 
+progress toward fair housing goals.
 
 ## Aggregation
 
@@ -116,6 +117,8 @@ information about transit systems to riders. It allows
 public transit agencies to publish their transit data in a format that can be 
 consumed by a wide variety of software applications.
 
+Source: https://gtfs.org/documentation/overview/ 
+
 ## High-opportunity / high-resource area
 
 A place that scores well on selected measures of opportunity or resources.
@@ -137,6 +140,23 @@ typically combined into a final opportunity index.
 A single measure created by combining multiple indicators. Composite indices
 can make complex information easier to communicate, but they can also obscure
 which underlying conditions are driving a score.
+
+## Longitudinal Employer-Household Dynamics (LEHD) 
+
+The Longitudinal Employer-Household Dynamics (LEHD) program is part of the 
+Center for Economic Studies at the U.S. Census Bureau. The LEHD program produces
+public-use information combining federal, state and Census Bureau data on 
+employers and employees.
+
+Source: https://lehd.ces.census.gov/
+
+## LEHD Origin-Destination Employment Statistics (LODES)
+
+LODES data provides detailed spatial distributions of workers and jobs 
+across the United States. It captures home-to-work relationships, employment by
+industry, worker demographics, and job characteristics.
+
+Source: https://lehd.ces.census.gov/data/lehd-code-samples/sections/lodes.html 
 
 ## Mobility-based interventions
 
