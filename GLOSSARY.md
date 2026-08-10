@@ -33,10 +33,10 @@ such as Area Median Income.
 The obligation of federal agencies and recipients of federal housing funds to
 take proactive steps to advance the purposes of the Fair Housing Act (1968),
 including addressing patterns of segregation and unequal access to housing
-opportunity. The U.S. Department of Housing and Development (HUD) describes the 
-Fair Housing Act as both prohibiting discrimination and requiring federal 
-agencies and recipients of federal housing funds to affirmatively further 
-progress toward fair housing goals.
+opportunity. The U.S. Department of Housing and Urban Development (HUD)
+describes the Fair Housing Act as both prohibiting discrimination and requiring
+federal agencies and recipients of federal housing funds to affirmatively
+further progress toward fair housing goals.
 
 ## Aggregation
 
