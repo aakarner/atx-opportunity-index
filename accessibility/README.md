@@ -1,127 +1,71 @@
-# Austin H8 Job Accessibility
+# Job-access source preparation
 
-This pipeline calculates walk-plus-transit access to jobs for H3 resolution 8
-cells whose centers fall inside the City of Austin boundary.
+These scripts prepare the H8 job-access snapshot consumed by the repository's
+`{targets}` pipeline. Routine component analysis uses the existing snapshot;
+source preparation is a separate, explicit operation. Maps, tract aggregation,
+and site profiles are produced by [the main pipeline](../PIPELINE.md).
 
-For the submitted Methods and Data Report, this pipeline is an upstream data
-source rather than the reported cluster analysis itself. Step 20 aggregates
-the H8 results to the shared tract file, and
-`22_policy_typology_proof_of_concept.R` uses the resulting 45-minute job-access
-measure in the report's five-cluster demonstration. The additional
-accessibility outputs and tract functional-role experiment remain available for
-broader method development.
+## Pinned specification
 
-## Data bundle
+- **Jobs:** 2023 LODES WAC, across the five-county Austin–Round Rock metro
+  (Bastrop, Caldwell, Hays, Travis, and Williamson).
+- **Resident-worker weights:** 2023 LODES RAC, across Travis, Williamson, and
+  Hays counties, aggregated to H8.
+- **Origins:** H3 resolution 8 cell centers inside the 2024 Austin city boundary.
+- **Network:** CapMetro GTFS and OpenStreetMap snapshots dated June 25, 2026.
+- **Travel:** walk plus transit; departures July 13, 2026, from 7:00–8:59 a.m.;
+  50th-percentile travel times and a 45-minute accessibility threshold.
 
-The pipeline uses the newest mutually defensible data available as of June
-2026. The result should be described as **current-network access to the latest
-available employment distribution**, because source release schedules differ.
+This describes access on a pinned summer network, not current-day service.
+Source URLs, checksums, routing parameters, and paths are in
+[`config.R`](config.R). Keep its source metadata consistent with
+[`config/pipeline.yml`](../config/pipeline.yml) when adopting a new snapshot.
 
-- Demographic integration target: 2020–2024 ACS 5-year estimates
-- Jobs and resident workers: 2023 LODES WAC and RAC
-- City boundary: 2024 TIGER/Line place boundary
-- Transit: CapMetro GTFS snapshot fetched June 25, 2026
-- Streets: Geofabrik/OpenStreetMap snapshot dated June 25, 2026
-- Analysis date: Monday, July 13, 2026
-- Departure window: 7:00–8:59 a.m.
-- Accessibility threshold: 45 minutes
-- Origins: City of Austin H8 cell centers
-- Destinations: 2023 job blocks aggregated to H8 across the five-county
-  Austin–Round Rock metro (Bastrop, Caldwell, Hays, Travis, and Williamson)
+## Rebuild the source snapshot
 
-Source URLs, dates, checksums, and model parameters live in
-[`accessibility/config.R`](config.R). Large downloaded and intermediate files
-are reproducible and intentionally excluded from Git.
-
-## Requirements
-
-- R 4.6 or compatible
-- JDK 21 (required by `r5r`)
-- `osmium` command-line tool
-- R packages: `r5r`, `lehdr`, `h3jsr`, `tidyverse`, `sf`, `tigris`,
-  `digest`, `patchwork`, and `zip`
-
-Install and validate the complete project R dependency set from the repository
-root:
+Run from the **repository root**. Source preparation requires network access,
+JDK 21 for R5, and the `osmium` command-line tool for the OSM extract. A
+project-local JDK under `accessibility/data/java/rjavaenv/` is used when present.
 
 ```sh
-Rscript 00_setup_packages.R
-```
-
-Accessibility scripts also source the central setup file and load their own
-package subsets automatically.
-
-Install project-local JDK 21:
-
-```r
-options(rJavaEnv.valid = TRUE)
-rJavaEnv::java_quick_install(
-  version = 21,
-  project_path = "accessibility/data/java"
-)
-```
-
-## Run order
-
-Run from the repository root:
-
-```sh
+Rscript scripts/setup_pipeline.R --sources
 Rscript accessibility/01-setup/01_pull_capmetro_gtfs.R
 Rscript accessibility/01-setup/02_pull_osm_network.R
 Rscript accessibility/02-data-processing/01_pull_lodes_wac_jobs.R
 Rscript accessibility/03-analysis/01_unweighted_job_accessibility.R
 Rscript accessibility/03-analysis/02_weighted_job_accessibility.R
+Rscript scripts/run_pipeline.R
 ```
 
-The directory prefixes identify the accessibility phase; filename prefixes
-give the order within each phase. Unnumbered files such as `config.R`,
-`r5r_setup.R`, and `utilities.R` are sourced helpers and should not be run as
-pipeline steps.
+The setup command installs dependencies explicitly. Preparation scripts load
+their dependencies through `scripts/prepare/packages.R`; they do not install
+packages during analysis. The routing packages are `digest`, `dplyr`, `h3jsr`,
+`lehdr`, `purrr`, `readr`, `r5r`, `sf`, `tidyr`, `tigris`, and `zip`.
 
-The LODES processing script writes three products: H8 job destinations, H8
-resident-worker weights, and
-`austin_tract_functional_role_2023.csv`. The tract file directly aggregates
-2023 block-level WAC jobs and RAC resident workers to 2020-vintage tracts for
-the opportunity-index functional-role experiment; it is not derived by
-allocating H8 values back to tracts.
+`01-setup/r5r_setup.R` is a helper sourced by the routing script, not a separate
+pipeline step. It rebuilds the cached R5 network when the GTFS checksum, OSM
+checksum, or recorded `r5r` version changes. The weighted preparation step is
+required: it attaches resident-worker counts to the routing output.
 
-The first routing run builds and caches the R5 network. Later runs reuse it
-unless the GTFS, OSM, or `r5r` version recorded in the input manifest changes.
+## Files and checks
 
-## Outputs
+- `data/processed/lehd/`: H8 job destinations and resident-worker counts.
+- `data/processed/accessibility/`: cached H8 origins.
+- `data/r5_setup/`: prepared GTFS, OSM extract, network cache, and input manifests.
+- `output/h8_job_accessibility.csv`: pipeline input containing all/low-/middle-/
+  high-wage job access, resident-worker counts, coordinates, and source metadata.
+- `output/h8_job_accessibility_summary.csv`: compact source QA table. Each
+  wage-specific summary uses its corresponding resident-worker group; downstream
+  tract summaries use all resident workers for every job-access component.
 
-- `h8_job_accessibility.csv`: H8 access to all, low-, middle-, and high-wage
-  jobs, plus resident-worker weights for downstream aggregation
-- `h8_job_accessibility_summary.csv`: resident-worker-weighted and unweighted
-  summaries
-- `h8_job_accessibility_map.png`: four-panel accessibility map
-- `austin_tract_functional_role_2023.csv`: tract jobs, resident workers,
-  job-worker balance, and total local activity for the experimental clustering
-  analysis
+The H8 preparation checks identifiers, finite nonnegative counts, and agreement
+between total counts and wage groups. A missing count in a present RAC record
+is an error; an origin absent from the complete RAC aggregation receives zero
+workers. The pipeline separately checks input metadata and tract/site behavior.
 
-## Validation notes
-
-- The output contains 1,021 unique City of Austin H8 cells with no missing
-  accessibility values.
-- Five-county WAC totals reconcile exactly: 1,303,090 total jobs equals the
-  sum of the three wage groups.
-- Three-county RAC totals reconcile exactly: 1,116,869 workers equals the sum
-  of the three wage groups.
-- The source GTFS contains 9,426 transfer rows with blank `transfer_type` and
-  populated `min_transfer_time`. The setup script creates a documented
-  R5-compatible derivative by assigning transfer type 2 to those rows while
-  preserving and checksumming the untouched archive.
-- `r5r` warns that fewer than 20% of service IDs operate on the analysis date.
-  The feed uses date-specific service IDs: the selected Monday contains 4,585
-  scheduled trips, versus a feed maximum of 4,609, so the warning does not
-  indicate materially reduced weekday service.
-
-The tract-based `20_austin_opportunity_index.R` aggregates H8 access to clipped
-tracts with area-apportioned resident-worker weights and combines it with 2024
-ACS, environmental-hazard, and KSI crash inputs. Step 22 then reads that tract
-file and independently fits the cluster solution reported in the Methods and
-Data Report. Step 20 separately tests direct tract LODES activity and
-job-worker-balance measures alongside development pressure and detailed ACS
-built form; those experiments are not report findings. A later implementation
-can allocate the relevant ACS indicators to H8 so every component shares the
-same target geography.
+GTFS preparation preserves the original archive and records the derivative
+that fills blank `transfer_type` with type 2 where `min_transfer_time` is given.
+The pinned feed has date-specific service IDs, so R5's service-ID coverage
+warning alone is not a measure of service frequency. Inspect scheduled trips
+when selecting a new analysis date. Large downloads and routing caches remain
+under `accessibility/data/` and are excluded from Git.
