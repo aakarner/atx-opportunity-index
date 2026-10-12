@@ -1,13 +1,13 @@
-# Step 15: pull and QA/QC physical flood-hazard polygons for Austin
+# Pull and QA/QC physical flood-hazard polygons for Austin
 #
 # This standalone script downloads the City of Austin's Greater Austin FEMA
 # Floodplain layer from its official ArcGIS service. It retains probability-
 # based physical hazard zones rather than a social-vulnerability index, clips
 # the polygons to the current City boundary, and writes source and QA/QC files.
-# The output supports the supplemental step-31 experiment and is not part of
-# the submitted step-22 analysis.
+# The output supplies the interim FEMA component; improved City flood measures
+# remain a separate pending source.
 
-source("00_setup_packages.R")
+source("scripts/prepare/packages.R")
 setup_project_packages(c(
   "tidyverse", "sf", "tigris", "httr2", "jsonlite", "digest"
 ))

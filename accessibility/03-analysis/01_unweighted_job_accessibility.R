@@ -6,7 +6,7 @@ Sys.setenv(R_USER_CACHE_DIR = cache_dir)
 options(java.parameters = "-Xmx12G")
 Sys.setenv(TZ = "America/Chicago")
 
-source("00_setup_packages.R")
+source("scripts/prepare/packages.R")
 setup_project_packages(c(
   "dplyr", "h3jsr", "readr", "sf", "tidyr", "tigris", "r5r"
 ))

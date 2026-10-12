@@ -1,0 +1,4 @@
+site_id,label,longitude,latitude,selection_note
+example_low,Illustrative origin A,-97.883274,30.179630,Near 20th percentile of low-wage job access among occupied AISD H8 origins; not a housing proposal
+example_middle,Illustrative origin B,-97.780280,30.167870,Near 50th percentile of low-wage job access among occupied AISD H8 origins; not a housing proposal
+example_high,Illustrative origin C,-97.666740,30.310930,Near 80th percentile of low-wage job access among occupied AISD H8 origins; not a housing proposal

@@ -1,10 +1,8 @@
 # Shared configuration for the Austin accessibility pipeline.
 #
-# This bundle measures access on the latest pinned transit/street network to
-# the latest available employment distribution. Source vintages intentionally
-# differ because each dataset is released on a different schedule.
+# This bundle measures access on the pinned June 2026 transit/street network
+# to 2023 employment. These snapshots do not describe current-day service.
 
-acs_year <- 2024
 lodes_year <- 2023
 city_boundary_year <- 2024
 h3_resolution <- 8L
@@ -73,10 +71,6 @@ lodes_jobs_path <- file.path(
 lodes_workers_path <- file.path(
   lodes_data_dir,
   paste0("austin_h", h3_resolution, "_workers_", lodes_year, ".csv")
-)
-lodes_tract_function_path <- file.path(
-  lodes_data_dir,
-  paste0("austin_tract_functional_role_", lodes_year, ".csv")
 )
 accessibility_output_path <- file.path(
   output_dir,

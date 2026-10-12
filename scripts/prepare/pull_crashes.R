@@ -21,10 +21,7 @@
 #   The Socrata application secret is not needed for this public-data query.
 #   Never place the token or secret directly in this script or commit them.
 #
-# The full CRIS public-extract workflow is retained separately in
-# 94_pull_txdot_cris_public_extract.R for future validation or regional expansion.
-
-source("00_setup_packages.R")
+source("scripts/prepare/packages.R")
 setup_project_packages(c("tidyverse", "sf", "tigris", "httr2", "scales"))
 
 options(tigris_use_cache = TRUE)
@@ -49,8 +46,8 @@ city_name <- "Austin"
 state_abbr <- "TX"
 city_boundary_year <- 2024
 
-# This window matches the 2024 ACS five-year estimates used by the submitted
-# step-22 proof of concept.
+# This window matches the processed-input contract and 2024 ACS five-year
+# estimates used by the component pipeline, which rebuilds tract/site measures.
 analysis_years <- 2020:2024
 
 # SODA3 permits larger pages, but 25,000 rows keeps each response manageable

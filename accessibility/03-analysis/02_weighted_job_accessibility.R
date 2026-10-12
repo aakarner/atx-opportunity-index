@@ -1,31 +1,48 @@
-# Summarize and map H8 accessibility using 2023 LODES resident workers.
+# Attach 2023 LODES resident-worker weights and produce a compact QA summary.
+# Component maps and tract aggregation are owned by the targets pipeline.
 
 source("accessibility/config.R")
 
-source("00_setup_packages.R")
-setup_project_packages(c(
-  "dplyr", "ggplot2", "h3jsr", "patchwork", "purrr", "readr",
-  "scales", "sf", "tidyr"
-))
+source("scripts/prepare/packages.R")
+setup_project_packages(c("dplyr", "purrr", "readr", "tidyr"))
 
 if (!file.exists(accessibility_output_path) || !file.exists(lodes_workers_path)) {
   stop("Run the LODES preparation and unweighted accessibility scripts first.")
 }
 
-access <- read_csv(accessibility_output_path, show_col_types = FALSE)
-workers <- read_csv(lodes_workers_path, show_col_types = FALSE)
+access <- read_csv(accessibility_output_path, col_types = cols(h3_id = col_character()),
+                   show_col_types = FALSE)
+workers <- read_csv(lodes_workers_path, col_types = cols(h3_id = col_character()),
+                    show_col_types = FALSE)
 
 worker_columns <- c(
   "workers_all", "workers_low", "workers_middle", "workers_high"
 )
+access_columns <- c("access_total_jobs", "access_low_wage_jobs",
+                    "access_middle_wage_jobs", "access_high_wage_jobs")
+
+validate_counts <- function(x, columns, label) {
+  if (!all(c("h3_id", columns) %in% names(x))) stop(label, " lacks required columns.")
+  if (!nrow(x) || nrow(problems(x)) || anyNA(x$h3_id) || anyDuplicated(x$h3_id) ||
+      any(!nzchar(x$h3_id))) stop(label, " needs unique, nonmissing H8 IDs and valid CSV records.")
+  values <- as.matrix(x[columns])
+  if (any(!is.finite(values)) || any(values < 0)) stop(label, " has invalid or missing counts.")
+  if (any(abs(x[[columns[1]]] - rowSums(x[columns[-1]])) > 1e-6)) {
+    stop(label, " wage groups do not reconcile.")
+  }
+}
+validate_counts(access, access_columns, "Job accessibility")
+validate_counts(workers, worker_columns, "Resident-worker weights")
 
 access_workers <- access %>%
   select(-any_of(worker_columns)) %>%
-  left_join(workers, by = "h3_id") %>%
-  mutate(across(starts_with("workers_"), ~ replace_na(.x, 0)))
+  left_join(select(workers, h3_id, all_of(worker_columns)), by = "h3_id", relationship = "one-to-one") %>%
+  # An absent cell in the complete RAC aggregation has zero workers. Missing
+  # values within a source record were rejected above and are never imputed.
+  mutate(across(all_of(worker_columns), ~ replace_na(.x, 0)))
 
-# Keep the resident-worker weights with the committed H8 results so downstream
-# tract validation does not depend on an ignored intermediate file.
+# Keep weights with the H8 results so targets needs only this accessibility
+# source file. Repeating this preparation replaces existing weight columns.
 write_csv(access_workers, accessibility_output_path)
 
 measure_config <- tibble(
@@ -48,7 +65,7 @@ summary_table <- purrr::pmap_dfr(
 
     tibble(
       job_type = job_type,
-      weighted_mean = weighted.mean(values[valid], weights[valid]),
+      weighted_mean = if (any(valid)) weighted.mean(values[valid], weights[valid]) else NA_real_,
       unweighted_mean = mean(values, na.rm = TRUE),
       median = median(values, na.rm = TRUE),
       minimum = min(values, na.rm = TRUE),
@@ -61,69 +78,6 @@ summary_table <- purrr::pmap_dfr(
 summary_path <- file.path(output_dir, paste0("h", h3_resolution, "_job_accessibility_summary.csv"))
 write_csv(summary_table, summary_path)
 
-map_data <- st_sf(
-  access_workers,
-  geometry = cell_to_polygon(access_workers$h3_id),
-  crs = 4326
-) %>%
-  pivot_longer(
-    cols = starts_with("access_"),
-    names_to = "measure",
-    values_to = "jobs_accessible"
-  ) %>%
-  mutate(
-    measure = recode(
-      measure,
-      access_total_jobs = "All jobs",
-      access_low_wage_jobs = "Low-wage jobs",
-      access_middle_wage_jobs = "Middle-wage jobs",
-      access_high_wage_jobs = "High-wage jobs"
-    )
-  )
-
-map_plots <- lapply(measure_config$job_type, function(measure_name) {
-    data <- filter(map_data, measure == measure_name)
-    legend_max <- max(data$jobs_accessible, na.rm = TRUE)
-    legend_breaks <- c(0, legend_max / 2, legend_max)
-
-    ggplot(data) +
-      geom_sf(aes(fill = jobs_accessible), color = NA) +
-      scale_fill_viridis_c(
-        labels = scales::label_number(scale_cut = scales::cut_short_scale()),
-        breaks = legend_breaks,
-        option = "mako",
-        guide = guide_colorbar(
-          title.position = "top",
-          barwidth = grid::unit(3, "cm"),
-          barheight = grid::unit(0.3, "cm")
-        )
-      ) +
-      labs(title = unique(data$measure), fill = "Jobs") +
-      theme_void() +
-      theme(
-        plot.title = element_text(face = "bold"),
-        legend.position = "bottom"
-      )
-  })
-
-access_map <- wrap_plots(map_plots, ncol = 2) +
-  plot_annotation(
-    title = paste0("City of Austin H", h3_resolution, " Transit Access to Jobs"),
-    subtitle = paste0(
-      "Jobs reachable within ", access_cutoff_minutes,
-      " minutes; 2023 LODES jobs on the pinned 2026 transit network"
-    ),
-    caption = paste0(
-      "Median travel times for departures from 7:00–8:59 a.m. on July 13, 2026; ",
-      "GTFS and OSM snapshots: June 25, 2026"
-    ),
-    theme = theme(plot.title = element_text(face = "bold"))
-  )
-
-map_path <- file.path(output_dir, paste0("h", h3_resolution, "_job_accessibility_map.png"))
-ggsave(map_path, access_map, width = 13, height = 10, dpi = 300, bg = "white")
-
 print(summary_table)
 message("Updated H8 accessibility output with resident-worker weights at ", accessibility_output_path)
 message("Saved summary to ", summary_path)
-message("Saved map to ", map_path)

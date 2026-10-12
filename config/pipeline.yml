@@ -1,0 +1,45 @@
+# Census acquisition and tract construction run inside targets. Other prepared
+# source inputs remain tracked files; changes invalidate only their descendants.
+inputs:
+  jobs: accessibility/output/h8_job_accessibility.csv
+  schools: data/processed/school_indicators/aisd_growth_assignments_2025_26.gpkg
+  flood: data/processed/flood_hazard/austin_fema_floodplain.gpkg
+  crashes: data/processed/crash_injuries/austin_open_data_ksi_crashes.gpkg
+  sites: config/example_sites.csv
+output_dir: output/components
+geography:
+  equal_area_crs: 5070
+  h3_resolution: 8
+census:
+  acs_year: 2024
+  boundary_year: 2024
+  state_fips: '48'
+  county_fips: ['453', '491', '209']
+  place_geoid: '4805000'
+  raw_dir: data/raw/census
+  refresh: false
+displacement:
+  source_year: 2022
+  path: data/raw/austin_open_data_displacement_risk/city_of_austin_displacement_risk_areas_2022.geojson
+  url: https://data.austintexas.gov/resource/t8nv-zcp9.geojson
+  refresh: false
+jobs:
+  employment_year: 2023
+  network_snapshot: '2026-06-25'
+  departure_local: '2026-07-13 07:00:00'
+  cutoff_minutes: 45
+  percentile: 50
+schools:
+  assignment_year: '2025-26'
+  growth_year: '2025-26'
+  accountability_year: 2026
+crashes:
+  first_year: 2020
+  last_year: 2024
+  buffer_meters: 1609.344
+sites:
+  max_origin_distance_meters: 1500
+maps:
+  width: 9
+  height: 8
+  dpi: 160
