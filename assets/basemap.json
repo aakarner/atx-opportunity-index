@@ -1,0 +1,5 @@
+{
+  "provider": "CARTO Positron",
+  "url": "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key=cb1_3vh5_1_60538af90715b7fcdd6fbaea",
+  "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap<\/a> contributors &copy; <a href=\"https://carto.com/attributions\">CARTO<\/a>"
+}
