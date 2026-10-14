@@ -4,6 +4,12 @@ export function flags(row, thresholds) {
   return {strong_access: finite(row?.jobs_total) ? row.jobs_total > thresholds.strong_access_above : null,
     elevated_burden: finite(row?.rsei) ? row.rsei >= thresholds.elevated_rsei_at_least : null};
 }
+// Missing either dimension cannot be classified as neither flag.
+export function combination(row) {
+  if(typeof row?.strong_access!=='boolean' || typeof row?.elevated_burden!=='boolean') return 'unknown';
+  return row.strong_access ? (row.elevated_burden ? 'both' : 'access_only') :
+    (row.elevated_burden ? 'burden_only' : 'neither');
+}
 // Return 0 outside, 1 inside, 2 on an edge. Coordinates are GeoJSON lon/lat.
 function inRing(point, ring) {
   const [x,y] = point; let inside = false;
