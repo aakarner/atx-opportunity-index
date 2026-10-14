@@ -49,6 +49,7 @@ read_pipeline_config <- function(path) {
   if (!grepl("^output/[A-Za-z0-9_-]+$", cfg$output_dir)) {
     stop("Use a dedicated output subdirectory (default: output/components).")
   }
+  validate_rsei_spec(cfg$rsei)
   cfg
 }
 

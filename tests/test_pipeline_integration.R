@@ -14,6 +14,10 @@ run_integration_checks <- function() {
   on.exit({ setwd(root); unlink(work, recursive = TRUE) }, add = TRUE)
   stopifnot(all(file.copy(c("R", "_targets.R"), work, recursive = TRUE)))
   dir.create(file.path(work, "config"))
+  stopifnot(file.copy("config/classification-review.yml", file.path(work,"config","classification-review.yml")))
+  stopifnot(file.exists(cfg$rsei$path), file.exists(paste0(cfg$rsei$path,".json")))
+  cfg$rsei$path <- normalizePath(cfg$rsei$path)
+  cfg$rsei$refresh <- FALSE
   cfg$inputs <- lapply(cfg$inputs, normalizePath)
   stopifnot(file.copy(cfg$inputs$sites, file.path(work, "config", "example_sites.csv")))
   cfg$inputs$sites <- "config/example_sites.csv"
@@ -47,6 +51,9 @@ run_integration_checks <- function() {
     all(sf::st_is_valid(inputs)), all(inputs$crash_observation_area_sqmi > 0),
     max(abs(inputs$annual_ksi_crash_density * inputs$crash_observation_years *
             inputs$crash_observation_area_sqmi - inputs$ksi_crashes_in_window)) < 1e-9)
+  targets::tar_make(names = c(classification_report, web_mockup_data), reporter = "silent")
+  stopifnot(all(targets::tar_read(h8_rsei)$rsei_coverage_share > .999999),
+            all(targets::tar_read(tract_rsei)$rsei_coverage_share > .999999))
   before <- targets::tar_meta(fields = c(name, time), targets_only = TRUE)
   targets::tar_make(reporter = "silent")
   after <- targets::tar_meta(fields = c(name, time), targets_only = TRUE)
@@ -60,7 +67,8 @@ run_integration_checks <- function() {
   changed <- targets::tar_meta(fields = c(name, time), targets_only = TRUE)
   cached <- c("acs_context", "tract_geometry", "tract_crash_windows", "tract_crashes",
               "job_access", "school_zones", "crash_points", "h8_geometry", "tract_h8_crosswalk",
-              "tract_job_access", "flood_union", "tract_flood", "tract_components", "component_files")
+              "tract_job_access", "flood_union", "tract_flood", "tract_components", "component_files",
+              "rsei_cells", "rsei_h8_crosswalk", "rsei_tract_crosswalk", "h8_rsei", "tract_rsei")
   stopifnot(identical(before$time[match(cached, before$name)], changed$time[match(cached, changed$name)]),
             targets::tar_read(site_profiles)$label[1] == sites$label[1],
             before$time[match("site_profiles", before$name)] != changed$time[match("site_profiles", changed$name)],
@@ -103,6 +111,17 @@ run_integration_checks <- function() {
     max(abs(updated$annual_ksi_crash_density * updated$crash_observation_years *
             updated$crash_observation_area_sqmi - updated$ksi_crashes_in_window)) < 1e-9,
     length(targets::tar_outdated(reporter = "silent")) == 0)
-  cat("Integration passed: source-only tract rebuild, report links, no-op rerun, site/ACS edits, and crash-buffer invalidation.\n")
+  # Threshold changes rebuild the review branch without recomputing measurements.
+  rule <- yaml::read_yaml("config/classification-review.yml")
+  rule$burden_fixed[[1]]$elevated_at_least <- 125
+  yaml::write_yaml(rule,"config/classification-review.yml")
+  targets::tar_make(reporter = "silent")
+  after_rule <- targets::tar_meta(fields=c(name,time),targets_only=TRUE)
+  cached <- c("rsei_source_files","rsei_cells","rsei_h8_crosswalk","rsei_tract_crosswalk", "h8_rsei",
+              "tract_rsei","h8_components","tract_components","component_maps","site_profiles")
+  stopifnot(identical(after_buffer$time[match(cached,after_buffer$name)],after_rule$time[match(cached,after_rule$name)]),
+    targets::tar_read(classification_thresholds)$high[targets::tar_read(classification_thresholds)$rule=="burden_100"]==125,
+    length(targets::tar_outdated(reporter="silent"))==0)
+  cat("Integration passed: RSEI coverage and classification-only invalidation; source-only tract rebuild, report links, no-op rerun, site/ACS edits, and crash-buffer invalidation.\n")
 }
 run_integration_checks()

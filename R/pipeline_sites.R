@@ -71,6 +71,6 @@ build_site_profiles <- function(sites, tracts, access, school_zones, flood_union
   if (length(footprint) > 1L) footprint <- sf::st_union(footprint)
   result <- dplyr::left_join(result, site_crash_burden(sites, crashes, footprint, crash_spec),
                             by = "site_id", relationship = "one-to-one")
-  result$overall_screen <- "Incomplete: RSEI, heat, traffic pollution and pedestrian barriers not integrated"
+  result$overall_screen <- "Incomplete: heat, traffic pollution and pedestrian barriers not integrated; no adopted screening thresholds"
   result
 }
