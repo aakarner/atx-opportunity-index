@@ -2,3 +2,5 @@
 /* Match the companion map's quiet basemap without a vendor API key. */
 .osm-basemap .leaflet-tile-pane{filter:grayscale(.85) saturate(.35) brightness(1.06);opacity:.72}
 .metric-block{margin-top:13px;padding-top:11px}.metric-value{font-size:30px}.components{margin-top:9px}.components div{padding:6px 0}
+@media(min-width:701px){.explorer{padding:16px}.explorer .intro{margin-bottom:12px;line-height:1.4}.explorer .layer-section{margin-top:12px;padding-top:12px}.explorer .layer-section h3{margin-top:12px}.explorer .check{margin-top:10px;padding-top:10px}.explorer .examples{margin:9px 0}.explorer .legend-row{margin:7px 0}.explorer .layer-section h2{margin-bottom:9px}}
+@media(min-width:701px){.explorer .intro{display:none}}
