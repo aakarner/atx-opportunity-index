@@ -53,6 +53,7 @@ dimensions, and the output directory.
 | Census ACS | 2024 five-year tract estimates and margins of error for Travis, Williamson, and Hays counties; county JSON responses and manifests cached under `data/raw/census/`. |
 | Census geography | 2024 1:500,000 cartographic tract boundaries and full TIGER/Line place boundaries; Austin place GEOID `4805000`. Source shapefile components and manifests are tracked files. |
 | City displacement | Downloads or reuses raw `data/raw/austin_open_data_displacement_risk/city_of_austin_displacement_risk_areas_2022.geojson`; published categories join by tract GEOID. |
+| EPA industrial air | National RSEI v2.3.12 2022 aggregated air microdata; cached in `data/raw/epa_rsei/`, extracted and area-averaged inside the graph. |
 | H8 job access | `accessibility/output/h8_job_accessibility.csv`, including resident-worker weights and employment/routing metadata. |
 | AISD schools | `data/processed/school_indicators/aisd_growth_assignments_2025_26.gpkg`, with attendance zones, matched growth scores, and availability flags. |
 | FEMA flood | `data/processed/flood_hazard/austin_fema_floodplain.gpkg`. |
@@ -168,7 +169,14 @@ risk designation. It remains distinct from missing or unrecognized categories
 and tracts outside published coverage. This is policy context rather than a
 neutral environmental measure or an eligibility screen.
 
-**Incomplete components.** Heat, industrial pollution, traffic pollution,
+**Industrial pollution.** EPA RSEI 2022 v2.3.12 air geographic microdata are acquired
+and extracted inside the graph. Native 810 m cells supply area-weighted H8/tract
+concentrations and containing-cell site profiles. No population multiplier or
+health threshold is applied. Source integrity, provenance, and spatial coverage
+are checked. See [docs/rsei.md](docs/rsei.md) for the source contract, interpretation,
+outputs, and the separate candidate-classification review.
+
+**Incomplete components.** Heat, traffic pollution,
 pedestrian barriers, improved City flood measures, other destinations, and
 driving access remain incomplete. Missing components never count as zero burden
 or a passed screen. The pipeline does not create composite scores, clusters,
@@ -240,3 +248,8 @@ Remaining migrations include prepared job/school/flood/crash inputs and
 environment locking. New access and burden components can join the same tract
 and site reporting interfaces. Keep expensive
 preparation and routing upstream of aggregation and policy comparisons.
+
+The `web_mockup_data` file target exports the selected access/RSEI components,
+city and tract geometry, and thresholds to `site/assets/` for the GitHub Pages
+client. Rebuild with `Rscript scripts/run_pipeline.R web_mockup_data`; see
+[website instructions](docs/web-mockup.md) for preview, checks, and publication.
