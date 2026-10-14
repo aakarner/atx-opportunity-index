@@ -21,6 +21,15 @@ else
   git -C "$publish_dir" remote add origin "$publish_remote"
 fi
 rsync -a --delete --exclude=.git site/ "$publish_dir/"
+# A content version prevents browsers from retaining an earlier stylesheet.
+"$node_bin" --input-type=module - "$publish_dir" <<'JS'
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+const directory=process.argv[2];
+const cssHash=createHash('sha256').update(readFileSync(directory+'/style.css')).digest('hex').slice(0,12);
+const html=readFileSync(directory+'/index.html','utf8').replace('href="style.css"',`href="style.css?v=${cssHash}"`);
+writeFileSync(directory+'/index.html',html);
+JS
 printf '{"source_commit":"%s"}\n' "$source_commit" > "$publish_dir/deployment.json"
 git -C "$publish_dir" add --all
 if git -C "$publish_dir" diff --cached --quiet; then
