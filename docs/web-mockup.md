@@ -92,3 +92,12 @@ GitHub's branch deployment builds after the push; source PRs do not auto-publish
 The initial source work is in a review branch; future iterations use the same
 script. For a larger public rollout, revisit basemap capacity, geocoder service
 availability, keyboard tract navigation, and the draft thresholds.
+
+## Combined map
+
+The Combined tab cross-classifies the existing tract flags: both (purple, 29
+tracts), strong access only (green, 51), elevated burden only (orange, 58), and
+neither (light gray, 137). Missing either flag is unknown, never neither. Legend
+counts are calculated from the displayed tract snapshot. The same categories
+apply when inspecting hexagons. This is a combination of flags, not a net score;
+thresholds and underlying component values are unchanged.

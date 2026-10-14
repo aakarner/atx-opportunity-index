@@ -21,13 +21,17 @@ else
   git -C "$publish_dir" remote add origin "$publish_remote"
 fi
 rsync -a --delete --exclude=.git site/ "$publish_dir/"
-# A content version prevents browsers from retaining an earlier stylesheet.
+# Content versions keep the stylesheet and module imports in sync for returning visitors.
 "$node_bin" --input-type=module - "$publish_dir" <<'JS'
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const directory=process.argv[2];
-const cssHash=createHash('sha256').update(readFileSync(directory+'/style.css')).digest('hex').slice(0,12);
-const html=readFileSync(directory+'/index.html','utf8').replace('href="style.css"',`href="style.css?v=${cssHash}"`);
+const hash=file=>createHash('sha256').update(readFileSync(directory+'/'+file)).digest('hex').slice(0,12);
+const app=readFileSync(directory+'/app.mjs','utf8').replace("from './logic.mjs'",`from './logic.mjs?v=${hash('logic.mjs')}'`);
+writeFileSync(directory+'/app.mjs',app);
+const html=readFileSync(directory+'/index.html','utf8')
+  .replace('href="style.css"',`href="style.css?v=${hash('style.css')}"`)
+  .replace('src="app.mjs"',`src="app.mjs?v=${hash('app.mjs')}"`);
 writeFileSync(directory+'/index.html',html);
 JS
 printf '{"source_commit":"%s"}\n' "$source_commit" > "$publish_dir/deployment.json"

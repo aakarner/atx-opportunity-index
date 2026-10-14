@@ -1,5 +1,12 @@
-import {finite, flags, locate, candidates, escapeHTML as esc} from './logic.mjs';
+import {finite, flags, combination, locate, candidates, escapeHTML as esc} from './logic.mjs';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
+const combinedClasses={
+ both:{color:'#8066a9',label:'Both flags'},
+ access_only:{color:'#3e8d70',label:'Strong access only'},
+ burden_only:{color:'#c7714a',label:'Elevated burden only'},
+ neither:{color:'#d9e0e3',label:'Neither flag'},
+ unknown:{color:'#a8b4be',label:'Unknown'}
+};
 const colors={benefit:'#3e8d70',burden:'#c7714a',neutral:'#d9e0e3',unknown:'#a8b4be'};
 let map, metadata, tracts, city, hexes, tractLayer, hexLayer, selected, dimension='benefits', controller, searchSequence=0;
 const geocoder='https://maps.austintexas.gov/arcgis/rest/services/Geocode/COA_Locator/GeocodeServer/findAddressCandidates';
@@ -32,14 +39,29 @@ function showTract(feature,latlng){
  $('inspect-point').addEventListener('click',()=>showHex(latlng.lng,latlng.lat,'Selected map location',false));enablePrint();
  if(window.innerWidth<=700)$('profile').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function style(row){const value=dimension==='benefits'?row.strong_access:row.elevated_burden;return {fillColor:value===null?colors.unknown:value?(dimension==='benefits'?colors.benefit:colors.burden):colors.neutral,fillOpacity:.73,color:'#fff',weight:.7};}
+function style(row){
+ const value=dimension==='benefits'?row.strong_access:row.elevated_burden;
+ const fillColor=dimension==='combined'?combinedClasses[combination(row)].color:
+   value===null?colors.unknown:value?(dimension==='benefits'?colors.benefit:colors.burden):colors.neutral;
+ return {fillColor,fillOpacity:.73,color:'#fff',weight:.7};
+}
 function renderMap(){
- const benefit=dimension==='benefits',t=metadata.thresholds;
- $('benefits').setAttribute('aria-pressed',String(benefit));$('burdens').setAttribute('aria-pressed',String(!benefit));
- $('legend-title').textContent=benefit?'Job access':'Industrial air releases';
- $('legend-rule').textContent=benefit?`Strong access: > ${fmt(t.strong_access_above)} jobs within 45 minutes`:`Elevated burden: RSEI ≥ ${fmt(t.elevated_rsei_at_least)}`;
- $('legend').innerHTML=[[benefit?colors.benefit:colors.burden,benefit?'Strong access':'Elevated burden'],[colors.neutral,benefit?'Not flagged as strong':'Not flagged'],[colors.unknown,'Unknown']].map(([c,l])=>`<div class="legend-row"><span class="swatch" style="background:${c}"></span>${l}</div>`).join('');
- $('map-count').textContent=`${benefit?metadata.counts.strong_tract:metadata.counts.elevated_tract} of ${metadata.counts.tracts} tracts flagged · city-clipped averages`;
+ const benefit=dimension==='benefits',combined=dimension==='combined',t=metadata.thresholds;
+ for(const view of ['benefits','burdens','combined'])$(view).setAttribute('aria-pressed',String(dimension===view));
+ $('legend-title').textContent=combined?'Benefits + burdens':benefit?'Job access':'Industrial air releases';
+ $('legend-rule').textContent=combined?`Strong access: > ${fmt(t.strong_access_above)} jobs · Elevated burden: RSEI ≥ ${fmt(t.elevated_rsei_at_least)}`:
+   benefit?`Strong access: > ${fmt(t.strong_access_above)} jobs within 45 minutes`:`Elevated burden: RSEI ≥ ${fmt(t.elevated_rsei_at_least)}`;
+ if(combined){
+   const counts=Object.fromEntries(Object.keys(combinedClasses).map(key=>[key,0]));
+   for(const feature of tracts.features)counts[combination(feature.properties)]++;
+   $('legend').innerHTML=Object.entries(combinedClasses).filter(([key])=>key!=='unknown'||counts.unknown>0).map(([key,{color,label}])=>
+     `<div class="legend-row"><span class="swatch" style="background:${color}"></span><span>${label}</span><span class="legend-count">${counts[key]} tracts</span></div>`).join('');
+   $('map-count').textContent=`${counts.both} of ${metadata.counts.tracts} tracts have both flags · city-clipped averages`;
+ }else{
+   $('legend').innerHTML=[[benefit?colors.benefit:colors.burden,benefit?'Strong access':'Elevated burden'],[colors.neutral,benefit?'Not flagged as strong':'Not flagged'],[colors.unknown,'Unknown']].map(([c,l])=>`<div class="legend-row"><span class="swatch" style="background:${c}"></span>${l}</div>`).join('');
+   $('map-count').textContent=`${benefit?metadata.counts.strong_tract:metadata.counts.elevated_tract} of ${metadata.counts.tracts} tracts flagged · city-clipped averages`;
+ }
+ $('legend').classList.toggle('combined-legend',combined);
  tractLayer.setStyle(f=>style(f.properties));hexLayer.setStyle(f=>({...style(f.properties),fillOpacity:.12,color:'#526f7d',weight:.7}));
  if($('hex-mode').checked){if(!map.hasLayer(hexLayer))hexLayer.addTo(map);tractLayer.setStyle({fillOpacity:.35});}
  else if(map.hasLayer(hexLayer))map.removeLayer(hexLayer);
@@ -72,7 +94,7 @@ async function init(){
   try{const r=await fetch('assets/basemap.json');if(r.ok){const configured=await r.json();if(configured.provider==='CARTO Positron' && configured.url.startsWith('https://basemaps.cartocdn.com/'))basemap=configured;}}catch{/* Source-only previews can use OpenStreetMap. */}
   document.body.classList.toggle('osm-basemap',basemap.provider!=='CARTO Positron');
   L.tileLayer(basemap.url,{maxZoom:19,attribution:basemap.attribution}).addTo(map);
-  tractLayer=L.geoJSON(tracts,{style:f=>style(f.properties),onEachFeature:(f,l)=>{l.bindTooltip('Tract '+f.properties.id,{sticky:true});l.on('click',e=>{$('hex-mode').checked?showHex(e.latlng.lng,e.latlng.lat,'Selected map location',false):showTract(f,e.latlng);});}}).addTo(map);
+  tractLayer=L.geoJSON(tracts,{style:f=>style(f.properties),onEachFeature:(f,l)=>{l.bindTooltip(()=>`Tract ${esc(f.properties.id)}${dimension==='combined'?'<br>'+combinedClasses[combination(f.properties)].label:''}`,{sticky:true});l.on('click',e=>{$('hex-mode').checked?showHex(e.latlng.lng,e.latlng.lat,'Selected map location',false):showTract(f,e.latlng);});}}).addTo(map);
   L.geoJSON(city,{style:{color:'#71868f',weight:1.4,fill:false,dashArray:'4 4'},interactive:false}).addTo(map);
   const hexFeatures=[...hexes.values()].map(row=>({type:'Feature',properties:row,geometry:{type:'Polygon',coordinates:[h3.cellToBoundary(row.id,true)]}}));
   hexLayer=L.geoJSON(hexFeatures,{onEachFeature:(f,l)=>l.on('click',e=>showHex(e.latlng.lng,e.latlng.lat,'Selected map location',false))});
@@ -80,7 +102,7 @@ async function init(){
   const reset=()=>map.fitBounds(tractLayer.getBounds(),{paddingTopLeft:window.innerWidth>700?[360,20]:[15,15],paddingBottomRight:window.innerWidth>700?[340,20]:[15,15]});
   reset();$('reset-view').addEventListener('click',reset);
   map.on('click',e=>{if($('hex-mode').checked)showHex(e.latlng.lng,e.latlng.lat,'Selected map location',false);});
-  $('benefits').addEventListener('click',()=>{dimension='benefits';renderMap();});$('burdens').addEventListener('click',()=>{dimension='burdens';renderMap();});
+  for(const view of ['benefits','burdens','combined'])$(view).addEventListener('click',()=>{dimension=view;renderMap();});
   $('hex-mode').addEventListener('change',()=>{renderMap();$('map-help').textContent=$('hex-mode').checked?'Click the map to inspect a hexagon. Only source cells have component values.':'Click a tract for its profile. Address searches always select a hexagon.';});
   $('search-form').addEventListener('submit',runSearch);$('address').addEventListener('input',()=>{cancelSearch();clearSelection();status('Enter an Austin address, then select a match.');});
   $('clear').addEventListener('click',()=>{cancelSearch();clearSelection();$('address').value='';status('Selection cleared. Search an address or explore the map.');});
