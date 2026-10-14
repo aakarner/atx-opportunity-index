@@ -114,5 +114,11 @@ async function init(){
   status('Search an address, try an example, or click a tract.');
  }catch(error){status('The map data could not be loaded. Reload the page to try again.',true);profileFrame('Map unavailable','Loading error',`<p>${esc(error.message)}</p><p>Serve this site over HTTP or use its GitHub Pages URL.</p>`);console.error(error);}
 }
+// Presentation-only selection: deliberately separate from map/data state.
+const groupButtons=document.querySelectorAll('[data-resident-group]');
+for(const button of groupButtons)button.addEventListener('click',()=>{
+ for(const other of groupButtons)other.setAttribute('aria-pressed',String(other===button));
+ $('group-note').textContent=`${button.dataset.residentGroup} selected for demonstration. Group-specific measures are not connected; map values are unchanged.`;
+});
 $('about-open').addEventListener('click',()=>$('about').showModal());$('about-close').addEventListener('click',()=>$('about').close());
 init();

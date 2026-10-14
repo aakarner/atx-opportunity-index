@@ -6,3 +6,19 @@
 @media(min-width:701px){.explorer .intro{display:none}}
 
 .legend-count{margin-left:auto;white-space:nowrap;color:#617580;font-size:11px;font-variant-numeric:tabular-nums}.combined-legend{display:block!important}
+
+/* Preview controls show the intended resident groups without changing scores. */
+.profile-column{position:absolute;z-index:450;top:18px;right:18px;width:322px;max-height:calc(100% - 48px);display:flex;flex-direction:column;gap:12px}
+.profile-column .panel{position:relative;top:auto;right:auto;width:100%;max-height:none}
+.profile-column .profile{flex:1 1 auto;min-height:0}
+.group-preview{flex:0 0 auto;padding:16px}
+.group-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.group-heading h2{font-size:15px;margin:0}.group-heading .prototype{display:inline-block;padding:4px 8px}
+.group-buttons{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.group-buttons button{font-size:12px;line-height:1.35;padding:8px;border-color:#b8c0c6}
+.group-buttons button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.group-preview .small{margin:10px 0 0}.profile-column .empty-icon{font-size:48px;padding:8px}
+@media(min-width:1500px){.profile-column{width:350px}}
+@media(max-width:1050px) and (min-width:701px){.profile-column{width:280px}}
+@media(max-width:700px){.profile-column{position:static;order:3;width:auto;max-height:none;margin:0 12px 12px;gap:12px}.profile-column .panel{margin:0}.profile-column .profile{overflow:visible;flex:none}}
+@media print{.group-preview{display:none!important}.profile-column{position:static;display:block;width:100%;max-height:none}}

@@ -22,7 +22,19 @@
       <section class="layer-section"><h2>Tract map</h2><div class="segmented" role="group" aria-label="Map dimension"><button id="benefits" aria-pressed="true">Benefits</button><button id="burdens" aria-pressed="false">Burdens</button><button id="combined" aria-pressed="false">Combined</button></div><h3 id="legend-title">Job access</h3><p id="legend-rule"></p><div id="legend"></div><p id="map-count" class="small"></p></section>
       <label class="check"><input type="checkbox" id="hex-mode"> Inspect hexagons on the map</label><p class="small map-help" id="map-help">Click a tract for its profile. Address searches always select a hexagon.</p><button id="reset-view" class="text-button">Reset map extent</button>
     </aside>
+    <div class="profile-column">
+      <section class="panel group-preview" aria-labelledby="group-title">
+        <div class="group-heading"><h2 id="group-title">Access by resident group</h2><span class="prototype">Demo</span></div>
+        <div class="group-buttons" role="group" aria-label="Resident group demonstration" aria-describedby="group-note">
+          <button type="button" data-resident-group="Older adults" aria-pressed="false">Older adults</button>
+          <button type="button" data-resident-group="Families" aria-pressed="false">Families</button>
+          <button type="button" data-resident-group="Permanent-supportive housing residents" aria-pressed="false">Permanent-supportive housing residents</button>
+          <button type="button" data-resident-group="Single adults" aria-pressed="false">Single adults</button>
+        </div>
+        <p id="group-note" class="small" role="status" aria-live="polite">Demo only. Group-specific measures are not connected; all groups show the same baseline access values.</p>
+      </section>
     <aside id="profile" class="panel profile" aria-label="Location profile" tabindex="-1"><span class="eyebrow">LOCATION PROFILE</span><h2>Start with a place</h2><p>Search an address to identify its H8 hexagon, or click a tract to explore the broader pattern.</p><div class="empty-icon" aria-hidden="true">⬡</div><p class="small">Two dimensions. Two separate flags.<br>Benefit and burden are assessed independently.</p></aside>
+    </div>
     <div class="map-note">2023 jobs · 2026 transit · 2022 RSEI <span> | </span> Austin study boundary</div>
   </main>
   <dialog id="about"><div class="dialog-header"><h2>About this prototype</h2><button id="about-close" aria-label="Close about dialog">×</button></div>

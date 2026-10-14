@@ -101,3 +101,11 @@ neither (light gray, 137). Missing either flag is unknown, never neither. Legend
 counts are calculated from the displayed tract snapshot. The same categories
 apply when inspecting hexagons. This is a combination of flags, not a net score;
 thresholds and underlying component values are unchanged.
+
+## Resident-group demonstration controls
+
+Four presentation-only buttons preview future access measures for older adults,
+families, permanent-supportive housing residents, and single adults. Clicking a
+button changes its selected appearance and the demo notice only. It does not
+filter data, change thresholds, recolor the map, or alter tract/hex profiles.
+The current baseline access values remain the same for every selection.
