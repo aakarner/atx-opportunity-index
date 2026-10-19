@@ -16,6 +16,8 @@ run_integration_checks <- function() {
   dir.create(file.path(work, "config"))
   stopifnot(file.copy("config/classification-review.yml", file.path(work,"config","classification-review.yml")))
   stopifnot(file.exists(cfg$rsei$path), file.exists(paste0(cfg$rsei$path,".json")))
+  cfg$municipal_boundary$path <- normalizePath(cfg$municipal_boundary$path)
+  cfg$municipal_boundary$refresh <- FALSE
   cfg$rsei$path <- normalizePath(cfg$rsei$path)
   cfg$rsei$refresh <- FALSE
   cfg$inputs <- lapply(cfg$inputs, normalizePath)

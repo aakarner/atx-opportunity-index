@@ -1,4 +1,5 @@
 import {finite, flags, combination, locate, candidates, escapeHTML as esc} from './logic.mjs';
+const DATA_VERSION='local';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 const combinedClasses={
  both:{color:'#8066a9',label:'Both flags'},
@@ -84,7 +85,7 @@ async function runSearch(e){
 async function init(){
  for(const b of document.querySelectorAll('.explorer button,.explorer input'))b.disabled=true;
  try{
-  const data=await Promise.all(['metadata.json','hexagons.json','tracts.geojson','city.geojson'].map(async f=>{const r=await fetch('assets/'+f);if(!r.ok)throw Error('Could not load '+f);return r.json();}));
+  const data=await Promise.all(['metadata.json','hexagons.json','tracts.geojson','city.geojson'].map(async f=>{const r=await fetch('assets/'+f+'?v='+DATA_VERSION);if(!r.ok)throw Error('Could not load '+f);return r.json();}));
   [metadata,,tracts,city]=data;hexes=new Map(data[1].map(r=>[r.id,r]));
   if(metadata.schema_version!==1||typeof L==='undefined'||typeof h3==='undefined')throw Error('Map library or data version unavailable');
   // Fail visibly if exported classifications drift from the configured rules.
@@ -106,10 +107,12 @@ async function init(){
   $('hex-mode').addEventListener('change',()=>{renderMap();$('map-help').textContent=$('hex-mode').checked?'Click the map to inspect a hexagon. Only source cells have component values.':'Click a tract for its profile. Address searches always select a hexagon.';});
   $('search-form').addEventListener('submit',runSearch);$('address').addEventListener('input',()=>{cancelSearch();clearSelection();status('Enter an Austin address, then select a match.');});
   $('clear').addEventListener('click',()=>{cancelSearch();clearSelection();$('address').value='';status('Selection cleared. Search an address or explore the map.');});
-  const examples=[[-97.883274,30.179630,'Southwest Austin example'],[-97.780280,30.167870,'South Austin example'],[-97.666740,30.310930,'East Austin example']];
+  const examples=[[-97.883274,30.179630,'Southwest Austin example'],[-97.780280,30.167870,'South Austin example'],[-97.666740,30.310930,'East Austin example'],[-97.662190,30.249080,'Dog’s Head example']];
   document.querySelectorAll('[data-example]').forEach(b=>b.addEventListener('click',()=>{cancelSearch();$('address').value='';showHex(...examples[Number(b.dataset.example)]);}));
   $('about-access').textContent=`Strong access is strictly more than ${fmt(metadata.thresholds.strong_access_above)} jobs.`;
   $('about-burden').textContent=`Elevated burden is RSEI ≥ ${fmt(metadata.thresholds.elevated_rsei_at_least)}.`;
+  $('boundary-note').textContent=`City of Austin GIS · ${metadata.boundary.snapshot} · full- and limited-purpose limits`;
+  $('hex-coverage').textContent=fmt(metadata.boundary.hex_coverage_share*100,1)+'%';
   renderMap();for(const b of document.querySelectorAll('.explorer button,.explorer input'))b.disabled=false;
   status('Search an address, try an example, or click a tract.');
  }catch(error){status('The map data could not be loaded. Reload the page to try again.',true);profileFrame('Map unavailable','Loading error',`<p>${esc(error.message)}</p><p>Serve this site over HTTP or use its GitHub Pages URL.</p>`);console.error(error);}

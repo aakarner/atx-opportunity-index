@@ -11,7 +11,7 @@ and site profiles are produced by [the main pipeline](../PIPELINE.md).
   (Bastrop, Caldwell, Hays, Travis, and Williamson).
 - **Resident-worker weights:** 2023 LODES RAC, across Travis, Williamson, and
   Hays counties, aggregated to H8.
-- **Origins:** H3 resolution 8 cell centers inside the 2024 Austin city boundary.
+- **Origins:** H3 resolution 8 cell centers inside the pinned City of Austin municipal boundary (full- and limited-purpose limits, including Dog’s Head; ETJ excluded). The snapshot is configured in `config/pipeline.yml` and documented in `docs/municipal-boundary.md`.
 - **Network:** CapMetro GTFS and OpenStreetMap snapshots dated June 25, 2026.
 - **Travel:** walk plus transit; departures July 13, 2026, from 7:00–8:59 a.m.;
   50th-percentile travel times and a 45-minute accessibility threshold.

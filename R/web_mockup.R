@@ -23,13 +23,19 @@ write_web_mockup_data <- function(h8, tracts, city, classification_spec, directo
   validate_mockup_spec(spec)
   hex <- web_component_rows(h8, "hex", spec)
   tract <- web_component_rows(tracts, "tract", spec)
-  metadata <- list(schema_version=1L, thresholds=spec, h3_resolution=8L,
+  city_projected <- sf::st_geometry(sf::st_transform(city,5070))
+  covered <- suppressWarnings(sf::st_intersection(sf::st_union(sf::st_geometry(sf::st_transform(h8,5070))),city_projected))
+  metadata <- list(boundary=list(snapshot=city$boundary_snapshot,source=city$boundary_source,
+    sha256=city$boundary_sha256,area_km2=as.numeric(sf::st_area(city_projected))/1e6,
+    hex_coverage_share=sum(as.numeric(sf::st_area(covered)))/sum(as.numeric(sf::st_area(city_projected)))),
+    schema_version=1L, thresholds=spec, h3_resolution=8L,
     jobs_year=unique(h8$jobs_year), network_snapshot=unique(h8$network_snapshot),
     gtfs_snapshot=unique(h8$gtfs_snapshot), departure_datetime=unique(as.character(h8$departure_datetime)),
     rsei_year=unique(h8$rsei_year), rsei_version=unique(h8$rsei_version),
     counts=list(hexagons=nrow(hex), tracts=nrow(tract),
       strong_hex=sum(hex$strong_access,na.rm=TRUE), elevated_hex=sum(hex$elevated_burden,na.rm=TRUE),
       both_hex=sum(hex$strong_access & hex$elevated_burden,na.rm=TRUE),
+      both_tract=sum(tract$strong_access & tract$elevated_burden,na.rm=TRUE),
       strong_tract=sum(tract$strong_access,na.rm=TRUE), elevated_tract=sum(tract$elevated_burden,na.rm=TRUE)))
   json <- function(x, filename) {
     p <- file.path(directory,filename)
@@ -44,5 +50,5 @@ write_web_mockup_data <- function(h8, tracts, city, classification_spec, directo
   }
   tract_sf <- sf::st_sf(tract,geometry=sf::st_geometry(tracts),crs=sf::st_crs(tracts))
   c(json(metadata,"metadata.json"),json(hex,"hexagons.json"),geo(tract_sf,"tracts.geojson"),
-    geo(city[,"NAME",drop=FALSE],"city.geojson"))
+    geo(city[,c("NAME","boundary_snapshot","boundary_source","boundary_sha256"),drop=FALSE],"city.geojson"))
 }

@@ -32,10 +32,8 @@ Thresholds come from `config/classification-review.yml`:
 - Elevated burden: **RSEI air ToxConc >=100**.
 
 The client checks every exported flag against its metadata before showing the
-map. Missing values become JSON null and remain unknown. The current snapshot
-has 1,021 H8 cells and 275 city-clipped tracts. Flags: 137 strong-access H8s,
-321 elevated-burden H8s, 48 with both; 80 strong-access tracts and 87 elevated
-tracts. These are prototype classifications, not adopted adequacy/health standards.
+map. Missing values become JSON null and remain unknown. `site/assets/metadata.json` records current counts, flags, boundary date,
+source checksum, and measured hex coverage. These are prototype classifications, not adopted adequacy/health standards.
 
 ## Address lookup and geography
 
@@ -46,7 +44,8 @@ The site does not persist searches or use an analytics service.
 
 `latLngToCell(latitude, longitude, 8)` identifies the actual containing hexagon.
 The exact H3 ID joins the exported source rows. A point must also lie within the
-2024 Austin study polygon. No nearest-hex or tract fallback fabricates an address
+pinned Austin municipal polygon (full- and limited-purpose limits, including
+Dog’s Head; ETJ excluded). No nearest-hex or tract fallback fabricates an address
 profile. Outside-city and uncovered cells show unavailable values and unknown
 flags. City polygon holes and multipolygons are respected. Tract lookup uses
 exported generalized Census geometry and is contextual, not a parcel assignment.
@@ -109,3 +108,7 @@ families, permanent-supportive housing residents, and single adults. Clicking a
 button changes its selected appearance and the demo notice only. It does not
 filter data, change thresholds, recolor the map, or alter tract/hex profiles.
 The current baseline access values remain the same for every selection.
+
+Boundary updates follow `docs/municipal-boundary.md`. The publisher versions all
+four data requests together with the app so returning visitors load the updated
+footprint and its matching measures.

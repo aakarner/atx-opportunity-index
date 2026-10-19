@@ -35,7 +35,7 @@ read_pipeline_config <- function(path) {
     stop("Current routing and spatial inputs require Austin and the Travis, Williamson, and Hays county set.")
   }
   if (census$acs_year != 2024 || census$boundary_year != 2024) {
-    stop("Current source contracts use 2024 ACS and boundaries; review geography and indicator definitions before changing vintages.")
+    stop("Current source contracts use 2024 ACS and tract boundaries; review geography and indicator definitions before changing vintages.")
   }
   if (!all(c("source_year", "path", "url", "refresh") %in% names(cfg$displacement)) ||
       cfg$displacement$source_year != 2022) stop("Expected the City 2022 displacement source configuration.")
@@ -49,6 +49,7 @@ read_pipeline_config <- function(path) {
   if (!grepl("^output/[A-Za-z0-9_-]+$", cfg$output_dir)) {
     stop("Use a dedicated output subdirectory (default: output/components).")
   }
+  validate_municipal_spec(cfg$municipal_boundary)
   validate_rsei_spec(cfg$rsei)
   cfg
 }

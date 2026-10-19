@@ -38,7 +38,7 @@ are 29.5 and 45.5 degrees north, central meridian -96 degrees, and latitude of
 origin 23 degrees. Each cell center is `(810 * X, 810 * Y)` meters in that CRS;
 its square extends 405 meters in each direction. X/Y are signed center indices,
 not array offsets from the southwest corner. The extracted template covers the
-union of the Austin place boundary and full available H8 polygons.
+union of the shared Austin municipal boundary and full available H8 polygons.
 
 - H8 means use **full-cell area weights**, matching the full-cell job-access origins.
 - Tract means use **City-clipped tract area weights**, independently of worker counts.
@@ -106,7 +106,7 @@ much and which geography changes as the rule changes, before choosing policy rul
 The fixed RSEI thresholds were selected after inspecting the local distribution;
 this is a sensitivity analysis, not an independently validated classification.
 
-The baseline includes **all 1,021 available H8 origins centered in Austin**, including
+The baseline includes **all available H8 origins centered in the pinned Austin municipal boundary**, including
 zero-worker cells, equally weighted. Tertiles use R's type-7 quantiles; ties remain
 together. Limited means strictly below the lower cutoff; strong/elevated means at
 least the upper cutoff. Unknown remains a distinct class. The same numeric
@@ -124,7 +124,7 @@ Open `output/components/classification-review/review.html` beside its assets:
 
 - Maps of all three access rules and all three burden rules at both scales.
 - Counts, City-clipped area shares, and H8 resident-worker shares for each class.
-  H8 origins cover about 92% of City area; uncovered areas are shown separately.
+  The report calculates H8 coverage from the pinned municipal boundary; uncovered areas are shown separately.
   H8 area shares use only covered City area, not the full City denominator.
   H8 worker counts include the full source cells at the city edge; they are not
   an exact count of City residents. Whole-tract ACS totals are not used as Austin

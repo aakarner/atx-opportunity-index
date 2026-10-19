@@ -9,10 +9,9 @@
 
 source("scripts/prepare/packages.R")
 setup_project_packages(c(
-  "tidyverse", "sf", "tigris", "httr2", "jsonlite", "digest"
+  "tidyverse", "sf", "httr2", "jsonlite", "digest", "yaml"
 ))
 
-options(tigris_use_cache = TRUE)
 options(timeout = max(300, getOption("timeout")))
 
 # ---- Source and processing settings -----------------------------------------
@@ -27,7 +26,8 @@ arcgis_layer_endpoint <- paste0(
   "https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/",
   "INLANDWATERS_greater_austin_fema_floodplain/FeatureServer/0"
 )
-city_boundary_year <- 2024
+source("R/municipal_boundary.R")
+municipal_boundary <- load_municipal_boundary()
 analysis_equal_area_crs <- 5070
 page_size <- 1000L
 
@@ -76,6 +76,9 @@ write_response_body <- function(response, path) {
 }
 
 download_json_file <- function(url, path, query = list()) {
+  if (file.exists(path) && !refresh_download) {
+    return(jsonlite::fromJSON(path, simplifyVector = TRUE))
+  }
   response <- perform_request(url, query = query)
   write_response_body(response, path)
   jsonlite::fromJSON(path, simplifyVector = TRUE)
@@ -83,7 +86,7 @@ download_json_file <- function(url, path, query = list()) {
 
 # ---- Download source metadata and stable GeoJSON pages ----------------------
 
-cat("Downloading floodplain source metadata and object identifiers...\n")
+cat("Loading floodplain source metadata and object identifiers...\n")
 metadata <- download_json_file(
   arcgis_layer_endpoint,
   metadata_path,
@@ -94,6 +97,8 @@ object_id_response <- download_json_file(
   object_ids_path,
   query = list(where = "1=1", returnIdsOnly = "true", f = "json")
 )
+
+if (!refresh_download) retrieved_at_utc <- format(file.info(metadata_path)$mtime,tz="UTC",usetz=TRUE)
 
 if (!is.null(metadata$error)) stop("ArcGIS layer metadata returned an error.")
 if (!is.null(object_id_response$error)) {
@@ -233,17 +238,7 @@ if (any(!recognized_zone)) {
 }
 
 cat("Pulling and applying the City of Austin boundary...\n")
-austin_boundary <- tigris::places(
-  state = "TX",
-  year = city_boundary_year,
-  class = "sf"
-) %>%
-  filter(NAME == "Austin") %>%
-  st_transform(analysis_equal_area_crs) %>%
-  st_make_valid()
-if (nrow(austin_boundary) != 1) {
-  stop("Expected one City of Austin boundary; found ", nrow(austin_boundary), ".")
-}
+austin_boundary <- st_transform(municipal_boundary,analysis_equal_area_crs)
 
 floodplain_austin <- suppressWarnings(
   floodplain_all %>%
@@ -294,7 +289,8 @@ qaqc_summary <- tribble(
   as.character(sum(floodplain_all$point_two_percent_annual_chance)),
   "regulatory_floodway_source_polygon_count",
   as.character(sum(floodplain_all$regulatory_floodway)),
-  "city_boundary_year", as.character(city_boundary_year),
+  "city_boundary_snapshot", municipal_boundary$boundary_snapshot,
+  "city_boundary_sha256", municipal_boundary$boundary_sha256,
   "analysis_equal_area_crs", as.character(analysis_equal_area_crs),
   "processed_file", processed_gpkg_path
 )
@@ -310,3 +306,5 @@ cat(
   "  Processed file: ", processed_gpkg_path, "\n",
   sep = ""
 )
+
+jsonlite::write_json(list(boundary_sha256=municipal_boundary$boundary_sha256, boundary_snapshot=municipal_boundary$boundary_snapshot),paste0(processed_gpkg_path,".boundary.json"),auto_unbox=TRUE,pretty=TRUE)
