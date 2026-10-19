@@ -51,8 +51,10 @@ dimensions, and the output directory.
 | Source | Current input and treatment |
 | --- | --- |
 | Census ACS | 2024 five-year tract estimates and margins of error for Travis, Williamson, and Hays counties; county JSON responses and manifests cached under `data/raw/census/`. |
-| Census geography | 2024 1:500,000 cartographic tract boundaries and full TIGER/Line place boundaries; Austin place GEOID `4805000`. Source shapefile components and manifests are tracked files. |
+| Census geography | 2024 1:500,000 cartographic tract boundaries. Source shapefile components and manifests are tracked files. |
+| Municipal geography | City of Austin GIS full- and limited-purpose limits, excluding ETJ; pinned October 19, 2026 snapshot includes Dog’s Head. See `docs/municipal-boundary.md`. |
 | City displacement | Downloads or reuses raw `data/raw/austin_open_data_displacement_risk/city_of_austin_displacement_risk_areas_2022.geojson`; published categories join by tract GEOID. |
+| EPA industrial air | National RSEI v2.3.12 2022 aggregated air microdata; cached in `data/raw/epa_rsei/`, extracted and area-averaged inside the graph. |
 | H8 job access | `accessibility/output/h8_job_accessibility.csv`, including resident-worker weights and employment/routing metadata. |
 | AISD schools | `data/processed/school_indicators/aisd_growth_assignments_2025_26.gpkg`, with attendance zones, matched growth scores, and availability flags. |
 | FEMA flood | `data/processed/flood_hazard/austin_fema_floodplain.gpkg`. |
@@ -76,7 +78,7 @@ target-caching behavior as Census acquisition.
 Input validation checks identifiers, geometry, metadata, and the supported
 measurement settings. The current access fields represent 45 minutes and H3
 resolution 8; area calculations use EPSG:5070. Source contracts currently require
-Austin and the Travis/Williamson/Hays county set, 2024 ACS and boundaries,
+Austin and the Travis/Williamson/Hays county set, 2024 ACS and tract boundaries, the separately pinned municipal snapshot,
 2022 displacement categories, and 2020–2024 crash points. Changing those settings
 requires reviewing the related source contracts and measurement definitions.
 Source SHA-256 checksums identify
@@ -110,7 +112,7 @@ has moved into the graph.
 ## Measurement and interpretation
 
 **Geography and ACS.** Reporting tracts have positive area overlap with the Austin
-place boundary. The cartographic tract shapes are clipped to the full place
+municipal boundary. The cartographic tract shapes are clipped to this
 boundary; their generalized edges are not parcel boundaries. ACS attributes
 remain published whole-tract estimates after clipping. Summing those attributes
 does not produce an Austin city population total.
@@ -154,7 +156,7 @@ remain pending.
 
 **Street safety.** Tract crash measures are recomputed from crash points. Each
 tract receives an internal representative point after projection to EPSG:5070.
-Its configured buffer is intersected with the actual Austin place boundary.
+Its configured buffer is intersected with the shared Austin municipal boundary.
 Unique crash IDs within that window are divided by the configured number of
 years, including zero-crash years, and by the City-observed window area in square
 miles. Site profiles use the same observation boundary around their coordinates.
@@ -168,7 +170,14 @@ risk designation. It remains distinct from missing or unrecognized categories
 and tracts outside published coverage. This is policy context rather than a
 neutral environmental measure or an eligibility screen.
 
-**Incomplete components.** Heat, industrial pollution, traffic pollution,
+**Industrial pollution.** EPA RSEI 2022 v2.3.12 air geographic microdata are acquired
+and extracted inside the graph. Native 810 m cells supply area-weighted H8/tract
+concentrations and containing-cell site profiles. No population multiplier or
+health threshold is applied. Source integrity, provenance, and spatial coverage
+are checked. See [docs/rsei.md](docs/rsei.md) for the source contract, interpretation,
+outputs, and the separate candidate-classification review.
+
+**Incomplete components.** Heat, traffic pollution,
 pedestrian barriers, improved City flood measures, other destinations, and
 driving access remain incomplete. Missing components never count as zero burden
 or a passed screen. The pipeline does not create composite scores, clusters,
@@ -240,3 +249,8 @@ Remaining migrations include prepared job/school/flood/crash inputs and
 environment locking. New access and burden components can join the same tract
 and site reporting interfaces. Keep expensive
 preparation and routing upstream of aggregation and policy comparisons.
+
+The `web_mockup_data` file target exports the selected access/RSEI components,
+city and tract geometry, and thresholds to `site/assets/` for the GitHub Pages
+client. Rebuild with `Rscript scripts/run_pipeline.R web_mockup_data`; see
+[website instructions](docs/web-mockup.md) for preview, checks, and publication.

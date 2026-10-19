@@ -1,0 +1,22 @@
+# Discussion scenarios only. No health standard or adopted adequacy threshold.
+# The extra tertile comparator is calculated from all Austin H8 origins.
+access_fixed:
+  - id: access_10k_50k
+    label: 'Access: 10k / 50k jobs'
+    limited_below: 10000
+    strong_at_least: 50000
+  - id: access_25k_100k
+    label: 'Access: 25k / 100k jobs'
+    limited_below: 25000
+    strong_at_least: 100000
+burden_fixed:
+  - id: burden_100
+    label: 'RSEI: 100 threshold'
+    elevated_at_least: 100
+  - id: burden_500
+    label: 'RSEI: 500 threshold'
+    elevated_at_least: 500
+# Selected for the website mockup; independent of the sensitivity scenarios above.
+mockup:
+  strong_access_above: 50000
+  elevated_rsei_at_least: 100

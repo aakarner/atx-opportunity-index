@@ -68,6 +68,12 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
                       " km of an internal tract point, normalized to City-observed area."),
                       "Describes nearby recorded crashes; not an individual risk estimate. Grey = missing.", sep = "\n"))
   )
+  specs$rsei_air <- list(field = "rsei_tox_conc", scale = 1,
+    title = "Industrial air-toxic burden",
+    subtitle = "EPA RSEI 2022 v2.3.12; area-weighted toxicity-weighted air concentration",
+    legend = "Toxicity-weighted concentration",
+    caption = "Modeled TRI-related air contributions, not all pollution or a health-risk estimate.
+810 m source grid averaged to City-clipped tracts; no population multiplier. Grey = missing.")
   paths <- character()
   for (name in names(specs)) {
     spec <- specs[[name]]
@@ -237,9 +243,10 @@ a{color:#075a75}p{max-width:960px}.kicker{font-size:.85rem;letter-spacing:.09em;
 <p class="kicker">Austin Opportunity Index · component pipeline</p>
 <h1>Benefits, burdens, and illustrative site profiles</h1>
 <div class="notice"><p><strong>Provisional component review.</strong> Tract geography and ACS context are rebuilt from Census sources, crash measures from recorded crash points, and displacement context from the City source. Job access, schools, flood, and crash points use prepared snapshots. These products do not constitute a completed opportunity index, adopted screening rules, or recommendations about housing locations.</p>
-<p>No composite score, clustering, or site exclusion is applied. Heat, RSEI pollution, traffic pollution, City flood data, and additional destination access remain pending; missing components are unknown, never evidence of zero burden.</p></div>
+<p>No composite score, clustering, or site exclusion is applied. Heat, traffic pollution, City flood data, and additional destination access remain pending; missing components are unknown, never evidence of zero burden.</p></div>
 <p>The same evidence supports tract summaries and finer-scale demonstration profiles. See the indicator registry, source checksums, and QA below for the current scope.</p>
 <p><a href="tract_components.csv">Tract component table (CSV)</a> · <a href="tract_components.gpkg">Tract geometries and components (GeoPackage)</a> · <a href="site_profiles.csv">Site profiles (CSV)</a></p>
+<p>Industrial pollution uses EPA RSEI 2022 v2.3.12 air toxicity-weighted concentrations. Tracts use area-weighted means; sites query the native 810 m cell. These are modeled TRI-related contributions, not total pollution, measured exposure, or health-risk estimates. <a href="rsei_and_h8.gpkg">Native EPA grid and H8 components</a> · <a href="h8_components.csv">H8 table</a></p>
 <h2>Component maps</h2><p>Each map retains its own units. Grey represents missing or unusable values. The school map also distinguishes areas outside the current AISD assignment coverage. Click any map to open its full-size image.</p>
 <div class="maps">', paste(map_html, collapse = "\n"), '</div>
 <h2>Illustrative site profiles</h2>

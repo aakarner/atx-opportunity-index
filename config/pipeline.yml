@@ -43,3 +43,20 @@ maps:
   width: 9
   height: 8
   dpi: 160
+rsei:
+  version: '2.3.12'
+  reporting_year: 2022
+  grid_code: 14
+  cell_size_m: 810
+  url: https://gaftp.epa.gov/rsei/Current_Version/V2312_RY2022/Aggregated_Grid_Cell/aggmicro2022_2022.csv.gz
+  path: data/raw/epa_rsei/v2312/aggmicro2022_2022.csv.gz
+  refresh: false
+
+municipal_boundary:
+  snapshot_date: '2026-10-19'
+  sha256: 4014001aff7acdf05f8126814998e53a72b0deb3e60caa72e217e2f226a5c4a0
+  path: data/raw/municipal_boundary/2026-10-19/austin_jurisdictions.geojson
+  url: https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/BOUNDARIES_jurisdictions/FeatureServer/0
+  city_name: CITY OF AUSTIN
+  jurisdiction_types: ['FULL', 'LTD']
+  refresh: false
