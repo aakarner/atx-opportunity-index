@@ -5,7 +5,10 @@ library(dplyr)      # Data manipulation
 library(tidycensus)
 library(ggplot2)
 library(units)
-
+library(tigris)
+library(osmdata)
+library(rosm)
+library(ggspatial)
 #
 # now get Austin
 #
