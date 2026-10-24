@@ -5,6 +5,24 @@ These scripts prepare the H8 job-access snapshot consumed by the repository's
 source preparation is a separate, explicit operation. Maps, tract aggregation,
 and site profiles are produced by [the main pipeline](../PIPELINE.md).
 
+Destination accessibility preparation is documented separately in
+[`docs/destination-accessibility.md`](../docs/destination-accessibility.md).
+Its reviewed inventory contracts and current meeting-stage measures are listed
+in [`config/destination_accessibility.yml`](../config/destination_accessibility.yml).
+Those workflows are being migrated to the same prepared-input boundary used by
+job access; they are not yet targets in the main component pipeline.
+
+Run a configured destination scenario with the shared runner, for example:
+
+```sh
+Rscript accessibility/scripts/run_accessibility.R \
+  --scenario grocery_third_nearest --mode drive --period am_peak
+```
+
+Scenario definitions are in `config/destination_accessibility.yml`. The runner
+uses the R `accessibility` package for measures and writes standardized results,
+QA, and a run manifest to `accessibility/output/working/`.
+
 ## Pinned specification
 
 - **Jobs:** 2023 LODES WAC, across the five-county Austin–Round Rock metro
@@ -12,7 +30,8 @@ and site profiles are produced by [the main pipeline](../PIPELINE.md).
 - **Resident-worker weights:** 2023 LODES RAC, across Travis, Williamson, and
   Hays counties, aggregated to H8.
 - **Origins:** H3 resolution 8 cell centers inside the 2024 Austin city boundary.
-- **Network:** CapMetro GTFS and OpenStreetMap snapshots dated June 25, 2026.
+- **Network:** CapMetro GTFS dated June 25, 2026, and the June 1, 2026
+  Geofabrik Texas OpenStreetMap snapshot clipped to Central Texas.
 - **Travel:** walk plus transit; departures July 13, 2026, from 7:00–8:59 a.m.;
   50th-percentile travel times and a 45-minute accessibility threshold.
 

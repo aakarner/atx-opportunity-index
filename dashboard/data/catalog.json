@@ -1,0 +1,201 @@
+{
+  "generated_from": "validated scenario-runner outputs",
+  "cell_count": 13189,
+  "scenarios": [
+    {
+      "id": "jobs_cumulative",
+      "destination": "Jobs",
+      "short": "Jobs",
+      "measure": "cumulative",
+      "description": "Jobs reachable within the selected travel-time threshold",
+      "source": "LEHD/LODES employment opportunities",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/jobs_cumulative__drive__am_peak.json",
+        "drive:midday": "data/results/jobs_cumulative__drive__midday.json",
+        "walk_transit:am_peak": "data/results/jobs_cumulative__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/jobs_cumulative__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "grocery_third_nearest",
+      "destination": "Grocery stores",
+      "short": "Grocery",
+      "measure": "time",
+      "description": "Travel time to the third-nearest grocery store",
+      "source": "USDA SNAP retailers with reviewed DataAxle additions",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/grocery_third_nearest__drive__am_peak.json",
+        "drive:midday": "data/results/grocery_third_nearest__drive__midday.json",
+        "walk_transit:am_peak": "data/results/grocery_third_nearest__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/grocery_third_nearest__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "childcare_fifth_nearest",
+      "destination": "Childcare facilities",
+      "short": "Childcare",
+      "measure": "time",
+      "description": "Travel time to the fifth-nearest childcare facility",
+      "source": "Texas HHSC licensed and registered operations",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/childcare_fifth_nearest__drive__am_peak.json",
+        "drive:midday": "data/results/childcare_fifth_nearest__drive__midday.json",
+        "walk_transit:am_peak": "data/results/childcare_fifth_nearest__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/childcare_fifth_nearest__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "park_reachable_supply",
+      "destination": "Parks and open space",
+      "short": "Parks",
+      "measure": "cumulative",
+      "description": "Number or acreage of eligible parks reachable within the selected threshold",
+      "source": "ParkServe with City of Austin attributes",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "midday"
+      ],
+      "files": {
+        "drive:midday": "data/results/park_reachable_supply__drive__midday.json",
+        "walk_transit:midday": "data/results/park_reachable_supply__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "library_nearest",
+      "destination": "Public libraries",
+      "short": "Libraries",
+      "measure": "time",
+      "description": "Travel time to the nearest public library",
+      "source": "City and regional public-library sources",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/library_nearest__drive__am_peak.json",
+        "drive:midday": "data/results/library_nearest__drive__midday.json",
+        "walk_transit:am_peak": "data/results/library_nearest__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/library_nearest__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "pharmacy_nearest",
+      "destination": "Pharmacies",
+      "short": "Pharmacy",
+      "measure": "time",
+      "description": "Travel time to the nearest community pharmacy",
+      "source": "Texas State Board of Pharmacy with DataAxle checks",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/pharmacy_nearest__drive__am_peak.json",
+        "drive:midday": "data/results/pharmacy_nearest__drive__midday.json",
+        "walk_transit:am_peak": "data/results/pharmacy_nearest__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/pharmacy_nearest__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "hospital_second_nearest",
+      "destination": "Hospitals",
+      "short": "Hospitals",
+      "measure": "time",
+      "description": "Travel time to the second-nearest hospital",
+      "source": "CMS NPPES facility records",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/hospital_second_nearest__drive__am_peak.json",
+        "drive:midday": "data/results/hospital_second_nearest__drive__midday.json",
+        "walk_transit:am_peak": "data/results/hospital_second_nearest__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/hospital_second_nearest__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "urgent_care_third_nearest",
+      "destination": "Urgent care",
+      "short": "Urgent care",
+      "measure": "time",
+      "description": "Travel time to the third-nearest urgent-care facility",
+      "source": "CMS NPPES and reviewed DataAxle locations",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/urgent_care_third_nearest__drive__am_peak.json",
+        "drive:midday": "data/results/urgent_care_third_nearest__drive__midday.json",
+        "walk_transit:am_peak": "data/results/urgent_care_third_nearest__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/urgent_care_third_nearest__walk_transit__midday.json"
+      }
+    },
+    {
+      "id": "public_center_nearest",
+      "destination": "Public community and senior centers",
+      "short": "Public centers",
+      "measure": "time",
+      "description": "Travel time to the nearest public community or senior center",
+      "source": "City and regional government facility sources",
+      "modes": [
+        "drive",
+        "walk_transit"
+      ],
+      "periods": [
+        "am_peak",
+        "midday"
+      ],
+      "files": {
+        "drive:am_peak": "data/results/public_center_nearest__drive__am_peak.json",
+        "drive:midday": "data/results/public_center_nearest__drive__midday.json",
+        "walk_transit:am_peak": "data/results/public_center_nearest__walk_transit__am_peak.json",
+        "walk_transit:midday": "data/results/public_center_nearest__walk_transit__midday.json"
+      }
+    }
+  ]
+}

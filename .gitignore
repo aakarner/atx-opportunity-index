@@ -23,6 +23,8 @@
 
 # macOS metadata
 .DS_Store
+__pycache__/
+*.pyc
 
 # produced vignettes
 vignettes/*.html
@@ -56,13 +58,19 @@ rsconnect/
 *.png
 *.rds
 *.csv
+# Small, reviewed decisions required to reproduce the pharmacy inventory.
+!destinations/pharmacies/manual_coordinate_overrides.csv
 # Keep only the compact H8 source snapshot versioned.
 /accessibility/output/*
 !accessibility/output/h8_job_accessibility.csv
 
 # Large reproducible inputs and intermediate routing files
 accessibility/data/
-data/
+accessibility/.venv/
+data/*
+!data/README.md
+rosm.cache/
+sites/
 .positai
 
 # Incremental targets workflow; preserve the configuration examples in Git.

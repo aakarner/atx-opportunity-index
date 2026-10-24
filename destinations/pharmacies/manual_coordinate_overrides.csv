@@ -1,0 +1,6 @@
+LIC_NBR,latitude,longitude,review_decision,coordinate_reference,evidence_reference,review_date
+35722,30.502012283775,-97.576561997447,include_manual_verified,https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer,https://www.healthgrades.com/pharmacy/gattis-pharmacy-u2tvj2n,2026-10-01
+35987,30.644841,-97.871328,include_manual_verified,https://phppd.providence.org/Intel/Pharmacy/View/560708023869466,https://www.healthgrades.com/pharmacy/costco-pharmacy-1767-u2tvkp2,2026-10-01
+34565,30.485126101638,-97.801903177892,include_manual_verified,https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer,https://healthcare.ascension.org/find-care/location/pharmacy/texas,2026-10-01
+36258,30.650323941675,-97.870800494156,include_manual_verified,https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer,https://www.healthgrades.com/pharmacy/cvs-pharmacy-17954-u2tvrgc,2026-10-01
+33156,30.385717735805,-97.694111148684,include_manual_verified,https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer,https://communitycaretx.org/services/pharmacy/,2026-10-01

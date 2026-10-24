@@ -31,7 +31,7 @@ if (!rebuild_network) {
   rebuild_network <- !identical(previous_inputs, current_inputs)
 }
 
-r5r_network <- build_network(
+r5r_network <- r5r::setup_r5(
   data_path = r5_data_dir,
   verbose = TRUE,
   overwrite = rebuild_network

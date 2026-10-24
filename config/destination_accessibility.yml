@@ -1,0 +1,182 @@
+# Prepared destination inventories and accessibility workflows.
+# Raw downloads, licensed microdata, routing matrices, and generated outputs
+# remain under ignored data/ and accessibility/output/ directories.
+geography:
+  metro_counties: [Bastrop, Caldwell, Hays, Travis, Williamson]
+  routing_resolution: 8
+  origin_grid: data/Karner, Alex - austin_msa_h3_r8_share_2026-10-02/input/austin_msa_h3_r8_cells.geojson
+  origin_id: h3_id
+
+modes:
+  drive:
+    backend: prepared_matrix
+    matrix_template: data/Karner, Alex - austin_msa_h3_r8_share_2026-10-02/outputs/long/austin_msa_h3_r8_{period}_od_stats.parquet
+    maximum_minutes: 60
+  walk_transit:
+    backend: r5r
+    maximum_minutes: 90
+    max_walk_minutes: 20
+    percentile: 50
+
+periods:
+  am_peak:
+    label: AM peak
+    departure_local: '2026-07-13 07:00:00'
+    time_window_minutes: 120
+  midday:
+    label: Midday
+    departure_local: '2026-07-13 12:00:00'
+    time_window_minutes: 120
+
+inventories:
+  jobs:
+    path: accessibility/data/processed/lehd/austin_msa_h8_jobs_2023.csv
+    format: h8_csv
+    id: h3_id
+    opportunities:
+      total_jobs: total_jobs
+      low_wage_jobs: low_wage_jobs
+      middle_wage_jobs: middle_wage_jobs
+      high_wage_jobs: high_wage_jobs
+    source: 2023 LODES workplace-area employment aggregated to H8
+  groceries:
+    path: data/destinations/groceries/processed/groceries_usda_snap_final.gpkg
+    layer: snap_groceries_final
+    id: snap_id
+    opportunities:
+      facility_count: 1
+    source: USDA SNAP retailers with documented manual review
+  childcare:
+    path: data/destinations/childcare/processed/childcare_texas_hhsc.gpkg
+    layer: childcare_destinations
+    id: destination_id
+    opportunities:
+      facility_count: 1
+      capacity: capacity
+    filters:
+      od_matrix_eligible:
+        include: [true]
+    source: Texas HHSC licensed and registered operations
+  pharmacies:
+    path: data/destinations/pharmacies/processed/pharmacies_final.gpkg
+    layer: pharmacies
+    id: pharmacy_id
+    opportunities:
+      facility_count: 1
+    source: Texas State Board of Pharmacy with reviewed Data Axle additions
+  hospitals:
+    path: data/destinations/healthcare/processed/healthcare_cms_nppes.gpkg
+    layer: hospital
+    id: npi
+    opportunities:
+      facility_count: 1
+    source: CMS NPPES general acute care hospital records
+  urgent_care:
+    path: data/destinations/healthcare/processed/healthcare_cms_nppes.gpkg
+    layer: urgent_care
+    id: npi
+    opportunities:
+      facility_count: 1
+    source: CMS NPPES urgent care records; source comparison remains under review
+  parks:
+    path: data/destinations/parks/processed/parks_final.gpkg
+    layer: parks
+    id: park_id
+    opportunities:
+      park_count: 1
+      acreage: acreage
+    filters:
+      park_designation:
+        include: [Local Park, Local Conservation Area, Local Recreation Area, Private Park, Recreation Management Area, State Park, State Recreation Area]
+      park_access:
+        include: [Open Access]
+      specialized_access:
+        exclude: [golf or cemetery]
+      acreage:
+        not_missing: true
+        greater_than: 0
+    source: ParkServe with local-government attributes and documented screening
+  libraries:
+    path: data/destinations/libraries/processed/libraries_final.gpkg
+    layer: libraries
+    id: library_id
+    opportunities:
+      facility_count: 1
+    source: city and regional public-library sources
+  public_centers:
+    path: data/destinations/recreation_centers/processed/regional_public_centers.gpkg
+    layer: regional_centers
+    id: facility_id
+    opportunities:
+      facility_count: 1
+    source: city and regional government public facility sources
+
+measures:
+  jobs_cumulative:
+    inventory: jobs
+    method: cumulative_opportunities
+    origin_batch_size: 1000
+    opportunity_fields: [total_jobs, low_wage_jobs, middle_wage_jobs, high_wage_jobs]
+    thresholds_minutes: [15, 30, 45, 60]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+  grocery_third_nearest:
+    inventory: groceries
+    method: kth_nearest_time
+    k: 3
+    opportunity_fields: [facility_count]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+  childcare_fifth_nearest:
+    inventory: childcare
+    method: kth_nearest_time
+    k: 5
+    opportunity_fields: [facility_count]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+  park_reachable_supply:
+    inventory: parks
+    method: cumulative_opportunities
+    opportunity_fields: [park_count, acreage]
+    thresholds_minutes: [10, 15, 30]
+    modes: [drive, walk_transit]
+    periods: [midday]
+  library_nearest:
+    inventory: libraries
+    method: kth_nearest_time
+    k: 1
+    opportunity_fields: [facility_count]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+  pharmacy_nearest:
+    inventory: pharmacies
+    method: kth_nearest_time
+    k: 1
+    opportunity_fields: [facility_count]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+  hospital_second_nearest:
+    inventory: hospitals
+    method: kth_nearest_time
+    k: 2
+    opportunity_fields: [facility_count]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+  urgent_care_third_nearest:
+    inventory: urgent_care
+    method: kth_nearest_time
+    k: 3
+    opportunity_fields: [facility_count]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+  public_center_nearest:
+    inventory: public_centers
+    method: kth_nearest_time
+    k: 1
+    opportunity_fields: [facility_count]
+    modes: [drive, walk_transit]
+    periods: [am_peak, midday]
+
+workflows:
+  destination_preparation: destinations/README.md
+  accessibility_runner: accessibility/scripts/run_accessibility.R

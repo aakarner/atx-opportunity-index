@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Austin Metro Accessibility Explorer</title>
+  <meta name="description" content="Explore auto and transit-plus-walk accessibility to destinations across the five-county Austin metro.">
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <header class="brand">
+        <p class="eyebrow">Austin Opportunity Index</p>
+        <h1>Accessibility Explorer</h1>
+        <p>Compare access to essential destinations across the five-county Austin metro.</p>
+      </header>
+
+      <section class="control-section">
+        <label for="region">Study area</label>
+        <select id="region"><option value="metro">Five-county Austin metro</option><option value="austin">City of Austin (full-purpose)</option></select>
+        <label for="destination">Destination</label>
+        <select id="destination"></select>
+        <div class="mode-tabs" role="group" aria-label="Travel mode">
+          <button data-mode="drive" class="active">Auto</button>
+          <button data-mode="walk_transit">Transit + walk</button>
+          <button data-mode="comparison">Mode comparison</button>
+        </div>
+        <div class="two-col">
+          <div><label for="period">Departure time</label><select id="period"></select></div>
+          <div><label for="metric">Measure</label><select id="metric"></select></div>
+        </div>
+      </section>
+
+      <section class="definition" aria-live="polite">
+        <span id="measureTag">ACCESS MEASURE</span>
+        <h2 id="measureTitle"></h2>
+        <p id="measureDescription"></p>
+        <p class="source" id="source"></p>
+      </section>
+
+      <section class="stats" aria-label="Summary statistics">
+        <article><span>Median</span><strong id="median">—</strong></article>
+        <article><span>Accessible cells</span><strong id="reachable">—</strong></article>
+        <article><span>Regional range</span><strong id="range">—</strong></article>
+      </section>
+
+      <section class="distribution">
+        <div class="section-heading"><h2>Distribution</h2><span id="unitLabel"></span></div>
+        <div class="bars" id="bars"></div>
+      </section>
+
+      <section class="layers">
+        <div class="section-heading"><h2>Reference layers</h2></div>
+        <label class="switch"><input id="destinationsToggle" type="checkbox"><span></span>Destination locations</label>
+        <label class="switch"><input id="countiesToggle" type="checkbox" checked><span></span>County boundaries</label>
+        <label class="switch"><input id="blocksToggle" type="checkbox"><span></span>Census block groups</label>
+      </section>
+      <footer>Prototype results · H8 analysis cells · Updated from validated scenario outputs</footer>
+    </aside>
+
+    <section class="map-panel">
+      <button class="menu-button" id="menuButton" aria-label="Toggle controls">☰</button>
+      <div id="map"></div>
+      <div class="map-title">
+        <span id="mapKicker">AUTO · MORNING PEAK</span>
+        <h2 id="mapTitle">Loading accessibility results…</h2>
+      </div>
+      <div class="legend" id="legend"></div>
+      <button class="share-button" id="shareButton">Copy view link</button>
+      <div class="status" id="status">Loading analysis…</div>
+    </section>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

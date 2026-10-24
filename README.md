@@ -1,5 +1,20 @@
 # Austin Opportunity Index
 
+## Destination accessibility extension
+
+This branch adds reproducible destination preparation, automobile and
+walk-plus-transit accessibility scenarios, and an interactive results
+dashboard. Start with [`docs/project-navigation.md`](docs/project-navigation.md)
+for the folder map and replication sequence. The central scenario registry is
+[`config/destination_accessibility.yml`](config/destination_accessibility.yml);
+new destination measures should be added there and run through the shared
+runner rather than implemented as separate analysis scripts.
+
+The browser-ready dashboard is under [`dashboard/`](dashboard/) and is
+published with GitHub Pages. Large source downloads, routing matrices, and
+generated analytical results remain local and follow the contract in
+[`data/README.md`](data/README.md).
+
 A reproducible framework for describing neighborhood benefits and burdens in
 Austin, with tract-level maps and more detailed profiles of example sites.
 Benefits focus on access to opportunities; burdens remain separate physical
