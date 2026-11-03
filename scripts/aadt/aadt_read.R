@@ -1,43 +1,24 @@
-library(h3r)         # H3 spatial indexing
 library(sf)         # Spatial data handling
-library(leaflet)    # Interactive mapping
 library(dplyr)      # Data manipulation
-library(tidycensus)
 library(ggplot2)
-library(units)
-library(tigris)
-library(osmdata)
-library(rosm)
 library(ggspatial)
+library(osmdata)
 #
 #
 #
-aadt_geo<-st_read("./TxDOT_AADT.shp")
-atx<-st_read("../austin_city_limits.gpkg")
+aadt_geo<-st_read("./scripts/aadt/aadt_austin_only.gpkg")
+atx<-st_read("./scripts/aadt/austin_city_limits.gpkg")
 atx<-st_transform(atx,st_crs(aadt_geo))
-
-
-# Clip 'target_layer' using 'clip_polygon'
-clipped_object <- st_intersection(aadt_geo, atx)
-
-ggplot() +
-  coord_sf(crs = 2847,xlim = bbox[1,], ylim = bbox[2,]) +
-  annotation_map_tile(type = "osm",alpha=0.5) + # OSM background
-  geom_sf(data =atx$geometry, color = "orange", fill='yellow',alpha=0.5) + # Austin City Limits ;-)
-  geom_sf(data =hex_list$geometry, color = "blue", fill=NA) + # hexes
-  theme_minimal()
-
-head(clipped_object)
-
-plot(clipped_object$geometry)
-
-hist(clipped_object$AADT_CUR)
-
-hex<-st_read("../surface_temp/hex_8.gpkg")
+hex<-st_read("./scripts/aadt/hex_8.gpkg")
 hex<-st_transform(hex,st_crs(aadt_geo))
-plot(hex$geom,add=TRUE)
+
+
+#
+# histogram aadt for these streets
+#
+hist(aadt_geo$AADT_CUR)
 high_vol<-subset(clipped_object,clipped_object$AADT_CUR>50000)
-plot(high_vol$geometry)
+
 high_vol_buffer<-st_buffer(high_vol,300, 
                            endCapStyle = "FLAT")
 plot(high_vol_buffer$geom,add=TRUE,col='blue')
@@ -47,3 +28,15 @@ plot(high_vol$geometry[1:3],add=TRUE,col='blue')
 plot(atx$geom, add=TRUE)
 plot(hex$geom,add=TRUE)
 length(high_vol$OBJECTID)
+#
+# map Austin with its water
+#
+bbox <- getbb("Austin, Texas")
+ggplot() +
+  coord_sf(crs = 2847,xlim = bbox[1,], ylim = bbox[2,]) +
+  annotation_map_tile(type = "osm",alpha=0.5) + # OSM background
+  geom_sf(data =atx$geom, color = "orange", fill='yellow',alpha=0.5) + # Austin City Limits ;-)
+  geom_sf(data =hex$geom, color = "blue", fill=NA) + # hex
+  geom_sf(data =high_vol$geom, color = "red", fill=NA) + # hex
+  theme_minimal()
+
