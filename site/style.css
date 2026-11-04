@@ -22,3 +22,6 @@
 @media(max-width:1050px) and (min-width:701px){.profile-column{width:280px}}
 @media(max-width:700px){.profile-column{position:static;order:3;width:auto;max-height:none;margin:0 12px 12px;gap:12px}.profile-column .panel{margin:0}.profile-column .profile{overflow:visible;flex:none}}
 @media print{.group-preview{display:none!important}.profile-column{position:static;display:block;width:100%;max-height:none}}
+.group-preview select{width:100%;color:var(--ink);border:1px solid #a5b4bd;background:white;border-radius:4px;padding:6px;font:inherit;font-size:13px}
+.benefit-controls{display:grid;grid-template-columns:1.5fr 1fr;gap:8px;margin:9px 0 4px}
+.benefit-controls select{display:block;margin-top:5px}

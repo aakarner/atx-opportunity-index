@@ -38,3 +38,33 @@ const dogsHead=locate(-97.66219,30.24908,city,tracts,hexes,h3);
 assert.ok(dogsHead.inCity && dogsHead.row && dogsHead.tract,'Dog’s Head must have a city, hex, and tract profile');
 assert.equal(city.features[0].properties.boundary_sha256,meta.boundary.sha256);
 console.log('Combined classifications passed: four combinations, missingness, cutoff equality, and tract totals.');
+
+const {records,scoreValue,basketColor,benefitProfile}=await import('../site/benefits.mjs');
+const benefits=read('benefits.json'),schools=read('school-zones.geojson');
+const benefitCells=new Map(records(benefits.hex)),benefitTracts=new Map(records(benefits.tract));
+const selection={profile:'families',mode:'walk_transit',minutes:30,display:'count'};
+assert.equal(benefitCells.size,rows.length);
+assert.equal(benefitTracts.size,tracts.features.length);
+for(const [,row] of benefitCells){
+ for(const [mode,budgets] of Object.entries(benefits.spec.budgets)){
+  for(const minutes of budgets){
+   const key=mode+'_'+minutes+'_';
+   for(const [profile,members] of Object.entries(benefits.spec.profiles)){
+    const values=members.map(name=>row[key+name]);
+    assert.equal(row[key+profile],values.includes(null)?null:values.reduce((a,b)=>a+b,0));
+   }
+  }
+ }
+}
+const south=benefitCells.get(locate(-97.780280,30.167870,city,tracts,hexes,h3).id);
+assert.equal(scoreValue(south,selection),3);
+assert.equal(south.walk_transit_30_park,1); // Exactly 30 minutes counts.
+const schoolProfile=benefitProfile(south,selection,benefits.spec,true,schools,[-97.780280,30.167870],[]);
+assert.match(schoolProfile,/BLAZIER EL/);assert.match(schoolProfile,/Paired accountability record/);
+assert.match(benefitProfile(south,selection,benefits.spec,true,schools,[-96.8,32.8],[]),/Outside available AISD/);
+for(const [,row] of benefitTracts){
+ if(!row.resident_weight)assert.equal(row.walk_transit_30_general,null);
+ assert.ok(row.area_coverage>=0 && row.area_coverage<=1);
+}
+assert.equal(basketColor({},selection,benefits.spec),'#a8b4be');
+console.log('Benefit checks passed: complete profile sums, inclusive thresholds, geography, schools and unavailable tracts.');

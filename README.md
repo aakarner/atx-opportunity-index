@@ -9,7 +9,7 @@ The repository has one analytical entrypoint: [`_targets.R`](_targets.R).
 
 ## Run
 
-From the repository root:
+Set `DAM_DATA_DIR` to the local, dated DAM team snapshot (2026-11-03). From the repository root:
 
 ```sh
 Rscript scripts/setup_pipeline.R
@@ -30,8 +30,7 @@ cached sources. See
 
 ## Current scope
 
-- **Benefits:** transit job access, including wage groups, and AISD assigned-school
-  academic growth. Other destinations and driving access are pending.
+- **Benefits:** driving and transit access to essential destinations and jobs, trial resident-specific baskets, and AISD assigned-school academic growth. See [the benefits review](output/components/benefits/review.html) and [methods](docs/benefits.md).
 - **Burdens:** mapped FEMA floodplain overlap, recorded severe-crash density, and
   EPA RSEI modeled industrial air-toxic concentration. Heat, traffic pollution, and improved City flood measures
   are pending.
@@ -44,8 +43,7 @@ For candidate benefit/burden flags, open `output/components/classification-revie
 This separate analysis compares provisional rules without adopting screening thresholds;
 see [RSEI methods and classification review](docs/rsei.md).
 
-Components retain their own units. The pipeline does not yet assign composite
-scores or apply site exclusions, and missing burdens remain unknown. Example
+The basket counts summarize destination types reached. Jobs, schools and burdens retain their own units. Point rules and site exclusions require City review. Example
 locations are demonstrations, not proposed housing developments.
 
 ## Repository layout
@@ -73,7 +71,7 @@ See [`PIPELINE.md`](PIPELINE.md) for the complete run guide,
 
 ## Interactive map prototype
 
-[Open the benefit and burden map](https://aakarner.github.io/atx-opportunity-index/).
-Tract maps and address-to-H8 profiles use strong job access **>50,000** and
+[Open the public prototype map](https://aakarner.github.io/atx-opportunity-index/).
+The Benefits tab adds housing profiles, travel budgets and an eight-type comparison. The Combined tab uses strong job access **>50,000** and
 elevated RSEI burden **≥100**, with independent flags.
 See [website rebuild and publishing instructions](docs/web-mockup.md).

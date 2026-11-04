@@ -1,0 +1,23 @@
+snapshot: '2026-11-03'
+source_commit: d5a2902cde153477117acbd2f46f93461e47fa11
+budgets:
+  drive: [5, 10, 15]
+  walk_transit: [30, 45, 60]
+defaults:
+  drive: 10
+  walk_transit: 30
+destinations:
+  grocery: Grocery
+  childcare: Childcare
+  pharmacy: Pharmacy
+  urgent_care: Urgent care
+  hospital: Hospital
+  park: Park
+  library: Library
+  public_center: Community or senior center
+profiles:
+  general: [grocery, childcare, pharmacy, urgent_care, hospital, park, library, public_center]
+  families: [grocery, childcare, park, library]
+  older: [grocery, pharmacy, urgent_care, public_center]
+  single: [grocery, pharmacy, urgent_care, public_center]
+  supportive: [grocery, pharmacy, urgent_care]

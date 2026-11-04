@@ -79,7 +79,7 @@ list(
                                                flood_union, crash_points, crash_spec, city_boundary),
                                                site_rsei, by = "site_id", relationship = "one-to-one")),
   tar_target(registry, rsei_registry(indicator_registry(job_spec, school_spec, crash_spec, census_spec, displacement_spec), rsei_spec)),
-  tar_target(manifest, source_manifest(c(rsei = rsei_source_files, configuration = config_file, acs = acs_files,
+  tar_target(manifest, source_manifest(c(dam=dam_release, benefit_configuration=benefit_config, rsei = rsei_source_files, configuration = config_file, acs = acs_files,
     tract_boundaries = tract_boundary_files, city_boundaries = city_boundary_files,
     displacement = displacement_file, jobs = job_file, schools = school_file,
     flood = flood_file, crashes = crash_file, sites = site_file))),
@@ -97,8 +97,20 @@ list(
   # Candidate rules are a separate review branch, not production scores.
   tar_target(classification_config_file, "config/classification-review.yml", format = "file"),
   tar_target(classification_spec, read_classification_spec(classification_config_file)),
-  tar_target(web_mockup_data, write_web_mockup_data(h8_components, tract_components,
-    city_boundary, classification_spec), format = "file"),
+  tar_target(benefit_config, "config/benefits.yml", format="file"),
+  tar_target(benefit_spec, yaml::read_yaml(benefit_config)),
+  tar_target_raw("dam_root", substitute(path, list(path=Sys.getenv("DAM_DATA_DIR")))),
+  tar_target(dam_release, dam_files(dam_root), format="file"),
+  tar_target(dam_inputs, read_benefit_inputs(dam_release, benefit_spec, h8_ids)),
+  tar_target(benefits, benefit_scores(dam_inputs, benefit_spec)),
+  tar_target(benefit_tract, benefit_tracts(benefits, dam_inputs$population, tract_geometry,
+    h8_access, tract_h8_crosswalk)),
+  tar_target(benefit_review, write_benefit_review(benefits, benefit_tract, dam_inputs,
+    benefit_spec, h8_geometry, tract_geometry, sites, output_directory), format="file"),
+  tar_target(benefit_brief, write_benefit_brief(benefit_review, benefit_spec, benefit_tract, site_profiles), format="file"),
+  tar_target(benefit_assets, write_benefit_assets(benefits, benefit_tract, benefit_spec, school_zones), format="file"),
+  tar_target(web_mockup_data, {benefit_assets; write_web_mockup_data(h8_components, tract_components,
+    city_boundary, classification_spec)}, format = "file"),
   tar_target(classification_thresholds, candidate_thresholds(h8_components, classification_spec)),
   tar_target(classification_comparison, compare_classifications(h8_components, tract_components,
     classification_thresholds, rsei_tract_crosswalk, city_boundary)),
@@ -106,7 +118,7 @@ list(
     classification_thresholds, h8_components, tract_components, sites, city_boundary,
     classification_spec, output_directory, rsei_source_files), format = "file"),
   tar_target(review_report, {
-    component_files; rsei_files; site_profile_file; registry_file; manifest_file; qa_file; runtime_file
+    benefit_brief; component_files; rsei_files; site_profile_file; registry_file; manifest_file; qa_file; runtime_file
     write_review_report(site_profiles, registry, manifest, qa, component_maps, output_directory,
                         job_spec, school_spec, crash_spec)
   }, format = "file")
