@@ -59,9 +59,13 @@ for(i in seq_along(hex_ids)){
                  crs = 4326)
   hex_list<-rbind(hex_list,hex_new)
 }
-water<-area_water(state='48',county=c('453','491','209'),year=2024)
-hex_list<-st_transform(hex_list,st_crs(water))
-hex_list<-cut_polygons_rmapshaper(hex_list, water)
+#
+# cut water out of hexigons if you want remove comments
+#
+#water<-area_water(state='48',county=c('453','491','209'),year=2024)
+#hex_list<-st_transform(hex_list,st_crs(water))
+#hex_list<-cut_polygons_rmapshaper(hex_list, water)
+hex_list<-st_transform(hex_list,st_crs(atx))
 hex_list<-hex_list[st_intersects(hex_list, atx, sparse = FALSE), ]
 # 
 # now plot map
@@ -75,4 +79,4 @@ ggplot() +
 #
 # save the geo package
 #
-st_write(hex_list,dsn='./hex_8.gpkg',delete_dsn=TRUE)
+st_write(hex_list,dsn='./scripts/aadt/hex_8_full.gpkg',delete_dsn=TRUE)
