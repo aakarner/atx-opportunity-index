@@ -59,6 +59,7 @@ rsconnect/
 # Keep only the compact H8 source snapshot versioned.
 /accessibility/output/*
 !accessibility/output/h8_job_accessibility.csv
+!/scripts/aadt/aadt_metrics.csv
 
 # Large reproducible inputs and intermediate routing files
 accessibility/data/
