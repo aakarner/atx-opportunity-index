@@ -35,7 +35,6 @@ ggplot() +
 #
 # allocate the sum of the AADT to the hexagons from the high volume buffers 
 #
-names(high_vol_buffer)
 interpolated_result <- st_interpolate_aw(
   x = high_vol_buffer['AADT_CUR'], 
   to = hex, 
@@ -65,8 +64,10 @@ ggplot() +
     panel.grid = element_blank()
   )
 st_write(interpolated_result,'./scripts/aadt/aadt_sum_hex8.gpkg',delete_dsn=TRUE)
+#
+# now calculate the distance to the closest high volume streets
+#
 all_high_vol<-st_union(high_vol)
-
 hex$distance_to_high_vol_ft <- as.numeric(st_distance(st_centroid(hex), all_high_vol))*3.28084
 
 ggplot() +
@@ -77,8 +78,8 @@ ggplot() +
   scale_fill_viridis_c(option = "plasma", name = "Sum AADT") +
   theme_minimal() +
   labs(
-    title = "Area Weighted Sum of AADT ",
-    subtitle = "Sum of AADT from Hight Volume Streets",
+    title = "Distance (feet) to high volume streets",
+    subtitle = "To closest High Volume Streets",
     caption = "Source: TXDOT"
   ) +
   theme(
@@ -116,3 +117,20 @@ hex <- hex %>%
   )
 hex$total_area<-hex$overlap_area<-NULL
 st_write(hex,'./scripts/aadt/aadt_metrics_hex8.gpkg',delete_dsn=TRUE)
+
+ggplot() +
+  coord_sf(crs = 2847,xlim = bbox[1,], ylim = bbox[2,]) +
+  annotation_map_tile(type = "osm",alpha=0.5) + # OSM background
+  geom_sf(data =atx$geom, color = "orange", fill='yellow',alpha=0.5) +
+  geom_sf(data = hex, aes(fill = fraction_overlap), color = NA, size = 0.2) +
+  scale_fill_viridis_c(option = "plasma", name = "Sum AADT") +
+  theme_minimal() +
+  labs(
+    title = "Fraction of Overlap",
+    subtitle = "Of 300 meter buffer avound High Volume Streets",
+    caption = "Source: TXDOT"
+  ) +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank()
+  )
