@@ -26,3 +26,5 @@
 .benefit-controls{display:grid;grid-template-columns:1.5fr 1fr;gap:8px;margin:9px 0 4px}
 .benefit-controls select{display:block;margin-top:5px}
 .education-coverage{width:100%;border-collapse:collapse;margin:.6rem 0;font-variant-numeric:tabular-nums}.education-coverage th,.education-coverage td{padding:.35rem .3rem;text-align:right;border-bottom:1px solid #e1e7eb}.education-coverage th:first-child,.education-coverage td:first-child{text-align:left}.education-coverage th{white-space:nowrap}
+
+#burden-controls{margin-top:12px}#burden-measure{width:100%;color:var(--ink);border:1px solid #a5b4bd;background:white;border-radius:4px;padding:7px;font:inherit;font-size:12px}

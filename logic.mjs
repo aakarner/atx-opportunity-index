@@ -1,5 +1,26 @@
 // Pure classification and spatial lookup functions shared by the client and tests.
 export const finite = v => typeof v === 'number' && Number.isFinite(v);
+export const trafficScales = {
+  traffic_distance_ft: {
+    title:'Distance to high-volume traffic',
+    labels:['0–<500 ft','500–<1,000 ft','1,000–<2,500 ft','2,500–<5,000 ft','5,000 ft or more'],
+    colors:['#9e3b22','#c96c37','#e3a568','#f2d3a8','#f6eee1'],
+    breaks:[500,1000,2500,5000]
+  },
+  traffic_buffer_share: {
+    title:'Coverage near high-volume traffic',
+    labels:['0%','More than 0–<25%','25–<50%','50–<75%','75–100%'],
+    colors:['#f6eee1','#f2d3a8','#e3a568','#c96c37','#9e3b22'],
+    breaks:[0,.25,.5,.75]
+  }
+};
+export function trafficColor(row,measure) {
+  const value=row?.[measure],scale=trafficScales[measure];
+  if(!scale || !finite(value) || value<0 || (measure==='traffic_buffer_share' && value>1))return '#a8b4be';
+  if(measure==='traffic_buffer_share' && value===0)return scale.colors[0];
+  const index=scale.breaks.findIndex(limit=>value<limit);
+  return scale.colors[index<0?4:index];
+}
 export function flags(row, thresholds) {
   return {strong_access: finite(row?.jobs_total) ? row.jobs_total > thresholds.strong_access_above : null,
     elevated_burden: finite(row?.rsei) ? row.rsei >= thresholds.elevated_rsei_at_least : null};

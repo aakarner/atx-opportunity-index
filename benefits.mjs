@@ -1,4 +1,4 @@
-import {contains, escapeHTML as esc, finite} from './logic.mjs?v=5e51a77bd6e5';
+import {contains, escapeHTML as esc, finite} from './logic.mjs?v=36c8cf2733c4';
 
 export const profileLabels = {
   general:'All eight destinations', families:'Families with children', older:'Older adults',
