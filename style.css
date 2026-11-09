@@ -28,3 +28,13 @@
 .education-coverage{width:100%;border-collapse:collapse;margin:.6rem 0;font-variant-numeric:tabular-nums}.education-coverage th,.education-coverage td{padding:.35rem .3rem;text-align:right;border-bottom:1px solid #e1e7eb}.education-coverage th:first-child,.education-coverage td:first-child{text-align:left}.education-coverage th{white-space:nowrap}
 
 #burden-controls{margin-top:12px}#burden-measure{width:100%;color:var(--ink);border:1px solid #a5b4bd;background:white;border-radius:4px;padding:7px;font:inherit;font-size:12px}
+/* Combined score and minimum status remain separate at every scale. */
+[hidden]{display:none!important}
+.combined-score{border-top:3px solid #476e68;padding-top:12px;margin:12px 0 18px}
+.combined-score .metric-value small{font-size:15px;letter-spacing:0;font-weight:400}
+.minimum-status{display:inline-block;font-weight:700;font-size:13px;padding:7px 10px;border-radius:4px;margin:5px 0}
+.minimum-status.meets{background:#deeee5;color:#1d644b}.minimum-status.below{background:#fae9dd;color:#99451e}.minimum-status.incomplete{background:#e9edef;color:#475c67}
+.minimum-reason{font-size:12px;line-height:1.5}.domain-score{padding:10px 0;border-bottom:1px solid #d7dfe3}.domain-score>div{display:flex;justify-content:space-between;gap:8px;font-size:12px}.domain-score>div span{white-space:nowrap;font-variant-numeric:tabular-nums}.domain-score p{margin:6px 0!important;font-size:12px}
+.score-gradient{height:14px;width:100%;background:linear-gradient(to right,rgb(238,243,240),rgb(23,105,86));border:1px solid #829891;border-radius:3px}.gradient-labels{display:flex;justify-content:space-between;width:100%;font-size:11px;margin-top:4px}
+#weights-section{margin-top:12px;font-size:12px}#weights-section summary{cursor:pointer;color:#345d6b}.weight-row{display:grid;grid-template-columns:1fr 60px 48px;align-items:center;gap:8px;margin:8px 0}.weight-row label{margin:0}.weight-row input{width:100%;min-width:0;padding:6px;border:1px solid #a5b4bd;border-radius:3px}.weight-row output{text-align:right;font-variant-numeric:tabular-nums}#reset-weights{font-size:12px}.sensitivity{font-weight:400;font-size:12px;line-height:1.5;margin-top:10px}.sensitivity input{vertical-align:middle}select:focus-visible{outline:3px solid #227fbd;outline-offset:2px}
+@media(min-width:701px){.group-preview{max-height:48vh!important;overflow:auto}.profile-column .profile{min-height:130px}}

@@ -1,8 +1,10 @@
+import {columnRows,assessBenefits,aggregateTract,normalizedWeights,requiredDomains,combinedStyle,combinedProfile,tractCombinedProfile,statusLabels,statusColors} from './combined-benefits.mjs?v=d292eb7f93ca';
 import {finite, flags, combination, locate, candidates, trafficScales, trafficColor, escapeHTML as esc} from './logic.mjs?v=36c8cf2733c4';
-import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile} from './benefits.mjs?v=1cb8e5a9a9bc';
+import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile, schoolAssignment} from './benefits.mjs?v=ba4547469589';
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
-const selection={profile:'general',mode:'walk_transit',minutes:30,display:'count'};
-const DATA_VERSION='c1b1d17d97ed';
+let combinedData, combinedOrigins, tractWeights, tractCoverage, assessments=new Map(), tractAssessments=new Map();
+const selection={profile:'families',mode:'walk_transit',minutes:45,display:'combined',weights:null,jobSensitivity:false};
+const DATA_VERSION='a60f9f59eb36';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 const combinedClasses={
  both:{color:'#8066a9',label:'Both flags'},
@@ -16,6 +18,15 @@ let map, metadata, tracts, city, hexes, tractLayer, hexLayer, selected, dimensio
 let burdenMeasure='rsei';
 const geocoder='https://maps.austintexas.gov/arcgis/rest/services/Geocode/COA_Locator/GeocodeServer/findAddressCandidates';
 const emptyProfile=$('profile').innerHTML;
+const combinedView=()=>['combined','minimums'].includes(selection.display);
+const jobScenario=()=>selection.mode==='walk_transit'?'transit':selection.jobSensitivity?'drive30':'drive';
+function refreshAssessments(){
+ assessments=new Map();tractAssessments=new Map();
+ if(!combinedData.spec.presets[selection.profile])return;
+ for(const [id,row] of combinedOrigins)assessments.set(id,assessBenefits(row,selection.profile,jobScenario(),combinedData.spec,benefitData.spec,selection.weights));
+ for(const [id,coverage] of tractCoverage)tractAssessments.set(id,aggregateTract(tractWeights.get(id),assessments,coverage));
+}
+
 function status(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);}
 function clearSelection(){refreshProfile=null;selected?.clearLayers();$('profile').innerHTML=emptyProfile;}
 function cancelSearch(){searchSequence++;controller?.abort();controller=null;$('search').disabled=false;$('results').replaceChildren();}
@@ -29,9 +40,12 @@ function trafficProfile(row,isHex){
 }
 function values(row,isHex,point=null){
  const scores=(isHex?benefitHex:benefitTracts).get(row?.id);
- const access=benefitProfile(scores,selection,benefitData.spec,isHex,schools,point,benefitSeries);
+ const access=benefitProfile(scores,selection,benefitData.spec,isHex,schools,point,benefitSeries,row);
  const f=flags(row,metadata.thresholds),t=metadata.thresholds;
- return `${access}<section class="metric-block"><div class="metric-label">Benchmark · Transit job access</div><div class="metric-value">${fmt(row?.jobs_total)}</div><div class="metric-unit">jobs reachable in 45 minutes · walk + transit</div><span class="badge ${f.strong_access?'benefit':''}">${flagLabel(f.strong_access,'Strong access','Not flagged as strong')}</span><p class="small">Strong access: &gt; ${fmt(t.strong_access_above)} jobs</p><dl class="components"><div><dt>Low wage · ≤ $1,250/month</dt><dd>${fmt(row?.jobs_low)}</dd></div><div><dt>Middle · $1,251–$3,333/month</dt><dd>${fmt(row?.jobs_middle)}</dd></div><div><dt>High wage · &gt; $3,333/month</dt><dd>${fmt(row?.jobs_high)}</dd></div></dl><p class="small">Wage groups are components of total access.</p></section>
+ const canScore=!!combinedData.spec.presets[selection.profile];
+ const assessment=canScore&&isHex?assessBenefits(combinedOrigins.get(row?.id),selection.profile,jobScenario(),combinedData.spec,benefitData.spec,selection.weights,point?schoolAssignment(schools,point):null):null;
+ const score=canScore?(isHex?combinedProfile(assessment,selection.profile,jobScenario(),!!selection.weights):tractCombinedProfile(tractAssessments.get(row?.id))):'';
+ return `${score}<details><summary>Destination and school detail</summary>${access}</details><details><summary>Earlier transit jobs benchmark</summary><section class="metric-block"><div class="metric-label">Benchmark · Transit job access</div><div class="metric-value">${fmt(row?.jobs_total)}</div><div class="metric-unit">jobs reachable in 45 minutes · walk + transit</div><span class="badge ${f.strong_access?'benefit':''}">${flagLabel(f.strong_access,'Strong access','Not flagged as strong')}</span><p class="small">Strong access: &gt; ${fmt(t.strong_access_above)} jobs</p><dl class="components"><div><dt>Low wage · ≤ $1,250/month</dt><dd>${fmt(row?.jobs_low)}</dd></div><div><dt>Middle · $1,251–$3,333/month</dt><dd>${fmt(row?.jobs_middle)}</dd></div><div><dt>High wage · &gt; $3,333/month</dt><dd>${fmt(row?.jobs_high)}</dd></div></dl><p class="small">Wage groups are components of total access. This earlier binary benchmark is separate from the combined benefits assessment.</p></section></details>
  <section class="metric-block"><div class="metric-label">Burden · Industrial air releases</div><div class="metric-value">${fmt(row?.rsei,1)}</div><div class="metric-unit">RSEI toxicity-weighted concentration · ToxConc</div><span class="badge ${f.elevated_burden?'burden':''}">${flagLabel(f.elevated_burden,'Elevated burden','Not flagged')}</span><p class="small">Elevated burden: ≥ ${fmt(t.elevated_rsei_at_least)}</p></section>
  ${trafficProfile(row,isHex)}
  <details><summary>Component detail &amp; interpretation</summary><dl class="components"><div><dt>Cancer-weighted concentration</dt><dd>${fmt(row?.rsei_cancer,1)}</dd></div><div><dt>Noncancer-weighted concentration</dt><dd>${fmt(row?.rsei_noncancer,1)}</dd></div><div><dt>RSEI model coverage</dt><dd>${finite(row?.rsei_coverage)?fmt(row.rsei_coverage*100,1)+'%':'Unavailable'}</dd></div></dl><p>Cancer and noncancer measures are separate diagnostics; do not add them to the total. No health or safety determination is made.</p><p>Access method: ${esc(row?.access_method||'Unavailable')}. RSEI: area-weighted ${isHex?'full hexagon':'city-clipped tract'} mean from the native EPA grid.</p><p>2023 jobs · June 2026 routing/transit snapshot · July 13 morning departures · 2022 RSEI v2.3.12. Values are rounded for display; flags use full precision.</p></details><button class="print">Print location profile</button>`;
@@ -42,7 +56,7 @@ function showHex(lon,lat,label,zoom=true,matchType=''){
  const boundary=h3.cellToBoundary(result.id);L.polygon(boundary,{color:'#243f50',weight:3,fillOpacity:.08,dashArray:result.row?null:'6 5',interactive:false}).addTo(selected);
  L.marker([lat,lon],{icon:L.divIcon({className:'',html:'<div class="selected-pin"></div>',iconSize:[14,14],iconAnchor:[7,7]}),interactive:false,keyboard:false}).addTo(selected);
  let note=!result.inCity?'Outside the Austin study boundary. No project flags are assigned.':!result.row?'No access origin is available for this hexagon. Component values and flags are unavailable.':null;
- profileFrame(label,'Hexagon profile',`<p class="id">H8 · ${esc(result.id)}</p><p class="small">${lat.toFixed(6)}, ${lon.toFixed(6)}${matchType?' · Locator match: '+esc(matchType):''}</p><p class="small">${result.tract?'Tract '+esc(result.tract.id)+' · approximate boundary lookup':result.inCity?'Tract context unavailable near boundary':'Outside study area'}</p>${note?`<p class="notice">${note}</p>`:''}${values(result.row,true,result.inCity?[lon,lat]:null)}<p class="small">These values describe the containing hexagon, not the parcel. Selected cell is outlined in dark blue.</p>`);
+ profileFrame(label,'Hexagon profile',`<p class="id">H8 · ${esc(result.id)}</p><p class="small">${lat.toFixed(6)}, ${lon.toFixed(6)}${matchType?' · Locator match: '+esc(matchType):''}</p><p class="small">${result.tract?'Tract '+esc(result.tract.id)+' · approximate boundary lookup':result.inCity?'Tract context unavailable near boundary':'Outside study area'}</p>${note?`<p class="notice">${note}</p>`:''}${values(result.row,true,result.inCity?[lon,lat]:null)}<p class="small">Access describes the containing hexagon. Elementary assignment uses the selected point; map scores use each hexagon’s origin, so school-boundary locations may differ. Selected cell is outlined in dark blue.</p>`);
  refreshProfile=()=>showHex(lon,lat,label,false,matchType);
  enablePrint();status(note||'Hexagon selected. The profile shows its component values and flags.',!!note);
  if(zoom)map.setView([lat,lon],14,{animate:false});
@@ -56,6 +70,11 @@ function showTract(feature,latlng){
  if(window.innerWidth<=700)$('profile').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function style(row){
+ if(dimension==='benefits' && combinedView()){
+   const tract=tractAssessments.has(row.id);
+   return combinedStyle(tract?tractAssessments.get(row.id):assessments.get(row.id),selection.display,tract);
+ }
+
  if(dimension==='burdens' && burdenMeasure!=='rsei'){
    return {fillColor:trafficColor(row,burdenMeasure),fillOpacity:.79,color:'#fff',weight:.7};
  }
@@ -73,7 +92,7 @@ function renderMap(){
  const traffic=dimension==='burdens' && burdenMeasure!=='rsei';
  $('burden-controls').hidden=dimension!=='burdens';
  for(const view of ['benefits','burdens','combined'])$(view).setAttribute('aria-pressed',String(dimension===view));
- $('legend-title').textContent=combined?'Benefits + burdens':benefit?'Job access':'Industrial air releases';
+ $('legend-title').textContent=combined?'Earlier jobs + air flags':benefit?'Job access':'Industrial air releases';
  $('legend-rule').textContent=combined?`Strong access: > ${fmt(t.strong_access_above)} jobs · Elevated burden: RSEI ≥ ${fmt(t.elevated_rsei_at_least)}`:
    benefit?`Strong access: > ${fmt(t.strong_access_above)} jobs within 45 minutes`:`Elevated burden: RSEI ≥ ${fmt(t.elevated_rsei_at_least)}`;
  if(traffic){
@@ -88,6 +107,16 @@ function renderMap(){
    const rows=isHex?[...hexes.values()]:tracts.features.map(f=>f.properties);
    const available=rows.filter(row=>finite(row[burdenMeasure])).length;
    $('map-count').textContent=`${available} of ${rows.length} ${isHex?'hexagons':'tracts'} with values${isHex?'':' · means over covered H8 area'}`;
+ }else if(benefit && combinedView()){
+   const isHex=$('hex-mode').checked,minimums=selection.display==='minimums';
+   $('legend-title').textContent=minimums?(isHex?'Minimum status':'Residents meeting all minimums'):'Combined benefits score';
+   $('legend-rule').textContent=profileLabels[selection.profile]+' · '+modeLabels[selection.mode]+' · '+selection.minutes+' minutes'+(selection.mode==='drive'&&selection.jobSensitivity?' · jobs: 30-minute sensitivity':'');
+   $('legend').innerHTML=minimums&&isHex?Object.entries(statusLabels).map(([key,label])=>`<div class="legend-row"><span class="swatch" style="background:${statusColors[key]}"></span>${label}</div>`).join(''):
+     `<div class="score-gradient" aria-label="Continuous scale from 0 to 100"></div><div class="gradient-labels"><span>0${minimums?'%':''}</span><span>50${minimums?'%':''}</span><span>100${minimums?'%':''}</span></div>`+
+     (isHex?'<p class="small">Orange dashed outline: below a minimum. Gray: incomplete. Color shows the score; it does not establish that minimums are met.</p>':'<p class="small">Tract means use complete locations only. Inspect a tract for complete, below-minimum and missing-data shares.</p>');
+   const results=[...assessments.values()],counts={meets:0,below:0,incomplete:0};
+   for(const a of results)counts[a.status]++;
+   $('map-count').textContent=isHex?`${counts.meets} meet all minimums · ${counts.below} below · ${counts.incomplete} incomplete hexagons`:'Population summaries over covered areas; no minimum is applied to a tract average.';
  }else if(benefit && selection.display!=='jobs'){
    const diff=selection.display==='difference', n=benefitData.spec.profiles[selection.profile].length;
    $('legend-title').textContent=diff?'Profile compared with all eight types':profileLabels[selection.profile];
@@ -109,7 +138,7 @@ function renderMap(){
  }
  $('legend').classList.toggle('combined-legend',combined);
  const filledHex=traffic || (benefit && selection.display!=='jobs');
- tractLayer.setStyle(f=>style(f.properties));hexLayer.setStyle(f=>({...style(f.properties),fillOpacity:filledHex ? .88 : .12,color:'#526f7d',weight:.7}));
+ tractLayer.setStyle(f=>style(f.properties));hexLayer.setStyle(f=>({...style(f.properties),fillOpacity:filledHex ? .88 : .12}));
  if($('hex-mode').checked){if(!map.hasLayer(hexLayer))hexLayer.addTo(map);tractLayer.setStyle({fillOpacity:filledHex?0:.35});}
  else if(map.hasLayer(hexLayer))map.removeLayer(hexLayer);
  selected.bringToFront();
@@ -131,9 +160,14 @@ async function runSearch(e){
 async function init(){
  for(const b of document.querySelectorAll('.explorer button,.explorer input'))b.disabled=true;
  try{
-  const data=await Promise.all(['metadata.json','hexagons.json','tracts.geojson','city.geojson','benefits.json','school-zones.geojson'].map(async f=>{const r=await fetch('assets/'+f+'?v='+DATA_VERSION);if(!r.ok)throw Error('Could not load '+f);return r.json();}));
+  const data=await Promise.all(['metadata.json','hexagons.json','tracts.geojson','city.geojson','benefits.json','school-zones.geojson','combined-benefits.json'].map(async f=>{const r=await fetch('assets/'+f+'?v='+DATA_VERSION);if(!r.ok)throw Error('Could not load '+f);return r.json();}));
   [metadata,,tracts,city]=data;hexes=new Map(data[1].map(r=>[r.id,r]));
-  benefitData=data[4];schools=data[5];
+  benefitData=data[4];schools=data[5];combinedData=data[6];
+  combinedOrigins=new Map(columnRows(combinedData.origins).map(r=>[r.id,r]));
+  if(combinedData.schema_version!==1||combinedOrigins.size!==hexes.size||[...hexes.keys()].some(id=>!combinedOrigins.has(id)))throw Error('Combined benefit geography mismatch');
+  tractCoverage=new Map(columnRows(combinedData.tracts).map(r=>[r.id,r]));tractWeights=new Map();
+  for(const r of columnRows(combinedData.tract_weights)){if(!tractWeights.has(r.tract_id))tractWeights.set(r.tract_id,[]);tractWeights.get(r.tract_id).push(r);}
+  refreshAssessments();
   benefitHex=new Map(records(benefitData.hex));benefitTracts=new Map(records(benefitData.tract));
   benefitSeries=benefitData.series.field.map((key,i)=>Object.fromEntries(Object.entries(benefitData.series).map(([name,col])=>[name,col[i]])));
   if([...hexes.keys()].some(id=>!benefitHex.has(id))||tracts.features.some(f=>!benefitTracts.has(f.properties.id)))throw Error('Benefit geography mismatch');
@@ -171,24 +205,59 @@ async function init(){
 }
 function setupBenefitControls(){
  const spec=benefitData.spec;
- for(const [key,label] of Object.entries(profileLabels))$('basket').add(new Option(label,key));
+ for(const [key,label] of Object.entries(profileLabels))$('basket').add(new Option(key==='supportive'?'Adult PSH—provisional':label,key));
+ $('basket').value=selection.profile;
  function setBudget(){
    $('time-budget').replaceChildren(...spec.budgets[selection.mode].map(v=>new Option(v+' min',v)));
    selection.minutes=spec.defaults[selection.mode];$('time-budget').value=selection.minutes;
+ }
+ function weightsUI(){
+   const preset=combinedData.spec.presets[selection.profile],raw=selection.weights||preset;
+   $('weights-section').hidden=!preset;
+   if(!preset)return;
+   const normalized=normalizedWeights(selection.profile,raw,combinedData.spec);
+   for(const k of ['destinations','jobs','education']){
+     const input=$('weight-'+k);input.value=raw[k]||0;input.disabled=!requiredDomains(selection.profile).includes(k);
+     $('effective-'+k).textContent=normalized&&k in normalized?fmt(100*normalized[k],1)+'%':'0%';
+   }
+   $('weights-label').textContent=selection.weights?'Custom weights':'Preset weights';
+   $('weight-error').hidden=!!normalized;
  }
  function note(){
    const names=spec.profiles[selection.profile].map(key=>spec.destinations[key]);
    $('group-note').textContent=names.join(' · ')+(selection.profile==='supportive'?'. Partial service inventory.':'')+
      (selection.mode==='walk_transit'?' · Provisional morning transit coverage.':'');
+   $('time-budget-label').hidden=combinedView();
+   $('budget-note').hidden=!combinedView();
+   $('budget-note').textContent=`Destinations and jobs: ${spec.defaults[selection.mode]} minutes ${modeLabels[selection.mode].toLowerCase()}.`;
+   $('job-sensitivity-label').hidden=selection.mode!=='drive'||!combinedView();
  }
  function update(){
-   dimension='benefits';note();renderMap();if(refreshProfile)refreshProfile();
+   dimension='benefits';note();weightsUI();refreshAssessments();renderMap();if(refreshProfile)refreshProfile();
  }
- $('basket').addEventListener('change',e=>{selection.profile=e.target.value;update();});
+ $('basket').addEventListener('change',e=>{
+   selection.profile=e.target.value;selection.weights=null;
+   if(selection.profile==='general'&&combinedView()){selection.display='count';$('benefit-display').value='count';}
+   update();
+ });
  $('travel-mode').addEventListener('change',e=>{selection.mode=e.target.value;setBudget();update();});
  $('time-budget').addEventListener('change',e=>{selection.minutes=Number(e.target.value);update();});
- $('benefit-display').addEventListener('change',e=>{selection.display=e.target.value;update();});
- setBudget();note();
+ $('benefit-display').addEventListener('change',e=>{
+   selection.display=e.target.value;
+   if(combinedView()){
+     if(selection.profile==='general'){selection.profile='families';$('basket').value='families';selection.weights=null;}
+     setBudget();
+   }
+   update();
+ });
+ $('job-sensitivity').addEventListener('change',e=>{selection.jobSensitivity=e.target.checked;update();});
+ for(const k of ['destinations','jobs','education'])$('weight-'+k).addEventListener('change',()=>{
+   selection.weights=Object.fromEntries(['destinations','jobs','education'].map(n=>{
+     const value=Number($('weight-'+n).value);return [n,Number.isFinite(value)?Math.max(0,Math.min(100,value)):0];
+   }));update();
+ });
+ $('reset-weights').addEventListener('click',()=>{selection.weights=null;update();});
+ setBudget();weightsUI();note();
 }
 $('about-open').addEventListener('click',()=>$('about').showModal());$('about-close').addEventListener('click',()=>$('about').close());
 init();
