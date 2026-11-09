@@ -1,8 +1,8 @@
 import {finite, flags, combination, locate, candidates, escapeHTML as esc} from './logic.mjs?v=5e51a77bd6e5';
-import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile} from './benefits.mjs?v=94ce407254d9';
+import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile} from './benefits.mjs?v=a1cd430e8a88';
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
 const selection={profile:'general',mode:'walk_transit',minutes:30,display:'count'};
-const DATA_VERSION='ee379922ca8b';
+const DATA_VERSION='521fee41ab86';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 const combinedClasses={
  both:{color:'#8066a9',label:'Both flags'},
