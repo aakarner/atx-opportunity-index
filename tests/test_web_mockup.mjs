@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
-import {flags,combination,contains,locate,candidates,escapeHTML} from '../site/logic.mjs';
+import {flags,combination,contains,locate,candidates,trafficScales,trafficColor,escapeHTML} from '../site/logic.mjs';
 const require=createRequire(import.meta.url),h3=require('../site/vendor/h3-js.umd.js');
 const read=f=>JSON.parse(readFileSync(new URL('../site/assets/'+f,import.meta.url)));
 const meta=read('metadata.json'), rows=read('hexagons.json'), tracts=read('tracts.geojson'),city=read('city.geojson'),hexes=new Map(rows.map(r=>[r.id,r]));
@@ -37,6 +37,27 @@ assert.equal(Object.values(combinedCounts).reduce((a,b)=>a+b,0),meta.counts.trac
 const dogsHead=locate(-97.66219,30.24908,city,tracts,hexes,h3);
 assert.ok(dogsHead.inCity && dogsHead.row && dogsHead.tract,'Dog’s Head must have a city, hex, and tract profile');
 assert.equal(city.features[0].properties.boundary_sha256,meta.boundary.sha256);
+assert.ok(Number.isFinite(dogsHead.row.traffic_distance_ft));
+assert.equal(meta.traffic.buffer_m,300);
+assert.equal(meta.traffic.threshold_operator,'>');
+for(const row of rows){
+ assert.ok(row.traffic_distance_ft>=0);
+ assert.ok(row.traffic_buffer_share>=0 && row.traffic_buffer_share<=1);
+}
+for(const feature of tracts.features){
+ const row=feature.properties;
+ assert.ok(row.traffic_coverage_share>=0 && row.traffic_coverage_share<=1);
+ if(row.traffic_coverage_share===0){assert.equal(row.traffic_distance_ft,null);assert.equal(row.traffic_buffer_share,null);}
+}
+assert.equal(trafficColor({},'traffic_distance_ft'),'#a8b4be');
+assert.equal(trafficColor({traffic_buffer_share:null},'traffic_buffer_share'),'#a8b4be');
+assert.equal(trafficColor({traffic_buffer_share:0},'traffic_buffer_share'),trafficScales.traffic_buffer_share.colors[0]);
+assert.equal(trafficColor({traffic_buffer_share:.25},'traffic_buffer_share'),trafficScales.traffic_buffer_share.colors[2]);
+assert.equal(trafficColor({traffic_buffer_share:1},'traffic_buffer_share'),trafficScales.traffic_buffer_share.colors[4]);
+assert.equal(trafficColor({traffic_distance_ft:499.9},'traffic_distance_ft'),trafficScales.traffic_distance_ft.colors[0]);
+assert.equal(trafficColor({traffic_distance_ft:500},'traffic_distance_ft'),trafficScales.traffic_distance_ft.colors[1]);
+assert.equal(trafficColor({traffic_distance_ft:5000},'traffic_distance_ft'),trafficScales.traffic_distance_ft.colors[4]);
+console.log('Traffic map checks passed: ranges, Dog’s Head, missing tracts, zero overlap and legend boundaries.');
 console.log('Combined classifications passed: four combinations, missingness, cutoff equality, and tract totals.');
 
 const {records,scoreValue,basketColor,benefitProfile}=await import('../site/benefits.mjs');

@@ -6,6 +6,7 @@ inputs:
   flood: data/processed/flood_hazard/austin_fema_floodplain.gpkg
   crashes: data/processed/crash_injuries/austin_open_data_ksi_crashes.gpkg
   sites: config/example_sites.csv
+  traffic: scripts/aadt/aadt_metrics.csv
 output_dir: output/components
 geography:
   equal_area_crs: 5070

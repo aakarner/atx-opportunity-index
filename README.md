@@ -31,8 +31,9 @@ cached sources. See
 ## Current scope
 
 - **Benefits:** driving and transit access to essential destinations and jobs, trial resident-specific baskets, and AISD assigned-school academic growth. See [the benefits review](output/components/benefits/review.html) and [methods](docs/benefits.md).
-- **Burdens:** mapped FEMA floodplain overlap, recorded severe-crash density, and
-  EPA RSEI modeled industrial air-toxic concentration. Heat, traffic pollution, and improved City flood measures
+- **Burdens:** mapped FEMA floodplain overlap, recorded severe-crash density,
+  EPA RSEI modeled industrial air-toxic concentration, and H8 traffic proximity
+  (road distance and 300-meter buffer coverage). Heat and improved City flood measures
   are pending.
 - **Context:** selected tract demographic, housing, and displacement attributes.
 - **Outputs:** tract component maps and three editable site examples. Site

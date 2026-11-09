@@ -8,6 +8,8 @@ web_component_rows <- function(x, geography, spec) {
     jobs_total=x[[fields[1]]], jobs_low=x[[fields[2]]], jobs_middle=x[[fields[3]]], jobs_high=x[[fields[4]]],
     rsei=x$rsei_tox_conc, rsei_cancer=x$rsei_cancer_tox_conc, rsei_noncancer=x$rsei_noncancer_tox_conc,
     rsei_coverage=x$rsei_coverage_share,
+    traffic_distance_ft=x$traffic_distance_ft, traffic_buffer_share=x$traffic_buffer_share,
+    traffic_coverage_share=if(is_hex) as.numeric(is.finite(x$traffic_distance_ft) & is.finite(x$traffic_buffer_share)) else x$traffic_coverage_share,
     access_method=if(is_hex) "H8 origin estimate" else x$access_aggregation_method,
     stringsAsFactors=FALSE)
   flags <- classify_mockup(out$jobs_total, out$rsei, spec)
@@ -17,7 +19,7 @@ web_component_rows <- function(x, geography, spec) {
   out
 }
 
-write_web_mockup_data <- function(h8, tracts, city, classification_spec, directory="site/assets") {
+write_web_mockup_data <- function(h8, tracts, city, classification_spec, directory="site/assets", traffic_metadata=NULL) {
   dir.create(directory, recursive=TRUE, showWarnings=FALSE)
   spec <- classification_spec$mockup
   validate_mockup_spec(spec)
@@ -32,6 +34,11 @@ write_web_mockup_data <- function(h8, tracts, city, classification_spec, directo
     jobs_year=unique(h8$jobs_year), network_snapshot=unique(h8$network_snapshot),
     gtfs_snapshot=unique(h8$gtfs_snapshot), departure_datetime=unique(as.character(h8$departure_datetime)),
     rsei_year=unique(h8$rsei_year), rsei_version=unique(h8$rsei_version),
+    traffic=list(source="TxDOT AADT", extract_dates=traffic_metadata$source_extract_dates,
+      threshold_aadt=50000, threshold_operator=">", buffer_m=300,
+      distance_units="feet", overlap_units="fraction",
+      tract_method="Area-weighted H8 means over covered tract area",
+      coverage="Share of tract area represented by H8 cells with both measurements"),
     counts=list(hexagons=nrow(hex), tracts=nrow(tract),
       strong_hex=sum(hex$strong_access,na.rm=TRUE), elevated_hex=sum(hex$elevated_burden,na.rm=TRUE),
       both_hex=sum(hex$strong_access & hex$elevated_burden,na.rm=TRUE),

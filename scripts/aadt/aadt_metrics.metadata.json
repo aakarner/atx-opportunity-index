@@ -1,0 +1,32 @@
+{
+  "h3_resolution": 8,
+  "cell_count": 1029,
+  "cell_selection": "H3 centers within shared municipal boundary",
+  "measurement_crs": 26914,
+  "distance_origin": "Canonical H3 cell center",
+  "threshold": "AADT_CUR > 50000",
+  "buffer_m": 300,
+  "buffer_end_caps": "ROUND",
+  "overlap_scale": "fraction 0 to 1",
+  "overlap_denominator": "Full H3 cell area",
+  "road_geometry": "Full source features, including outside city",
+  "source_url": "https://services.arcgis.com/KTcxiTD9dsQw4r7Z/arcgis/rest/services/TxDOT_AADT/FeatureServer/0",
+  "source_retrieved_utc": "2026-11-09 17:57:18 UTC",
+  "source_extract_dates": "11-01-2026",
+  "traffic_observation_year": "Not supplied by AADT_CUR; EXT_DATE is the source extraction date",
+  "boundary_snapshot": "2026-10-19",
+  "boundary_sha256": "4014001aff7acdf05f8126814998e53a72b0deb3e60caa72e217e2f226a5c4a0",
+  "road_search_padding_m": 20000,
+  "nearest_road_extent_check_passed": true,
+  "high_volume_road_features": 439,
+  "distance_range_ft": [1.20996347723168, 26087.5433614981],
+  "overlap_range": [0, 0.975164653205589],
+  "zero_overlap_cells": 717,
+  "missing_data_note": "Coverage check verifies the query, not completeness of TxDOT traffic observations",
+  "output_sha256": {
+    "aadt_metrics_hex8.gpkg": "ec326a20c2e6696ae50b7ef94f938776f315f914df8d98b281817b28266a40d2",
+    "aadt_metrics.csv": "580c45b6ee36cdd99b3558254fea3f222a152130f3c3b6e4b89e32267b06a18a",
+    "austin_city_limits.gpkg": "2ad749fab9a4f23b613ceebc9159f58a3f16f13875c317ea3d55cf6c32951dc1",
+    "hex_8_full.gpkg": "cc3592e983e88a67cf550ff654033c3484a508705a0e6b3553e328dd612b38cf"
+  }
+}

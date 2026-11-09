@@ -69,6 +69,7 @@ data/
 /_targets/
 /.R-library/
 !config/*.csv
+!scripts/aadt/aadt_metrics.csv
 
 # Generated browser basemap configuration; included only in the Pages artifact.
 /site/assets/basemap.json

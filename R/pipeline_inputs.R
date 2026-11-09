@@ -20,7 +20,7 @@ require_spatial <- function(x, label) {
 
 read_pipeline_config <- function(path) {
   cfg <- yaml::read_yaml(path)
-  required <- c("jobs", "schools", "flood", "crashes", "sites")
+  required <- c("jobs", "schools", "flood", "crashes", "sites", "traffic")
   if (!all(required %in% names(cfg$inputs))) stop("Incomplete pipeline input configuration.")
   if (!identical(cfg$geography$h3_resolution, 8L)) stop("This migration supports H8 origins only.")
   if (cfg$geography$equal_area_crs != 5070) stop("Area and distance calculations require EPSG:5070.")

@@ -177,7 +177,18 @@ health threshold is applied. Source integrity, provenance, and spatial coverage
 are checked. See [docs/rsei.md](docs/rsei.md) for the source contract, interpretation,
 outputs, and the separate candidate-classification review.
 
-**Incomplete components.** Heat, traffic pollution,
+**Traffic proximity.** `inputs.traffic` points to the corrected H8 CSV. Its
+metadata checksum, municipal boundary, measurement settings, and exact H8 IDs
+are validated before joining. Run `Rscript scripts/aadt/aadt_read.R` to rebuild
+the prepared source. Both measurements enter H8 exports and site profiles.
+Tracts use intersection-area-weighted H8 means over the covered area, with
+coverage reported separately. No-coverage tracts retain missing values. Buffer
+fractions are full-H8 measurements averaged to tracts, so these are approximate
+spatial summaries. The map's Burdens selector exposes distance and buffer
+coverage separately. Its combined classification uses the existing RSEI rule.
+See [traffic methods](scripts/aadt/README.md).
+
+**Incomplete components.** Heat,
 pedestrian barriers, improved City flood measures, other destinations, and
 driving access remain incomplete. Missing components never count as zero burden
 or a passed screen. The pipeline does not create composite scores, clusters,

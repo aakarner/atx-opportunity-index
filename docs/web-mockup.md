@@ -109,3 +109,14 @@ The Benefits tab opens on all eight destination types at 30 minutes by transit a
 Boundary updates follow `docs/municipal-boundary.md`. The publisher versions all
 six data requests together with the app so returning visitors load the updated
 footprint and its matching measures.
+
+## Traffic layers
+
+Under Burdens, select industrial air releases, traffic distance, or traffic
+buffer coverage. Traffic uses the corrected H8 source described in
+`scripts/aadt/README.md`. The pipeline adds `traffic_distance_ft`,
+`traffic_buffer_share`, and `traffic_coverage_share` to the public geography
+assets. Both measurements appear in profiles. Tract profiles identify the
+represented area, and uncovered tracts display Unavailable. The hexagon toggle
+shows the underlying H8 surface. Legend ranges are descriptive display bins.
+The Combined tab uses the transit-job and RSEI flags.
