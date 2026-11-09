@@ -2,7 +2,8 @@
 dam_files <- function(root) {
   if (!nzchar(root)) stop("Set DAM_DATA_DIR to the dated DAM snapshot directory.")
   paths <- c(manifest="manifest.json", results="accessibility/accessibility_results.csv",
-             dictionary="accessibility/measure_dictionary.csv", population="demographics/h3_population_counts.csv")
+             dictionary="accessibility/measure_dictionary.csv", population="demographics/h3_population_counts.csv",
+             acs_population="demographics/acs2024_block_groups.csv", population_crosswalk="demographics/block_group_h8_crosswalk.csv")
   setNames(normalizePath(file.path(root, paths), mustWork=TRUE), names(paths))
 }
 
@@ -28,6 +29,22 @@ read_benefit_inputs <- function(files, spec, ids) {
   results <- results[results$h3_id %in% ids,]
   pop <- readr::read_csv(files[["h3_population_counts.csv"]], col_types=readr::cols(h3_id="c"), show_col_types=FALSE)
   stopifnot(setequal(results$h3_id, ids), !anyDuplicated(pop$h3_id), all(ids %in% pop$h3_id))
+  acs <- readr::read_csv(files[["acs2024_block_groups.csv"]], col_types=readr::cols(geoid="c"),show_col_types=FALSE)
+  cw <- readr::read_csv(files[["block_group_h8_crosswalk.csv"]], col_types=readr::cols(bg_geoid="c",h3_id="c"),show_col_types=FALSE)
+  # Austin and metro rows partition the cells; include BOTH. Reconcile the
+  # existing total-population allocation before applying it to children.
+  stopifnot(!anyDuplicated(cw[c("bg_geoid","h3_id")]), !anyDuplicated(acs$geoid),
+    all(cw$bg_geoid %in% acs$geoid), all(is.finite(cw$pop_weight) & cw$pop_weight>=0))
+  totals <- cw |> dplyr::group_by(bg_geoid) |> dplyr::summarise(weight=sum(pop_weight),.groups="drop")
+  stopifnot(all(abs(totals$weight-1)<1e-5))
+  allocated <- cw |> dplyr::left_join(acs[c("geoid","total_population","children_under_18")],by=c("bg_geoid"="geoid")) |>
+    dplyr::group_by(h3_id) |> dplyr::summarise(total_check=sum(total_population*pop_weight),
+      children_under_18=sum(children_under_18*pop_weight),.groups="drop")
+  pop <- dplyr::left_join(pop,allocated,by="h3_id",relationship="one-to-one")
+  stopifnot(identical(is.na(pop$total_population),is.na(pop$total_check)),
+    all(abs(pop$total_population-pop$total_check)<1e-5,na.rm=TRUE),
+    all(pop$children_under_18<=pop$total_population+1e-5,na.rm=TRUE))
+  pop$total_check <- NULL
   list(results=results, series=series, population=pop[match(ids,pop$h3_id),], ids=ids)
 }
 
@@ -165,16 +182,22 @@ write_benefit_review <- function(data, tract, inputs, spec, h8, tracts, sites, d
     csv(data$series,"measure-dictionary.csv"),csv(dplyr::bind_rows(destination_coverage),"destination-coverage.csv"))
 }
 
-write_benefit_assets <- function(data,tract,spec,zones,directory="site/assets") {
+write_benefit_assets <- function(data,tract,spec,zones,directory="site/assets",coverage=NULL) {
   dir.create(directory,recursive=TRUE,showWarnings=FALSE)
   schools <- dplyr::bind_rows(lapply(zones,function(z) {
-    sf::st_transform(z[c("school_level","campus_id","campus_name","usable_growth","score_status")],4326)
+    sf::st_transform(z[c("school_level","campus_id","campus_name","district_name","usable_growth","score_status",
+      "subgroup_growth","subgroup_status","minimum_growth_tests","assignment_school_year","growth_school_year",
+      "source_layer_label","boundary_year_basis")],4326)
   }))
   schools_file <- file.path(directory,"school-zones.geojson")
   sf::st_write(schools,schools_file,driver="GeoJSON",delete_dsn=TRUE,quiet=TRUE,layer_options="COORDINATE_PRECISION=7")
   # Column-oriented JSON keeps field names from being repeated for each origin.
   path <- file.path(directory,"benefits.json")
+  spec$education <- list(level="elementary",assignment_year="2026-27",growth_year="2025-26",
+    districts=c("Austin","Round Rock","Pflugerville","Del Valle","Manor"),
+    coverage=if(is.null(coverage)) NULL else coverage$summary)
   jsonlite::write_json(list(spec=spec,series=data$series,
+    education_origins=if(is.null(coverage)) NULL else coverage$origins[c("site_id","campus_id","overall","subgroup","status")],
     hex=dplyr::left_join(data$raw,data$scores,by="id"),tract=tract),path,dataframe="columns",
     digits=NA,auto_unbox=TRUE,na="null",null="null")
   c(path,schools_file)
@@ -220,7 +243,7 @@ write_benefit_brief <- function(files,spec,tract,site_profiles) {
     '<style>body{font:16px/1.55 system-ui;color:#233d46;margin:3rem auto;max-width:850px;padding:0 1rem}h1,h2{line-height:1.2}h2{margin-top:2rem}th,td{padding:.4rem .65rem;border-bottom:1px solid #ddd;text-align:left}th{background:#eef4ef}.table-scroll{overflow:auto}table{border-collapse:collapse;font-size:.9rem}a{color:#155e52}small{color:#52666b}</style><main>',
     paste0('<small>Housing siting research · DAM release ',spec$snapshot,'</small><h1>Which everyday destinations can a resident reach?</h1>'),
     '<p>Compare a proposed address under separate driving and transit scenarios. Count one point per destination type within the trial time budget. Use the component list to see which trip a resident would still need to make. Jobs and assigned-school growth are separate benefits.</p>',
-    '<h2>Three example locations</h2><p>Each cell is a count of reachable types. Driving and transit use the trial defaults shown below. The school column uses the example address and the 2025–26 AISD assignment.</p>',report_html_table(examples),
+    '<h2>Three example locations</h2><p>Each cell is a count of reachable types. Driving and transit use the trial defaults shown below. The school column uses the current published elementary assignment at the example address. Austin, Round Rock, Pflugerville, Del Valle and Manor are integrated.</p>',report_html_table(examples),
     '<h2>Choosing a time budget</h2><p>The rows below count H8 origins. As the budget rises, more sites tie. At 15 minutes driving all three examples reach every family destination. At 30 minutes by transit the family basket distinguishes all three. At 45 minutes the South and East Austin examples tie as the South Austin library trip enters the budget.</p>',
     report_html_table(budget),
     '<h2>Which destinations drive the count?</h2><p>Share of modeled origins reaching each type at the trial default. A higher count of eligible facilities does not establish availability of a slot, appointment or program.</p>',

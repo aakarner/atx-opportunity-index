@@ -1,0 +1,27 @@
+# Confirmed prototype choices and explicitly identified sensitivity scenarios.
+assignment_year: '2026-27'
+growth_year: '2025-26'
+accountability_year: 2026
+inputs:
+  school_zones: data/processed/school_indicators/elementary_growth_assignments_2026_27.gpkg
+  school_subgroups: data/processed/school_indicators/expanded_subgroup_comparison_2026.csv
+  boundary_manifest: data/raw/elementary_boundaries/2026_27/source_manifest.json
+levels: [elementary]
+school_level_weights: {elementary: 1}
+subgroup_minimum_tests: [1, 10, 20, 30]
+presets:
+  families: {destinations: 1, education: 1, jobs: 1}
+  older: {destinations: 75, education: 0, jobs: 25}
+  single: {destinations: 40, education: 0, jobs: 60}
+# PSH weights remain discussion scenarios.
+psh_scenarios:
+  services_emphasis: {destinations: 75, education: 0, jobs: 25}
+  equal: {destinations: 50, education: 0, jobs: 50}
+transit:
+  minutes: 45
+  full_credit_jobs: 50000
+driving:
+  minutes: [15, 30]
+  candidate_full_credit_jobs: [50000, 100000, 150000, 200000, 250000, 300000, 500000, 750000, 1000000, 1250000]
+# Analytical sensitivities, awaiting a decision on the minimum and its consequence.
+candidate_domain_floors: [0.5, 0.6, 0.7]

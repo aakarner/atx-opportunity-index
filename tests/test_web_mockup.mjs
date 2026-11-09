@@ -61,10 +61,28 @@ assert.equal(scoreValue(south,selection),3);
 assert.equal(south.walk_transit_30_park,1); // Exactly 30 minutes counts.
 const schoolProfile=benefitProfile(south,selection,benefits.spec,true,schools,[-97.780280,30.167870],[]);
 assert.match(schoolProfile,/BLAZIER EL/);assert.match(schoolProfile,/Paired accountability record/);
-assert.match(benefitProfile(south,selection,benefits.spec,true,schools,[-96.8,32.8],[]),/Outside available AISD/);
+assert.match(benefitProfile(south,selection,benefits.spec,true,schools,[-96.8,32.8],[]),/Outside available elementary/);
 for(const [,row] of benefitTracts){
  if(!row.resident_weight)assert.equal(row.walk_transit_30_general,null);
  assert.ok(row.area_coverage>=0 && row.area_coverage<=1);
 }
 assert.equal(basketColor({},selection,benefits.spec),'#a8b4be');
 console.log('Benefit checks passed: complete profile sums, inclusive thresholds, geography, schools and unavailable tracts.');
+
+// Compare browser point assignment with independently exported sf assignments.
+const {schoolAssignment}=await import('../site/benefits.mjs');
+assert.ok(schools.features.every(f=>f.properties.school_level==='elementary'));
+assert.deepEqual([...new Set(schools.features.map(f=>f.properties.district_name))].sort(),['Austin ISD','Del Valle ISD','Manor ISD','Pflugerville ISD','Round Rock ISD']);
+const education=benefits.education_origins;
+assert.equal(education.site_id.length,rows.length);
+for(let i=0;i<education.site_id.length;i++){
+ const [lat,lon]=h3.cellToLatLng(education.site_id[i]);
+ const actual=schoolAssignment(schools,[lon,lat]);
+ assert.equal(actual.status,education.status[i],education.site_id[i]);
+ assert.equal(actual.campus_id??null,education.campus_id[i]);
+ assert.equal(actual.usable_growth??null,education.overall[i]);
+ assert.equal(actual.subgroup_growth??null,education.subgroup[i]);
+}
+assert.ok(!schoolProfile.includes('Assigned schools · AISD'));
+assert.match(schoolProfile,/Under 18/);
+console.log('Elementary-only browser assignment matches sf at every H8 origin; both growth measures and child coverage verified.');

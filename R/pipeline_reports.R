@@ -104,7 +104,7 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
     zone
   })
   schools <- do.call(rbind, school_panels)
-  schools$level <- factor(schools$level, levels = c("Elementary", "Middle", "High"))
+  schools$level <- factor(schools$level, levels = tools::toTitleCase(names(school_zones)))
   outlines <- do.call(rbind, lapply(levels(schools$level), function(level) {
     sf::st_sf(level = factor(level, levels = levels(schools$level)), geometry = boundary)
   }))
@@ -117,11 +117,11 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
                                  name = "Campus academic growth score (0–100)") +
     ggplot2::guides(fill = ggplot2::guide_colourbar(barwidth = grid::unit(11, "cm"),
                                                   title.position = "top")) +
-    ggplot2::labs(title = "Assigned-school academic growth · AISD only",
+    ggplot2::labs(title = "Assigned elementary-school academic growth · five districts",
       subtitle = paste0("Attendance zones: ", school_spec$assignment_year, " · growth: ", school_spec$growth_year,
                          " · TEA ", school_spec$accountability_year, " accountability release · clipped to Austin"),
-      caption = paste("Campus-wide descriptive growth scores; not causal estimates of school effectiveness. Other districts are not yet integrated.",
-                      "Grey = unavailable or excluded score. Near-white = outside the mapped AISD assignment coverage; outline = Austin.", sep = "\n"))
+      caption = paste("Campus-wide descriptive growth scores; not causal estimates of school effectiveness. Austin, Round Rock, Pflugerville, Del Valle and Manor are integrated.",
+                      "Grey = unavailable or excluded score. Near-white = outside the mapped elementary assignment coverage; outline = Austin.", sep = "\n"))
   school_path <- file.path(map_dir, "aisd_school_growth.png")
   ggplot2::ggsave(school_path, p, width = max(width, 12), height = height, dpi = dpi, bg = "white")
   paths <- c(paths, aisd_school_growth = school_path)
@@ -202,7 +202,7 @@ write_review_report <- function(site_profiles, registry, manifest, qa, maps, out
                                 job_spec, school_spec, crash_spec) {
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
   map_titles <- c(low_wage_jobs = "Transit access to low-wage jobs", fema_floodplain = "FEMA floodplain overlap",
-                  ksi_crashes = "Recorded fatal and serious-injury crashes", aisd_school_growth = "AISD assigned-school growth",
+                  ksi_crashes = "Recorded fatal and serious-injury crashes", aisd_school_growth = "Assigned elementary-school growth",
                   example_locations = "Illustrative screening locations")
   map_html <- vapply(maps, function(path) {
     # All current maps are generated inside this report's maps/ directory.
@@ -247,7 +247,7 @@ a{color:#075a75}p{max-width:960px}.kicker{font-size:.85rem;letter-spacing:.09em;
 <p>The same evidence supports tract summaries and finer-scale demonstration profiles. See the indicator registry, source checksums, and QA below for the current scope.</p>
 <p><a href="tract_components.csv">Tract component table (CSV)</a> · <a href="tract_components.gpkg">Tract geometries and components (GeoPackage)</a> · <a href="site_profiles.csv">Site profiles (CSV)</a></p>
 <p>Industrial pollution uses EPA RSEI 2022 v2.3.12 air toxicity-weighted concentrations. Tracts use area-weighted means; sites query the native 810 m cell. These are modeled TRI-related contributions, not total pollution, measured exposure, or health-risk estimates. <a href="rsei_and_h8.gpkg">Native EPA grid and H8 components</a> · <a href="h8_components.csv">H8 table</a></p>
-<h2>Component maps</h2><p>Each map retains its own units. Grey represents missing or unusable values. The school map also distinguishes areas outside the current AISD assignment coverage. Click any map to open its full-size image.</p>
+<h2>Component maps</h2><p>Each map retains its own units. Grey represents missing or unusable values. The school map also distinguishes areas outside the current elementary assignment coverage. Click any map to open its full-size image.</p>
 <div class="maps">', paste(map_html, collapse = "\n"), '</div>
 <h2>Illustrative site profiles</h2>
 <p>These configured origins are examples, not actual housing proposals. Job access uses the containing H8 cell or a nearest-origin fallback and is approximate; no new routing is performed. Review the reported origin distance and coverage flags. Tract context remains distinct from measurements made at a point or around it. The access measure counts jobs reachable in ',
@@ -255,7 +255,7 @@ report_html_escape(job_spec$cutoff_minutes), ' minutes, using ', report_html_esc
 ' jobs and network snapshot ', report_html_escape(job_spec$network_snapshot), '.</p>
 <p>A point outside the mapped FEMA floodplain has no mapped overlap in that snapshot; this does not establish absence of flood risk. School growth is a campus-wide descriptive score, not a causal estimate of effectiveness. The school baseline uses ',
 report_html_escape(school_spec$assignment_year), ' assignments and ', report_html_escape(school_spec$growth_year),
-' growth, from the TEA ', report_html_escape(school_spec$accountability_year), ' accountability release. Coverage is currently AISD only.</p>
+' growth, from the TEA ', report_html_escape(school_spec$accountability_year), ' accountability release. Coverage includes elementary assignments in Austin, Round Rock, Pflugerville, Del Valle and Manor; other districts remain incomplete.</p>
 <p>Site crash density describes the City-observed portion of a ',
 report_html_escape(format(crash_spec$buffer_meters / 1000, digits = 5, trim = TRUE)), '-kilometer buffer, using crashes from ',
 report_html_escape(crash_spec$first_year), '–', report_html_escape(crash_spec$last_year),

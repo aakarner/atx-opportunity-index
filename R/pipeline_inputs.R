@@ -105,20 +105,21 @@ read_job_access <- function(path, spec) {
 }
 
 read_school_zones <- function(path, spec) {
-  levels <- c("elementary", "middle", "high")
+  levels <- if(is.null(spec$levels)) c("elementary", "middle", "high") else unlist(spec$levels)
   setNames(lapply(levels, function(level) {
     x <- sf::st_read(path, layer = level, quiet = TRUE)
     require_spatial(x, paste(level, "school zones"))
     require_unique_id(x, "source_object_id", level)
     require_columns(x, c("campus_id", "campus_name", "usable_growth", "score_status",
                          "school_level", "assignment_school_year", "growth_school_year", "accountability_year"), level)
-    if (anyNA(x[c("campus_id", "campus_name", "score_status", "school_level", "assignment_school_year",
+    if (anyNA(x[c("campus_name", "score_status", "school_level", "assignment_school_year",
                    "growth_school_year", "accountability_year")]) ||
         any(x$school_level != level) || any(x$assignment_school_year != spec$assignment_year) ||
         any(x$growth_school_year != spec$growth_year) || any(x$accountability_year != spec$accountability_year)) {
       stop("School assignment/score vintage mismatch: ", level)
     }
-    if (any(!is.na(x$usable_growth) & (!is.finite(x$usable_growth) | x$usable_growth < 0 | x$usable_growth > 100)) ||
+    if (any(is.na(x$campus_id) & x$score_status == "Available") ||
+        any(!is.na(x$usable_growth) & (!is.finite(x$usable_growth) | x$usable_growth < 0 | x$usable_growth > 100)) ||
         any(is.na(x$usable_growth) != (x$score_status != "Available"))) stop("Invalid school score/status.")
     x
   }), levels)

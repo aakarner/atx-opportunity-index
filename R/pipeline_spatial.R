@@ -105,7 +105,7 @@ pipeline_qa <- function(tracts, jobs, schools, sites) {
       sum(tracts$displacement_coverage_status == "Outside published coverage"),
       sum(tracts$displacement_coverage_status %in% c("Missing source category", "Unrecognized source category")),
       nrow(tracts), school_counts, nrow(sites)),
-    status = c("info", "pass", rep("info", 8), "pass", rep("info", 4)))
+    status = c("info", "pass", rep("info", 8), "pass", rep("info", length(school_counts)+1)))
 }
 
 indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, displacement_spec) {
@@ -116,7 +116,7 @@ indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, d
       "Non-job destination access", "Driving access", "Demographic and market context"),
     role = c("benefit", "benefit", "burden", "burden", rep("burden", 2),
       "mitigation_context", rep("burden", 2), "benefit", "benefit", "overlay"),
-    status = c("available", "AISD_only", "FEMA_snapshot_only", "tract_and_site_source_query",
+    status = c("available", "five_districts_elementary_only", "FEMA_snapshot_only", "tract_and_site_source_query",
       rep("not_integrated", 5), "provisional_DAM", "provisional_DAM", "source_derived_tract_context"),
     units = c("Jobs reachable in 45 minutes", "Raw academic growth score (0-100)",
       "Share of mapped reporting area / point intersection", "KSI crashes per year per square mile",
@@ -129,7 +129,7 @@ indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, d
       paste(crash_spec$first_year, crash_spec$last_year, sep = "-"),
       rep("Not yet integrated", 5), rep("DAM release 2026-11-03", 2), paste(census_spec$acs_year, "ACS; City", displacement_spec$source_year, "displacement")),
     limitation = c("Pinned summer morning service; resident-worker tract weighting; not new site routing",
-      "Campus-wide outcomes; AISD only; missing scores stay missing; no tract school composite",
+      "Assigned elementary campus outcomes; Austin, Round Rock, Pflugerville, Del Valle and Manor; missing scores stay missing; no tract school composite",
       "Mapped overlap only; no coverage certification or City Atlas 14 replacement; no overlap does not imply no risk",
       "City-observed window around tract representative point or site; low counts do not establish pedestrian safety",
       "Missing data cannot count as a passed screen", "Physical heat measure still needed",

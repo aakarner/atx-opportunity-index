@@ -15,6 +15,9 @@ run_integration_checks <- function() {
   stopifnot(all(file.copy(c("R", "_targets.R"), work, recursive = TRUE)))
   dir.create(file.path(work, "config"))
   stopifnot(file.copy("config/benefits.yml", file.path(work,"config","benefits.yml")))
+  scoring_cfg <- yaml::read_yaml("config/benefit-scoring-review.yml")
+  scoring_cfg$inputs <- lapply(scoring_cfg$inputs, normalizePath)
+  yaml::write_yaml(scoring_cfg, file.path(work,"config","benefit-scoring-review.yml"))
   stopifnot(file.copy("config/classification-review.yml", file.path(work,"config","classification-review.yml")))
   stopifnot(file.exists(cfg$rsei$path), file.exists(paste0(cfg$rsei$path,".json")))
   cfg$municipal_boundary$path <- normalizePath(cfg$municipal_boundary$path)
@@ -54,7 +57,7 @@ run_integration_checks <- function() {
     all(sf::st_is_valid(inputs)), all(inputs$crash_observation_area_sqmi > 0),
     max(abs(inputs$annual_ksi_crash_density * inputs$crash_observation_years *
             inputs$crash_observation_area_sqmi - inputs$ksi_crashes_in_window)) < 1e-9)
-  targets::tar_make(names = c(classification_report, web_mockup_data), reporter = "silent")
+  targets::tar_make(names = c(classification_report, web_mockup_data, scoring_comparison), reporter = "silent")
   stopifnot(all(targets::tar_read(h8_rsei)$rsei_coverage_share > .999999),
             all(targets::tar_read(tract_rsei)$rsei_coverage_share > .999999))
   before <- targets::tar_meta(fields = c(name, time), targets_only = TRUE)

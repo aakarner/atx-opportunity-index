@@ -30,17 +30,37 @@ export function basketColor(row,selection,spec) {
   return palette[Math.min(4,Math.floor(4*count/spec.profiles[selection.profile].length))];
 }
 
-function schoolDetail(zones,point) {
-  if(!point) return '<p>Select an address or map point for its assigned schools.</p>';
-  const hits=zones.features.filter(f=>contains(f.geometry,...point)).map(f=>f.properties);
-  return ['elementary','middle','high'].map(level=>{
-    const matches=hits.filter(p=>p.school_level===level);
-    const unique=new Set(matches.map(p=>JSON.stringify([p.campus_id,p.score_status,p.usable_growth])));
-    if(!matches.length) return `<p>${level} · Outside available AISD assignment coverage</p>`;
-    if(unique.size>1) return `<p>${level} · Ambiguous assignment</p>`;
-    const p=matches[0];
-    return `<p>${esc(p.campus_name)} · ${esc(level)} · ${finite(p.usable_growth)?'growth '+p.usable_growth:esc(p.score_status)}</p>`;
-  }).join('');
+export function schoolAssignment(zones,point) {
+  if(!point) return {status:'No point selected'};
+  const matches=zones.features.filter(f=>f.properties.school_level==='elementary' && contains(f.geometry,...point)).map(f=>f.properties);
+  const unique=new Set(matches.map(p=>JSON.stringify([p.campus_id,p.campus_name,p.score_status,p.usable_growth,p.subgroup_growth])));
+  if(!matches.length) return {status:'Outside available assignment coverage'};
+  if(unique.size>1) return {status:'Ambiguous assignment overlap'};
+  return {...matches[0],status:matches[0].score_status};
+}
+export function schoolDetail(zones,point) {
+  const p=schoolAssignment(zones,point);
+  if(p.status==='No point selected') return '<p>Select an address or map point for its assigned elementary school.</p>';
+  if(p.status==='Outside available assignment coverage') return '<p>Outside available elementary assignment coverage</p>';
+  if(p.status==='Ambiguous assignment overlap') return '<p>Ambiguous elementary assignment overlap · Scores unavailable</p>';
+  return `<p><strong>${esc(p.campus_name)}</strong> · ${esc(p.district_name)}</p>
+    <dl class="components"><div><dt>Overall growth</dt><dd>${finite(p.usable_growth)?number(p.usable_growth):esc(p.score_status)}</dd></div>
+    <div><dt>Economically disadvantaged growth</dt><dd>${finite(p.subgroup_growth)?number(p.subgroup_growth):esc(p.subgroup_status)}</dd></div></dl>
+    ${finite(p.minimum_growth_tests)&&p.minimum_growth_tests<20?'<p class="notice">Small subgroup sample: at least one growth subject has fewer than 20 evaluated tests.</p>':''}
+    <p>Current published assignment for 2026–27 · ${esc(p.growth_school_year)} growth. Elementary only; travel time is not scored.</p>
+    <details><summary>Attendance boundary source</summary><p>${esc(p.source_layer_label)} · ${esc(p.boundary_year_basis)}</p></details>`;
+}
+function educationCoverage(spec) {
+  const c=spec.education?.coverage;
+  if(!c?.scenario) return '';
+  const value=(scenario,group)=>{
+    const i=c.scenario.findIndex((s,i)=>s===scenario && c.population_group[i]===group);
+    return i<0?'Unavailable':number(100*c.population_coverage[i])+'%';
+  };
+  const items=[['Five-district elementary assignment','Assigned elementary'],['Overall growth available','Overall growth'],['Subgroup growth; minimum 1 tests per subject','Subgroup growth']];
+  return `<details><summary>Education coverage · residents and children</summary>
+    <table class="education-coverage"><thead><tr><th>Coverage</th><th>Residents</th><th>Under 18</th></tr></thead><tbody>${items.map(([key,label])=>`<tr><td>${label}</td><td>${value(key,'total_population')}</td><td>${value(key,'children_under_18')}</td></tr>`).join('')}</tbody></table>
+    <p>Shares of known population weights in the prototype hexes. Children are residents under 18, not enrolled students. ${c.missing_weight_origins[0]} origins have missing population weights and are excluded from these denominators. Small-sample scores are flagged, not discarded.</p></details>`;
 }
 const number=(v,d=1)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 export function benefitProfile(row,selection,spec,isHex,zones,point,series) {
@@ -65,7 +85,7 @@ export function benefitProfile(row,selection,spec,isHex,zones,point,series) {
     ${isHex?'':`<p class="small">H8 cells cover ${number(row?.area_coverage*100)}% of the clipped tract area. Resident weights cover ${number(row?.resident_weight_area_share*100)}% of tract area. Estimated resident weight: ${number(row?.resident_weight,0)}. Zero weight gives an unavailable mean.</p>`}
     ${profile==='supportive'?'<p class="notice">Partial basket. Behavioral health, supportive services and on-site supports require separate review.</p>':''}
     ${mode==='walk_transit'?'<p class="small">Provisional July morning routing. An unreached trip can reflect service coverage or model limits.</p>':''}
-    ${profile==='families'?`<h3>Assigned schools · AISD</h3><div class="small">2025–26 campus academic growth${schoolDetail(zones,point)}</div>`:''}
+    ${profile==='families'?`<h3>Assigned elementary school</h3><div class="small">Austin, Round Rock, Pflugerville, Del Valle and Manor${schoolDetail(zones,point)}${educationCoverage(spec)}</div>`:''}
     ${isHex?`<p class="small">Mean trip to the nearest facility across this basket: ${number(row?.[`${mode}_${profile}_mean_minutes`])}${finite(row?.[`${mode}_${profile}_mean_minutes`])?' min':' (requires a time for every type)'}.</p>`:''}
     ${['families','single'].includes(profile)?`<h3>Access to employment</h3><p class="small">${number(row?.[`${mode}__jobs_cumulative__low_wage_jobs__30`],0)} low-wage jobs of ${number(row?.[`${mode}__jobs_cumulative__total_jobs__30`],0)} total within 30 minutes by ${esc(modeLabels[mode].toLowerCase())}.</p>`:''}
     <details><summary>Jobs${isHex?', destination choice and park acreage':''} · ${esc(modeLabels[mode])}</summary>

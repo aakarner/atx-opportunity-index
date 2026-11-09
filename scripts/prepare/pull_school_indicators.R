@@ -99,9 +99,9 @@ tea_number <- function(x) {
   out
 }
 
-normalize_aisd <- function(x, year, district) {
-  x <- filter(x, DISTRICT == district)
-  if (!nrow(x) || any(x$DISTNAME != "AUSTIN ISD")) stop("AISD filter failed: ", year)
+normalize_school_campuses <- function(x, year, district) {
+  x <- filter(x, DISTRICT %in% district)
+  if (!nrow(x) || !setequal(unique(x$DISTRICT), district)) stop("District filter failed: ", year)
   flag_fields <- c("CFLDAEP", "CFLJJ", "CFLRTF", "CFLALTED",
                    "CFLPAIRD", "CFLPAIRO", "CFLPAIR")
   if (any(vapply(x[flag_fields], function(z) any(is.na(z) | !z %in% c("Y", "N")),
@@ -142,6 +142,11 @@ normalize_aisd <- function(x, year, district) {
       complete_metrics = if_all(all_of(names(school_metrics)), ~ !is.na(.x)),
       primary_sample = eligible & complete_metrics & !is.na(econ_disadv_pct)
     )
+}
+
+normalize_aisd <- function(x, year, district) {
+  stopifnot(identical(district, "227901"))
+  normalize_school_campuses(x, year, district)
 }
 
 # ---- Outputs -----------------------------------------------------------------
