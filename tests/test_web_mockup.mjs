@@ -107,3 +107,15 @@ for(let i=0;i<education.site_id.length;i++){
 assert.ok(!schoolProfile.includes('Assigned schools · AISD'));
 assert.match(schoolProfile,/Under 18/);
 console.log('Elementary-only browser assignment matches sf at every H8 origin; both growth measures and child coverage verified.');
+
+// Default destination budgets match the selected job-access budgets. The job
+// summary must use the independent 45-minute transit source, not DAM's 30-minute series.
+assert.deepEqual(benefits.spec.defaults,{drive:15,walk_transit:45});
+for(const mode of ['drive','walk_transit']) {
+ const chosen={...selection,mode,minutes:benefits.spec.defaults[mode]};
+ const source=benefitCells.get(example.id);
+ const detail=benefitProfile(source,chosen,benefits.spec,true,schools,[-97.666740,30.310930],[],example.row);
+ const expectedJobs=mode==='drive'?source.drive__jobs_cumulative__total_jobs__15:example.row.jobs_total;
+ assert.ok(detail.includes(`${expectedJobs.toLocaleString('en-US',{maximumFractionDigits:0})} total within ${chosen.minutes} minutes`));
+}
+console.log('Aligned 15-minute driving / 45-minute transit defaults and job summary sources verified.');

@@ -1,6 +1,11 @@
 # Regression checks for partial credit, required school coverage and sample rules.
 if (dir.exists(".R-library")) .libPaths(c(normalizePath(".R-library"),.libPaths()))
 source("R/benefit_scoring_review.R")
+education_spec <- yaml::read_yaml("config/benefit-scoring-review.yml")$education
+e <- education_growth_score(c(49,50,70,99,NA_real_),c(10,19,20,5,NA_real_),education_spec)
+stopifnot(isTRUE(all.equal(e$education_points,c(70,100*50/70,100,100,NA_real_))),
+  identical(e$education_minimum_met,c(FALSE,TRUE,TRUE,TRUE,NA)),
+  identical(e$education_small_sample,c(TRUE,TRUE,FALSE,TRUE,NA)))
 stopifnot(identical(linear_benefit_points(c(0,49000,50000,75000,NA_real_),50000),
   c(0,.98,1,1,NA_real_)))
 schools <- targets::tar_read(scoring_schools)

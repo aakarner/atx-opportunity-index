@@ -9,19 +9,41 @@ inputs:
 levels: [elementary]
 school_level_weights: {elementary: 1}
 subgroup_minimum_tests: [1, 10, 20, 30]
+education:
+  measure: economically_disadvantaged_growth
+  small_sample_tests_each_subject: 20
+  small_sample_policy: flag_only
+  full_credit_growth: 70
+  minimum_growth: 50
+  # Retained sensitivity scenarios around the adopted 70 / 50 rule.
+  candidate_full_credit_growth: [65, 70, 75]
+  candidate_minimum_growth: [50, 55, 60]
 presets:
   families: {destinations: 1, education: 1, jobs: 1}
   older: {destinations: 75, education: 0, jobs: 25}
   single: {destinations: 40, education: 0, jobs: 60}
-# PSH weights remain discussion scenarios.
+  supportive: {destinations: 75, education: 0, jobs: 25}
+destination_minimums:
+  families: 3
+  older: 3
+  single: 3
+  supportive: 2
+require_grocery: true
+# Retained PSH weight sensitivities; the adopted adult preset is 75/25 above.
 psh_scenarios:
   services_emphasis: {destinations: 75, education: 0, jobs: 25}
   equal: {destinations: 50, education: 0, jobs: 50}
 transit:
   minutes: 45
   full_credit_jobs: 50000
+jobs:
+  minimum_fraction: 0.5
 driving:
+  default: {minutes: 15, full_credit_jobs: 250000}
+  sensitivity: {minutes: 30, full_credit_jobs: 1000000}
   minutes: [15, 30]
   candidate_full_credit_jobs: [50000, 100000, 150000, 200000, 250000, 300000, 500000, 750000, 1000000, 1250000]
-# Analytical sensitivities, awaiting a decision on the minimum and its consequence.
+# Retained analytical sensitivities; adopted jobs floor is 50%, education uses raw growth 50.
 candidate_domain_floors: [0.5, 0.6, 0.7]
+# Retained sensitivities around the adopted 50% job minimum.
+job_minimum_sensitivity_fractions: [0.2, 0.3, 0.4, 0.5]

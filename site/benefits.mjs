@@ -2,7 +2,7 @@ import {contains, escapeHTML as esc, finite} from './logic.mjs';
 
 export const profileLabels = {
   general:'All eight destinations', families:'Families with children', older:'Older adults',
-  single:'Single adults', supportive:'Permanent supportive housing'
+  single:'Single adults', supportive:'Adult PSH—provisional'
 };
 export const modeLabels = {drive:'Driving',walk_transit:'Transit + walk'};
 export const palette = ['#f4f1df','#cfe6cd','#91c8ac','#509d85','#176956'];
@@ -63,7 +63,7 @@ function educationCoverage(spec) {
     <p>Shares of known population weights in the prototype hexes. Children are residents under 18, not enrolled students. ${c.missing_weight_origins[0]} origins have missing population weights and are excluded from these denominators. Small-sample scores are flagged, not discarded.</p></details>`;
 }
 const number=(v,d=1)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
-export function benefitProfile(row,selection,spec,isHex,zones,point,series) {
+export function benefitProfile(row,selection,spec,isHex,zones,point,series,jobBenchmark=null) {
   const {mode,minutes,profile}=selection, names=spec.profiles[profile];
   const prefix=`${mode}_${minutes}_`, count=scoreValue(row,selection);
   const components=names.map(name=>{
@@ -79,6 +79,9 @@ export function benefitProfile(row,selection,spec,isHex,zones,point,series) {
   const details=series.filter(s=>s.mode===mode && (s.scenario==='jobs_cumulative' ||
     (isHex && (s.scenario.includes('_nearest') && !s.measure_id.endsWith('__1') || s.unit==='acres'))));
   const fields=details.map(s=>`<div><dt>${esc(s.label)}</dt><dd>${number(row?.[s.field])} ${esc(s.unit)}</dd></div>`).join('');
+  const jobMinutes=mode==='drive'?15:45;
+  const totalJobs=mode==='drive'?row?.drive__jobs_cumulative__total_jobs__15:jobBenchmark?.jobs_total;
+  const lowWageJobs=mode==='drive'?row?.drive__jobs_cumulative__low_wage_jobs__15:jobBenchmark?.jobs_low;
   return `<section class="metric-block"><div class="metric-label">${esc(profileLabels[profile])} · ${esc(modeLabels[mode])}</div>
     <div class="metric-value">${number(count)} / ${names.length}</div><div class="metric-unit">${isHex?'Destination types reached':'Resident-weighted mean types reached'} within ${minutes} minutes</div>
     <dl class="components">${components}</dl>
@@ -87,7 +90,7 @@ export function benefitProfile(row,selection,spec,isHex,zones,point,series) {
     ${mode==='walk_transit'?'<p class="small">Provisional July morning routing. An unreached trip can reflect service coverage or model limits.</p>':''}
     ${profile==='families'?`<h3>Assigned elementary school</h3><div class="small">Austin, Round Rock, Pflugerville, Del Valle and Manor${schoolDetail(zones,point)}${educationCoverage(spec)}</div>`:''}
     ${isHex?`<p class="small">Mean trip to the nearest facility across this basket: ${number(row?.[`${mode}_${profile}_mean_minutes`])}${finite(row?.[`${mode}_${profile}_mean_minutes`])?' min':' (requires a time for every type)'}.</p>`:''}
-    ${['families','single'].includes(profile)?`<h3>Access to employment</h3><p class="small">${number(row?.[`${mode}__jobs_cumulative__low_wage_jobs__30`],0)} low-wage jobs of ${number(row?.[`${mode}__jobs_cumulative__total_jobs__30`],0)} total within 30 minutes by ${esc(modeLabels[mode].toLowerCase())}.</p>`:''}
+    ${['families','single'].includes(profile)?`<h3>Access to employment</h3><p class="small">${number(lowWageJobs,0)} low-wage jobs of ${number(totalJobs,0)} total within ${jobMinutes} minutes by ${esc(modeLabels[mode].toLowerCase())}.</p>`:''}
     <details><summary>Jobs${isHex?', destination choice and park acreage':''} · ${esc(modeLabels[mode])}</summary>
     <dl class="components">${fields}</dl>${isHex?'':`<p class="small">DAM jobs: ${esc(row?.job_method||'Unavailable')}.</p>`}</details></section>`;
 }

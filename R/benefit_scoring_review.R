@@ -11,6 +11,14 @@ review_rank <- function(x) {
   100*(rank(x,ties.method="average",na.last="keep")-1)/(n-1)
 }
 
+education_growth_score <- function(growth, minimum_tests, spec) {
+  stopifnot(spec$measure=="economically_disadvantaged_growth",spec$small_sample_policy=="flag_only",
+    spec$minimum_growth>0,spec$minimum_growth<spec$full_credit_growth)
+  data.frame(education_points=100*linear_benefit_points(growth,spec$full_credit_growth),
+    education_minimum_met=ifelse(is.na(growth),NA,growth>=spec$minimum_growth),
+    education_small_sample=ifelse(is.na(growth),NA,minimum_tests<spec$small_sample_tests_each_subject))
+}
+
 school_score_comparison <- function(paths, spec, h8, sites) {
   names(paths) <- basename(paths)
   campus <- readr::read_csv(paths[[basename(spec$inputs$school_subgroups)]],
@@ -66,6 +74,7 @@ school_score_comparison <- function(paths, spec, h8, sites) {
     wide[[paste0(metric,"_mean")]] <- as.vector(mat %*% weights / sum(weights))
   }
   wide$minimum_growth_tests <- do.call(pmin,wide[paste("minimum_growth_tests",levels,sep="_")])
+  wide <- cbind(wide,education_growth_score(wide$subgroup_mean,wide$minimum_growth_tests,spec$education))
   wide$subgroup_minus_overall <- wide$subgroup_mean-wide$overall_mean
   summaries <- lapply(spec$subgroup_minimum_tests,function(minimum) {
     h <- wide[wide$kind=="H8 origin",]
@@ -188,7 +197,7 @@ write_scoring_comparison <- function(schools,jobs,spec,source_files,directory,co
     schools$summaries$paired[schools$summaries$minimum_tests_each_growth_subject==20],
     '. These comparisons require a choice between coverage and the treatment of small samples.</p>',
     '<h2>Education at the example addresses</h2>',report_html_table(school_sites),
-    '<p>Values are raw growth points at the assigned elementary campus. Raw growth is a points-based outcome and can exceed 100 for a subgroup. An unavailable elementary score leaves education unavailable. A full-credit education target remains to be chosen. The existing *_mean export fields now contain the single elementary value for compatibility.</p>',
+    '<p>Values are raw growth points at the assigned elementary campus. Raw growth is a points-based outcome and can exceed 100 for a subgroup. An unavailable elementary score leaves education unavailable. Education uses 100 × min(subgroup growth / 70, 1), with a separate raw-growth minimum of 50. Small-sample flags do not change points. The existing *_mean export fields now contain the single elementary value for compatibility.</p>',
     '<h2>Population and child coverage</h2>',report_html_table(coverage_display),
     '<p>Known-weight denominator: ',format(round(residents$denominator[1]),big.mark=","),' residents and ',
     format(round(children$denominator[1]),big.mark=","),' children under 18. Missing weights: ',residents$missing_weight_origins[1],
@@ -203,8 +212,8 @@ write_scoring_comparison <- function(schools,jobs,spec,source_files,directory,co
     '<h2>Transit reference</h2>',report_html_table(jobs$transit),
     '<p>The comparison awards full credit at 50,000 total jobs in 45 minutes. This implements min(jobs / 50,000, 1), so exactly 50,000 qualifies. The earlier map flag used strictly greater than 50,000.</p>',
     '<h2>Jobs at the example addresses</h2>',report_html_table(jobs$sites),
-    '<h2>Decisions recorded</h2><p>Families use equal domain weights. Older adults use 75% everyday destinations and 25% employment. Single adults use 40% everyday destinations and 60% employment. Education has zero weight in those two adult profiles. PSH 75/25 and 50/50 remain discussion scenarios. User-adjustable weights should retain a fixed set of applicable domains for minimum requirements. Missing required education leaves a combined assessment incomplete.</p>',
-    '<h2>Decisions remaining</h2><p>Choose the driving time and full-credit target, the elementary growth measure and full-credit scale, domain minimums and their consequence, PSH weights, and the applicability of education to developments serving children. Education now has one elementary-school value rather than a school-level average. The data comparison does not establish the remaining policy choices.</p>',
+    '<h2>Decisions recorded</h2><p>Families use equal domain weights. Older adults use 75% everyday destinations and 25% employment. Single adults use 40% everyday destinations and 60% employment. Education has zero weight in those two adult profiles. Adult PSH uses 75% destinations and 25% jobs; 50/50 remains a sensitivity. User-adjustable weights should retain a fixed set of applicable domains for minimum requirements. Missing required education leaves a combined assessment incomplete.</p>',
+    '<h2>Decisions remaining</h2><p>Economically disadvantaged elementary growth is selected, with published small-sample scores retained and flagged below 20 tests in either subject. Education full credit is set at growth 70 and its minimum at 50. Driving full credit is 250,000 jobs in 15 minutes, with 1,000,000 jobs in 30 minutes as a sensitivity. Job minimums are set at 50% of each mode-specific full-credit target. Destination minimums are three of four types for families/older/single and two of three for adult PSH, with groceries required. The combined score and minimum status are displayed separately. Adult PSH is provisional; a family-serving PSH preset remains outside this release. Education now has one elementary-school value rather than a school-level average. The data comparison does not establish the remaining policy choices.</p>',
     '<h2>Files</h2><ul>',paste0('<li><a href="',basename(csvs),'">',basename(csvs),'</a></li>',collapse=""),'</ul></html>')
   report <- file.path(root,"review.html");writeLines(html,report)
   c(csvs,figure,report)

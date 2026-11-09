@@ -4,8 +4,8 @@ budgets:
   drive: [5, 10, 15]
   walk_transit: [30, 45, 60]
 defaults:
-  drive: 10
-  walk_transit: 30
+  drive: 15
+  walk_transit: 45
 destinations:
   grocery: Grocery
   childcare: Childcare
