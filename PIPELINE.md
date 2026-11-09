@@ -149,10 +149,11 @@ only; there is no tract school composite yet. Campus-wide growth is descriptive,
 not a causal measure of school effectiveness. Missing scores remain missing.
 See `docs/schools.md` for matching and exclusions.
 
-**Flood.** Tracts report the fraction of City-clipped area intersecting the FEMA
+**Flood eligibility.** The City fully developed floodplain is a separate hard development constraint: full-hex coverage or actual address-point intersection means ineligible. Partial hexes require address checks. It has no burden-score weight. Power outages are out of scope. See [the current burden scope and flood rule](docs/burdens.md).
+
+**Legacy FEMA context.** Tracts report the fraction of City-clipped area intersecting the FEMA
 1%-annual-chance floodplain snapshot. Sites report point overlap. No mapped
-overlap does not establish absence of flood risk. Improved City flood measures
-remain pending.
+overlap does not establish absence of flood risk. This FEMA summary is retained only as legacy context; it does not drive the City flood-eligibility rule.
 
 **Street safety.** Tract crash measures are recomputed from crash points. Each
 tract receives an internal representative point after projection to EPSG:5070.
@@ -189,7 +190,7 @@ coverage separately. Its combined classification uses the existing RSEI rule.
 See [traffic methods](scripts/aadt/README.md).
 
 **Incomplete components.** Heat,
-pedestrian barriers, improved City flood measures, other destinations, and
+pedestrian barriers, other destinations, and
 driving access remain incomplete. Missing components never count as zero burden
 or a passed screen. The pipeline does not create composite scores, clusters,
 policy thresholds, or site exclusions.

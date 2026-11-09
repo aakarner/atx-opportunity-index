@@ -14,3 +14,5 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/test_web_mockup.mjs
+      - run: node tests/test_combined_benefits.mjs
+      - run: node tests/test_flood_eligibility.mjs

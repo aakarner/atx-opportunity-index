@@ -1,0 +1,19 @@
+# User decisions, 2026-11-09. Scoring rules for these five domains remain open.
+scored_domains:
+  - industrial_air_pollution
+  - traffic_pollution
+  - heat
+  - street_safety
+  - pedestrian_barriers
+excluded_domains: [power_outages]
+flood:
+  role: eligibility_constraint
+  source: City of Austin Fully Developed Floodplain
+  url: https://maps.austintexas.gov/gis/rest/FloodPro/FloodPro/MapServer/9
+  snapshot_dir: data/raw/austin_fully_developed_floodplain/2026-11-09
+  hex_rule: entire_full_hex_covered
+  address_rule: point_intersects_including_boundary
+  partial_hex_status: address_check_required
+  no_overlap_status: not_excluded_by_flood_rule
+  missing_status: unknown
+  contributes_to_burden_score: false

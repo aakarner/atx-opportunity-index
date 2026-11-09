@@ -120,3 +120,7 @@ assets. Both measurements appear in profiles. Tract profiles identify the
 represented area, and uncovered tracts display Unavailable. The hexagon toggle
 shows the underlying H8 surface. Legend ranges are descriptive display bins.
 The Combined tab uses the transit-job and RSEI flags.
+
+## Flood eligibility constraint (November 9, 2026)
+
+The prototype includes a separate Eligibility view using the City fully developed floodplain. Entirely covered full hexes are ineligible and retain dark flags in other map views; partial hexes require actual-point checks. Address profiles test the selected coordinate and show eligibility ahead of descriptive benefit scores. Flooding has no score weight; outages are excluded. See [docs/burdens.md](burdens.md) for source, geometry, and scope rules. The Eligibility view defaults to the actual floodplain footprint over hex outlines. The overlay can be toggled on other views. Release validation checks the flood geometry checksum and 1,942 independent point classifications; the publisher versions the flood assets and module with the rest of the map.
