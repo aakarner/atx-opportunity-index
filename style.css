@@ -5,7 +5,6 @@
 @media(min-width:1001px){.explorer{padding:16px}.explorer .intro{margin-bottom:12px;line-height:1.4}.explorer .layer-section{margin-top:12px;padding-top:12px}.explorer .layer-section h3{margin-top:12px}.explorer .check{margin-top:10px;padding-top:10px}.explorer .examples{margin:9px 0}.explorer .legend-row{margin:7px 0}.explorer .layer-section h2{margin-bottom:9px}}
 @media(min-width:1001px){.explorer .intro{display:none}}
 
-.legend-count{margin-left:auto;white-space:nowrap;color:#617580;font-size:11px;font-variant-numeric:tabular-nums}.combined-legend{display:block!important}
 
 /* Preview controls show the intended resident groups without changing scores. */
 .profile-column{position:absolute;z-index:450;top:18px;right:18px;width:322px;max-height:calc(100% - 48px);display:flex;flex-direction:column;gap:12px}
