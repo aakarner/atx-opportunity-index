@@ -5,6 +5,29 @@ https://aakarner.github.io/atx-opportunity-index/ . It uses Leaflet 1.9.4,
 H3-js 4.2.1, CARTO Positron, and the public City of Austin address locator.
 Vendored browser library licenses are in `site/vendor/`.
 
+## Current combined burdens (November 10, 2026)
+
+Open `/#burdens` to share the Burdens view directly. It defaults to equal thirds
+for heat, air, and street safety, with industrial air and traffic each receiving
+half the air weight. No equal-four-domain sensitivity is offered. The fixed
+weighted score and component warnings are separate. Missing any domain withholds
+the score; known warnings remain visible. Secondary industrial review, limited
+heat observations, and pedestrian completion-date reviews have separate badges.
+
+The Burdens selector offers the composite, warnings, individual scores, heat
+observation quality, and industrial screening bands. Burdens use H8 geometry;
+tract aggregation is not inferred. Half-mile street neighborhoods and a 50%
+traffic-overlap warning are the defaults; quarter-mile neighborhoods and a 25%
+traffic warning remain explicit sensitivities. Benefits and flood eligibility
+retain their independent rules. The historical Jobs + air view is labeled
+“Earlier flags” to distinguish its RSEI >=100 rule from current burden scoring.
+
+Rebuild with `Rscript scripts/run_pipeline.R combined_burden_assets` after setting
+`DAM_DATA_DIR`. Validate with `Rscript tests/test_combined_burdens.R` and
+`node tests/test_combined_burdens.mjs`. Publication versions the burden data and
+module alongside all existing assets, and runs all four browser-module checks.
+The baseline-export and earlier-screen descriptions below document legacy layers.
+
 ## Rebuild and preview
 
 From the repository root:

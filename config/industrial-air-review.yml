@@ -1,0 +1,13 @@
+# Comparison candidates only; no production scoring or flag change is adopted.
+status: discussion_only
+version: industrial_air_review_2026_11_10
+source_version: '2.3.12'
+reporting_year: 2022
+reference_origins: 1029
+reference_weighting: equal_hex
+quantile_method: R_type_7
+candidate_full_burden_concentration: 622.73023119285699
+candidate_high_concentration: 351.10409694733289
+existing_mockup_high_concentration: 100
+score_method: linear_from_zero_to_reference_p95_capped_at_100
+spatial_support: full_hex_area_weighted_RSEI_ToxConc

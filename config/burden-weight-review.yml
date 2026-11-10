@@ -1,0 +1,22 @@
+# Comparison only. A default preset has not been selected.
+status: comparison_only
+version: burden_weight_review_2026_11_10
+presets:
+  equal_themes:
+    label: Equal thirds for heat, street safety and air
+    relative_weights:
+      heat_score: 2
+      street_safety_score: 2
+      industrial_air_score: 1
+      traffic_score: 1
+  equal_domains:
+    label: Equal quarters across four domains
+    relative_weights:
+      heat_score: 1
+      street_safety_score: 1
+      industrial_air_score: 1
+      traffic_score: 1
+missing_rule: require_every_weighted_domain_no_renormalization
+warning_rule: any_primary_component_high_independent_of_weights
+rank_reference: origins_with_both_composite_scores
+top_tail_definition: inclusive_R_type_7_quantile_with_ties

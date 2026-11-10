@@ -1,11 +1,114 @@
-# User decisions, 2026-11-09. Scoring rules for these five domains remain open.
+# Adopted scoring and equal-theme weights through 2026-11-10.
+combined:
+  version: combined_burdens_2026_11_10_v1
+  default: equal_thirds_by_theme
+  relative_weights:
+    heat_score: 2
+    street_safety_score: 2
+    industrial_air_score: 1
+    traffic_score: 1
+  missing_rule: require_all_four_domains_no_renormalization
+  warning_rule: any_primary_component_high_independent_of_score
+  secondary_review_role: separate_badge_not_primary_warning
+  observation_quality_role: retain_score_and_separate_badge
+  flood_role: separate_hard_eligibility_constraint
+  four_domain_sensitivity: false
 scored_domains:
   - industrial_air_pollution
   - traffic_pollution
   - heat
-  - street_safety
-  - pedestrian_barriers
+  - street_safety_pedestrian_environment
+domain_components:
+  street_safety_pedestrian_environment:
+    status: scoring_and_flags_adopted
+    weights:
+      crash_density: 0.5
+      pedestrian_gaps: 0.5
+    spatial_review:
+      direction: smaller_windows_for_both_components
+      candidate_radii_miles: [0.25, 0.5]
+      baseline_radius_miles: 1
+      adopted_radius_miles: 0.5
+      sensitivity_radius_miles: 0.25
+    scoring:
+      version: street_safety_2026_11_09_v1
+      crash_method: linear_to_frozen_p95_capped_at_100
+      crash_full_burden_density: 6.1118601065110614
+      crash_high_burden_density: 4.2772765182635766
+      pedestrian_high_burden_score: 50
+      reference: 1029_half_mile_origins_2020_2024_crashes
+      reference_quantile_method: R_type_7_unweighted
+      crash_first_year: 2020
+      crash_last_year: 2024
+      missing_rule: combined_unavailable_if_either_component_missing
+      warning_rule: either_component_high_even_if_other_missing
+      sensitivity_anchors: same_as_half_mile
 excluded_domains: [power_outages]
+traffic_exposure:
+  status: scoring_and_flags_adopted
+  version: traffic_exposure_2026_11_10_v1
+  label: Near-road traffic exposure
+  measure: full_hex_area_share_within_qualifying_road_buffer
+  method: 100_times_buffer_share
+  road_aadt_greater_than: 50000
+  buffer_m: 300
+  high_burden_share: 0.5
+  sensitivity_high_burden_share: 0.25
+  sensitivity_role: alternative_flag_only
+  distance_role: context_only_canonical_hex_center
+  missing_rule: unavailable_if_overlap_share_missing
+industrial_air:
+  status: scoring_and_flags_adopted
+  version: industrial_air_2026_11_10_v1
+  measure: RSEI_ToxConc
+  method: linear_from_zero_to_frozen_p95_capped_at_100
+  full_burden_concentration: 622.73023119285699
+  high_burden_concentration: 351.10409694733289
+  review_band_lower_concentration: 100
+  review_band_rule: lower_inclusive_high_threshold_exclusive
+  review_band_role: secondary_screening_not_high_burden
+  reference: 1029_current_origins_RSEI_2022_v2_3_12
+  reference_quantile_method: R_type_7_unweighted
+  source_version: '2.3.12'
+  reporting_year: 2022
+  spatial_support: full_hex_area_weighted_concentration
+  missing_rule: unavailable_if_missing_or_incomplete_grid_coverage
+heat:
+  status: scoring_and_flags_adopted
+  version: heat_2026_11_10_v1
+  measure: reconstructed_relative_percentile
+  high_burden_percentile: 90
+  minimum_daily_land_coverage: 0.5
+  thin_coverage_below_dates: 8
+  thin_coverage_action: retain_score_and_flag
+  no_eligible_dates: unavailable
+  reference: frozen_1029_current_hexes_2026_daytime_observations
+  percentile_method: empirical_cdf_upper_rank_equal_hex_daily_then_mean_then_rank
+  hot_pixel_share_role: context_only
+  hot_pixel_threshold_F: 120
+  spatial_support: full_hex_land_excluding_census_water
+  inputs:
+    indicators:
+      path: output/components/heat-validation/current_heat_indicators.csv
+      sha256: fb70d3404447b8e0ca3c62f0af050145b21632fc3a47791bb617c26c6129fbab
+    daily:
+      path: output/components/heat-validation/current_daily_values.csv
+      sha256: 892e49293bd51b835272de4d328b01bdb44b7f6566b965c94fdae0dd6844ddfd
+    source_manifest:
+      path: data/raw/peter_heat/d90d74f38a/manifest.json
+      sha256: 5e0160af4846b8840b8311ee72d2017897209b0a10a0aa8a0cab24a930c5dcc0
+pedestrian:
+  url: https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/Sidewalks_(Public)/FeatureServer/0
+  snapshot_dir: data/raw/austin_pedestrian_inventory/2026-11-09
+  crs: 26914
+  # Original inventory build baseline; adopted combined-domain radius is above.
+  # Matching half-/quarter-mile results are in the radius-comparison analysis.
+  buffer_m: 1609.344
+  measure: planned_length_divided_by_completed_plus_planned_length
+  potential_sidewalks: sensitivity_only
+  observation_boundary: city_full_and_limited_purpose
+  missing_rule: no_classified_length_or_unclassified_length_is_unavailable
+  high_burden_cutoff: 50
 flood:
   role: eligibility_constraint
   source: City of Austin Fully Developed Floodplain

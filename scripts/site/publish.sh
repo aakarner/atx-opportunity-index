@@ -7,6 +7,7 @@ node_bin="${NODE_BIN:-node}"
 "$node_bin" tests/test_web_mockup.mjs
 "$node_bin" tests/test_combined_benefits.mjs
 "$node_bin" tests/test_flood_eligibility.mjs
+"$node_bin" tests/test_combined_burdens.mjs
 if [[ ! -f site/assets/basemap.json ]]; then
   echo 'Configure the CARTO browser basemap first: Rscript scripts/site/configure_basemap.R [environment-file]' >&2
   exit 1
@@ -29,13 +30,14 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const directory=process.argv[2];
 const hash=file=>createHash('sha256').update(readFileSync(directory+'/'+file)).digest('hex').slice(0,12);
-const dataVersion=createHash('sha256').update(['metadata.json','hexagons.json','tracts.geojson','city.geojson','benefits.json','school-zones.geojson','combined-benefits.json','flood-eligibility.json','flood-geometry.geojson'].map(f=>hash('assets/'+f)).join('')).digest('hex').slice(0,12);
+const dataVersion=createHash('sha256').update(['metadata.json','hexagons.json','tracts.geojson','city.geojson','benefits.json','school-zones.geojson','combined-benefits.json','flood-eligibility.json','flood-geometry.geojson','combined-burdens.json'].map(f=>hash('assets/'+f)).join('')).digest('hex').slice(0,12);
 const versionLogic=code=>code.replace("from './logic.mjs'",`from './logic.mjs?v=${hash('logic.mjs')}'`);
 writeFileSync(directory+'/benefits.mjs',versionLogic(readFileSync(directory+'/benefits.mjs','utf8')));
 writeFileSync(directory+'/combined-benefits.mjs',versionLogic(readFileSync(directory+'/combined-benefits.mjs','utf8')));
 writeFileSync(directory+'/flood-eligibility.mjs',versionLogic(readFileSync(directory+'/flood-eligibility.mjs','utf8')));
+writeFileSync(directory+'/combined-burdens.mjs',versionLogic(readFileSync(directory+'/combined-burdens.mjs','utf8')));
 const app=readFileSync(directory+'/app.mjs','utf8').replace("const DATA_VERSION='local'",`const DATA_VERSION='${dataVersion}'`).replace("from './benefits.mjs'",`from './benefits.mjs?v=${hash('benefits.mjs')}'`);
-writeFileSync(directory+'/app.mjs',versionLogic(app.replace("from './combined-benefits.mjs'",`from './combined-benefits.mjs?v=${hash('combined-benefits.mjs')}'`).replace("from './flood-eligibility.mjs'",`from './flood-eligibility.mjs?v=${hash('flood-eligibility.mjs')}'`)));
+writeFileSync(directory+'/app.mjs',versionLogic(app.replace("from './combined-burdens.mjs'",`from './combined-burdens.mjs?v=${hash('combined-burdens.mjs')}'`).replace("from './combined-benefits.mjs'",`from './combined-benefits.mjs?v=${hash('combined-benefits.mjs')}'`).replace("from './flood-eligibility.mjs'",`from './flood-eligibility.mjs?v=${hash('flood-eligibility.mjs')}'`)));
 const html=readFileSync(directory+'/index.html','utf8')
   .replace('href="style.css"',`href="style.css?v=${hash('style.css')}"`)
   .replace('src="app.mjs"',`src="app.mjs?v=${hash('app.mjs')}"`);

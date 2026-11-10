@@ -16,3 +16,4 @@ jobs:
       - run: node tests/test_web_mockup.mjs
       - run: node tests/test_combined_benefits.mjs
       - run: node tests/test_flood_eligibility.mjs
+      - run: node tests/test_combined_burdens.mjs

@@ -1,0 +1,21 @@
+.libPaths(c('.R-library',.libPaths()))
+suppressPackageStartupMessages(library(sf)); source('R/pedestrian_gaps.R')
+stopifnot(identical(pedestrian_classes(c('EXISTING_SIDEWALK','DRIVEWAY','SHARED_STREET','PLANNED_SHARED_STREET','POTENTIAL_SIDEWALK',NA)),c('completed','completed','completed','planned','potential','unknown')))
+s<-pedestrian_scores(c(60,0,100,0,20),c(40,0,0,100,80),c(100,50,0,0,0),c(0,0,0,0,1))
+stopifnot(s$gap_score[1]==40,s$potential_included_score[1]==70,is.na(s$gap_score[2]),s$gap_score[3]==0,s$gap_score[4]==100,is.na(s$gap_score[5]))
+line<-function(a,b)st_linestring(rbind(a,b))
+x<-st_sf(OBJECTID=1:6,PEDESTRIAN_FACILITY_TYPE=c('EXISTING_SIDEWALK','EXISTING_SIDEWALK','PLANNED_SIDEWALK','POTENTIAL_SIDEWALK','SHARED_STREET','PLANNED_SHARED_STREET'),
+ geometry=st_sfc(line(c(0,1),c(6,1)),line(c(0,1),c(6,1)),line(c(6,1),c(10,1)),line(c(10,1),c(12,1)),line(c(0,2),c(4,2)),line(c(4,2),c(10,2)),crs=26914))
+x$classification<-pedestrian_classes(x$PEDESTRIAN_FACILITY_TYPE)
+city<-st_sf(geometry=st_sfc(st_polygon(list(rbind(c(-1,0),c(13,0),c(13,3),c(-1,3),c(-1,0)))),crs=26914))
+net<-prepare_pedestrian_network(list(lines=x,manifest=list()),city,list(crs=26914))
+w<-city;w$h3_id<-'a';m<-measure_pedestrian_windows(w,net)
+stopifnot(abs(m$completed_m-10)<1e-7,abs(m$planned_m-10)<1e-7,m$gap_score==50,abs(m$potential_m-2)<1e-7)
+# Conflicting built/planned line length becomes unknown, not a passing result.
+x2<-rbind(x,transform(x[1,],OBJECTID=7,PEDESTRIAN_FACILITY_TYPE='PLANNED_SIDEWALK',classification='planned'))
+net2<-prepare_pedestrian_network(list(lines=x2,manifest=list()),city,list(crs=26914));m2<-measure_pedestrian_windows(w,net2)
+stopifnot(abs(net2$conflicting_completed_planned_m-6)<1e-7,is.na(m2$gap_score),m2$status=='unclassified_inventory')
+# Clip lengths to observation boundaries, not feature counts or full source lengths.
+half<-st_sf(h3_id='b',geometry=st_sfc(st_polygon(list(rbind(c(0,0),c(5,0),c(5,3),c(0,3),c(0,0)))),crs=26914))
+m3<-measure_pedestrian_windows(half,net);stopifnot(m3$completed_m==9,m3$planned_m==1,m3$gap_score==10)
+cat('Pedestrian tests passed: classification, length weighting, geometry clipping, duplicate removal, conflicts, potential sensitivity, completed shared streets and missingness.\n')

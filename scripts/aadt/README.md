@@ -1,5 +1,37 @@
 # Traffic proximity on the shared Austin H8 grid
 
+## Adopted burden score, November 10, 2026
+
+The score is `100 * traffic_buffer_share`: the percentage of the full hex within
+300 m of roads with `AADT_CUR >50000`. The primary high-burden flag is inclusive
+at 50% overlap; the broader 25% flag is a sensitivity only. Both flags share the
+same continuous score. Center distance remains context with no extra weight.
+Missing overlap is unavailable; measured zero overlap is retained as zero and
+does not establish clean air.
+
+Policy is in `config/burdens.yml` under `traffic_exposure`. Scoring and exports
+are implemented in `R/traffic_burden.R`, with `traffic_burden` and
+`traffic_burden_assets` targets. Reproduce with `DAM_DATA_DIR` pointing to the
+existing November 3 benefits snapshot for population inputs:
+
+```sh
+Rscript scripts/run_pipeline.R traffic_burden_assets
+Rscript scripts/air/report_traffic_burden.R
+Rscript tests/test_traffic_burden.R
+Rscript tests/test_traffic_burden_snapshot.R
+```
+
+Results in `output/components/near-road-traffic/` include `review.html`, maps,
+all scores/flags/distance context, population summaries, GIS data and provenance.
+All 1,029 origins have scores; 717 have zero corridor overlap. The primary flag
+identifies 123 origins containing about 117,244 known estimated residents
+(12.17%). The sensitivity identifies 201 origins, containing about 211,782
+known residents (21.97%), adding 78 origins. Distance context describes canonical
+hex centers, not actual development addresses. Overall burden weights and public
+deployment remain separate decisions.
+
+## Source preparation
+
 Run from the repository root with `Rscript scripts/aadt/aadt_read.R`.
 Required R packages are sf, h3jsr, units, httr2, jsonlite, digest, and yaml.
 The first run downloads the public TxDOT AADT features. Later runs use the

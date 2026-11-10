@@ -1,5 +1,83 @@
 # Industrial air-toxic burden and candidate classifications
 
+## Adopted industrial-air score, November 10, 2026
+
+The user adopted the recommended continuous score, high-burden flag and secondary
+review band. Production policy is in `config/burdens.yml` under `industrial_air`:
+
+- Score: `min(100, 100 * ToxConc / 622.73023119285699)`.
+- High burden: `ToxConc >=351.10409694733289`.
+- Secondary review: `100 <= ToxConc <351.10409694733289`.
+- Below 100: below the review band, not a safe-air finding.
+- Missing concentrations or incomplete modeled-grid coverage: unavailable.
+
+The anchors remain fixed to the reviewed baseline rather than recalculating with
+each run. The secondary band is exclusive of high burden, adds no score points,
+and does not set the high-burden flag. A separate review-or-high field preserves
+the broader >=100 screen. Raw concentrations remain available above the score cap.
+All 1,029 origins are scored: 103 are high burden, 231 are secondary review and
+695 are below the review band. Median score is 8.39. The high and review bands
+contain 3.87% and 26.91% of known estimated residents, respectively.
+
+`R/industrial_air_burden.R` provides scoring, aggregation and exports. Reproduce
+with the existing `DAM_DATA_DIR` environment pointing to the November 3 snapshot:
+
+```sh
+Rscript scripts/run_pipeline.R industrial_air_burden_assets
+Rscript scripts/air/report_industrial_burden.R
+Rscript tests/test_industrial_air_burden.R
+Rscript tests/test_industrial_air_burden_snapshot.R
+```
+
+The `industrial_air_burden` and `industrial_air_burden_assets` targets were built
+successfully. Results in `output/components/industrial-air-burden/` include
+`review.html`, maps, scores and separate flags, population summaries, GIS data,
+and frozen policy/source metadata. The comparison below and the earlier mockup
+remain historical review artifacts. Public-map deployment is separate and has
+not been changed by this analytical implementation. Traffic scoring was adopted
+subsequently; overall burden weights remain open.
+
+## November 10, 2026 score and flag review
+
+The user requested a comparison before adopting industrial-air scoring. This
+review does not change the existing mockup or public map. The candidate score
+is `min(100, 100 * ToxConc / 622.73023119285699)`, with an inclusive candidate
+high-burden flag at `351.10409694733289`. These are the unweighted type-7 95th
+and 90th percentiles, respectively, across the current 1,029 H8 origins. The
+existing mockup flag is `ToxConc >=100`. Source data are RSEI v2.3.12, year 2022.
+All inputs have complete modeled-grid coverage; neither flag is a health standard.
+
+| Rule | Flagged origins | Known residents | Share of known residents | Known children | Share of known children |
+|---|---:|---:|---:|---:|---:|
+| Existing >=100 | 334 | 296,621 | 30.78% | 59,942 | 34.81% |
+| Candidate >=351.1041 | 103 | 37,269 | 3.87% | 8,991 | 5.22% |
+| Flag removed by higher cutoff | 231 | 259,352 | 26.91% | 50,951 | 29.59% |
+
+The candidate score has median 8.39 and 75th percentile 24.00. Fifty-two origins
+reach the 100-point cap; raw concentrations remain available above it. The old
+flag corresponds to 16.06 score points and the candidate flag to 56.38 points.
+The continuous score and flag are separate decisions. A possible secondary
+review band from 100 to 351.1041 is discussed, not adopted. None of the removed
+flags indicates improvement in air quality. The reference is not weighted by
+population; these population summaries use whole-hex estimates and exclude 71
+origins with unknown population.
+
+Reproduce from the existing prepared RSEI/H8 and population targets:
+
+```sh
+Rscript scripts/air/compare_industrial.R
+Rscript tests/test_industrial_air_review.R
+```
+
+Candidate parameters are isolated in `config/industrial-air-review.yml`.
+`R/industrial_air_review.R` implements review-only score/flag fields. The
+script checks the current quantiles against the pinned candidate reference;
+a changed reference must be explicitly reviewed. Outputs in
+`output/components/industrial-air-review/` include `review.html`, score and
+classification maps, distribution plots, per-origin results with coordinates,
+removed flags, population summaries, GIS data and provenance. No production
+burden configuration or overall weights are changed.
+
 ## Source and scope
 
 The pipeline now acquires EPA's **2022 aggregated air geographic microdata**, RSEI
