@@ -6,7 +6,7 @@ import {profileLabels, modeLabels, records, basketColor, palette, differenceColo
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
 let combinedData, combinedOrigins, tractWeights, tractCoverage, assessments=new Map(), tractAssessments=new Map();
 const selection={profile:'families',mode:'walk_transit',minutes:45,display:'combined',weights:null,jobSensitivity:false};
-const DATA_VERSION='af7e437218d2';
+const DATA_VERSION='ed167504976f';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 let map, metadata, tracts, city, hexes, tractLayer, hexLayer, selected, dimension=location.hash==='#burdens'?'burdens':'benefits', controller, searchSequence=0;
 let floodIndex, excludedLayer, floodplainLayer;
