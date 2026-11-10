@@ -12,7 +12,7 @@ for(const r of columnRows(data.reference)){
  compared++;
 }
 assert.equal(compared,origins.size*4*3);
-const base={drive_families:3,drive_older:3,drive_single:3,drive_supportive:2,drive_grocery:1,
+const base={drive_families:3,drive_older:5,drive_single:3,drive_supportive:2,drive_grocery:1,
  transit_families:3,transit_grocery:1,jobs_drive:125000,jobs_transit:25000,jobs_drive30:500000,
  education_growth:50,education_sample:10};
 const score=(r,p='families',s='drive',w=null,school=null)=>assessBenefits(r,p,s,spec,baskets,w,school);

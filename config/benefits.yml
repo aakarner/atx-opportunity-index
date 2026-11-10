@@ -18,6 +18,6 @@ destinations:
 profiles:
   general: [grocery, childcare, pharmacy, urgent_care, hospital, park, library, public_center]
   families: [grocery, childcare, park, library]
-  older: [grocery, pharmacy, urgent_care, public_center]
+  older: [grocery, pharmacy, urgent_care, public_center, library, park]
   single: [grocery, pharmacy, urgent_care, public_center]
   supportive: [grocery, pharmacy, urgent_care]

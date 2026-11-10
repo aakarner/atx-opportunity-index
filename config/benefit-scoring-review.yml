@@ -25,7 +25,7 @@ presets:
   supportive: {destinations: 75, education: 0, jobs: 25}
 destination_minimums:
   families: 3
-  older: 3
+  older: 5
   single: 3
   supportive: 2
 require_grocery: true
