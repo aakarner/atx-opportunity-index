@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
 from datetime import datetime, timezone
+from elementary_boundary_formats import hays_elementary
 
 ROOT = Path("data/raw/elementary_boundaries/2026_27")
 ROOT.mkdir(parents=True, exist_ok=True)
@@ -37,6 +38,22 @@ def fetch(name, url, sanitize=None):
 
 def write(name, value):
     (ROOT / name).write_text(json.dumps(value))
+
+
+def fetch_binary(name, url):
+    path = ROOT / name
+    cached = path.exists()
+    if not cached:
+        with urlopen(url, timeout=120) as response:
+            path.write_bytes(response.read())
+    MANIFEST.append(dict(path=str(path), url=url, reused_cache=cached,
+                         sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                         snapshot_utc=datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()))
+    return path.read_bytes()
+
+
+def fetch_text(name, url):
+    return fetch_binary(name, url).decode()
 
 
 def arcgis_layer(name, endpoint):
@@ -133,10 +150,52 @@ for school in mi["Schools"]:
         geometry=dict(type="MultiPolygon", coordinates=polys)))
 write("manor_elementary.geojson", dict(type="FeatureCollection", features=features))
 
+# Eanes publishes explicit school-year collections, including the post-closure
+# five-school elementary configuration. Do not use historical Valley View zones.
+ea_client = "40669a54-a33b-43e1-ab74-8ce7364ec1c9"
+ea_collections = fetch("eanes_collections.json", dv_api + urlencode(dict(kind="collections", clientId=ea_client)))
+ea = [x for c in ea_collections if c["name"] == "School Year 2026-27"
+      for x in c["items"] if x["scenario_name"] == "Elementary"]
+assert len(ea) == 1 and ea[0]["id"] == "afaff545-ade1-4754-8f2e-7321b312a994"
+ea_zones = fetch("eanes_elementary.geojson", dv_api + urlencode(dict(
+    kind="collection", clientId=ea_client, collectionItemId=ea[0]["id"])))
+assert len(ea_zones["features"]) == len(ea[0]["zones"]) == 5
+
+# Current Leander locator retains a 24–25 service name, but its August 2026
+# layer excludes Faubion after the district's approved 2026–27 conversion.
+le_app = fetch("leander_app.json", arcgis + "68baf4729b254d0e9c281f78bf62db67/data?f=json")
+assert le_app["values"]["webmap"] == "7ee3f8924ccc4477ad89684cf3ea2025"
+le_map = fetch("leander_webmap.json", arcgis + le_app["values"]["webmap"] + "/data?f=json")
+le = [x for x in le_map["operationalLayers"] if x["title"] == "Elementary School Zones"]
+assert len(le) == 1 and not le[0].get("layerDefinition", {}).get("definitionExpression")
+le_zones = arcgis_layer("leander_elementary", le[0]["url"])
+assert len(le_zones["features"]) == 29
+assert not any("Faubion" in f["properties"]["DisplayName"] for f in le_zones["features"])
+
+# Hays links a Google My Maps export. Read only the named elementary folder;
+# campus-location points, secondary layers and future assignments are excluded.
+hays_kml_url = "https://www.google.com/maps/d/kml?mid=1sL-9kjFP69cxCbdggELeSl05aMPx2Q4&forcekml=1"
+write("hays_elementary.geojson", hays_elementary(fetch_text("hays_zones.kml", hays_kml_url)))
+
+# Independent district footprints support an explicit remaining-gap audit.
+arcgis_layer("district_inventory", "https://maps.austintexas.gov/arcgis/rest/services/Shared/BoundariesGrids_2/MapServer/2")
+
+# LTISD's current attendance page links this georeferenced PDF. The separate
+# extraction steps preserve its 2023–24 effective label and approximate method.
+lt_pdf_url = "https://resources.finalsite.net/images/v1711643413/laketravistxednet/hyewcrjpw1jsqfntxyta/23-24ElementaryAttendanceZones_Detail.pdf"
+assert fetch_binary("lake_travis_elementary.pdf", lt_pdf_url).startswith(b"%PDF-")
+lt_client = fetch("lake_travis_client.json", mi_api + "ClientRequest.asmx/GetClientData?clientId=LTI05860338223",
+                  lambda d: {k: d[k] for k in ["id", "name", "bulletinEnglish", "lastUpdatedStr", "schools"]})
+assert lt_client["name"] == "Lake Travis ISD" and "2026-2027" in lt_client["bulletinEnglish"]
+
 evidence = [
     dict(district="Round Rock ISD", source_label="Round Rock ISD 2526", current_use="District's currently published school-boundary page embeds this service; legacy SCHL_YEAR attributes are not used as assignment years.", page="https://www.roundrockisd.org/o/rrisd/page/school-boundaries-and-maps"),
     dict(district="Pflugerville ISD", source_label="Elementary Schools 2025-26", current_use="Current Find My School locator; 2026–27 enrollment directs families to this map. Proposed closures/rezoning apply in 2027–28 and are excluded.", page="https://www.pfisd.net/registration-information/find-my-school-map"),
     dict(district="Del Valle ISD", source_label="Current", current_use="Current elementary scenario in district-published map; future Option A/B excluded.", page="https://www.dvisd.net/departments/communications/north-del-valle-hs-updates/attendance-zones"),
-    dict(district="Manor ISD", source_label="24-25 Elementary Schools", current_use="Enrollment-linked locator explicitly announces 2026–27; official attendance page says elementary changes effective fall 2024. Live locator layer retained with original label.", page="https://www.manorisd.net/information-for-parents-and-scholars/enroll")]
-write("source_manifest.json", dict(assignment_school_year="2026-27", current_use_basis="District-published live locators, checked 2026-11-09; not district-certified effective-year GIS exports", evidence=evidence, files=MANIFEST))
-print("Saved elementary boundary snapshots for Round Rock, Pflugerville, Del Valle and Manor.")
+    dict(district="Manor ISD", source_label="24-25 Elementary Schools", current_use="Enrollment-linked locator explicitly announces 2026–27; official attendance page says elementary changes effective fall 2024. Live locator layer retained with original label.", page="https://www.manorisd.net/information-for-parents-and-scholars/enroll"),
+    dict(district="Eanes ISD", source_label="School Year 2026-27 / Elementary", current_use="Explicit 2026–27 collection in district-linked SchoolSearch; five elementary zones, excluding closed Valley View.", page="https://www.eanesisd.net/district/maps"),
+    dict(district="Leander ISD", source_label="Elementary School Zones / Leander_AZ_Finder_24_25_WFL1", current_use="Current district-linked locator; layer last edited August 4, 2026, with 29 zones and no Faubion elementary assignment. Legacy service and field labels retained.", page="https://www.leanderisd.org/attendancezones/"),
+    dict(district="Hays CISD", source_label="Elementary School Zones 2026-2027", current_use="Explicit 2026–27 folder in district-linked Google map. November 10 snapshot assigns future January 2027 Tom Green move-in overlay to Sunfield as stated in the source. Existing-student grandfathering is not modeled.", page="https://www.hayscisd.net/zonemap"),
+    dict(district="Lake Travis ISD", source_label="Elementary Attendance Zones; effective 2023-24", current_use="Official current attendance page still links the April 2023 GeoPDF. Approximate map-derived polygons, not district GIS exports. Extract with extract_lake_travis_pdf.py and build_lake_travis_pdf.R; retain embedded controls, pixel resolution, and validation audit.", page="https://www.ltisdschools.org/families/school-attendance-zones/elementary-school-attendance-zones-detail")]
+write("source_manifest.json", dict(assignment_school_year="2026-27", current_use_basis="District-published live locators; original five-district sources checked 2026-11-09, additions checked 2026-11-10; not district-certified GIS exports", evidence=evidence, files=MANIFEST))
+print("Saved elementary boundary snapshots for " + ", ".join(e["district"] for e in evidence) + ".")

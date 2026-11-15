@@ -4,8 +4,9 @@ source("scripts/prepare/pull_school_subgroups.R")
 source("scripts/prepare/build_school_assignments.R")
 
 build_elementary_access <- function() {
-  districts <- c("227901", "246909", "227904", "227910", "227907")
-  district_names <- c("Austin ISD", "Round Rock ISD", "Pflugerville ISD", "Del Valle ISD", "Manor ISD")
+  districts <- c("227901", "246909", "227904", "227910", "227907", "227909", "246913", "105906", "227913")
+  district_names <- c("Austin ISD", "Round Rock ISD", "Pflugerville ISD", "Del Valle ISD", "Manor ISD",
+    "Eanes ISD", "Leander ISD", "Hays CISD", "Lake Travis ISD")
   raw <- "data/raw/elementary_boundaries/2026_27"
   processed <- "data/processed/school_indicators"
   qa <- "data/qaqc/elementary_access"
@@ -18,8 +19,14 @@ build_elementary_access <- function() {
     "ROBERTSON"="VIC ROBERTSON", "JOHNSON"="JOE LEE JOHNSON", "SOMMER"="PATSY SOMMER",
     "CALLISON"="NEYSA CALLISON", "HERRINGTON"="LINDA HERRINGTON", "ENGLAND"="ELSA ENGLAND",
     "BARRON"="RUTH BARRON", "DELCO"="WILHELMINA DELCO", "SPRING HILL"="SPRINGHILL",
-    "SHADOW GLEN"="SHADOWGLEN")
-  key <- function(x) { k <- school_name_key(x); i <- match(k,names(aliases)); k[!is.na(i)] <- aliases[i[!is.na(i)]]; k }
+    "SHADOW GLEN"="SHADOWGLEN", "AKIN"="MONTA JANE AKIN", "BUSH"="LAURA WELCH BUSH",
+    "CAMACHO"="CHRISTINE CAMACHO", "COX"="CHARLOTTE COX", "GIDDENS"="LOIS F GIDDENS",
+    "HISLE"="DONALD LEWIS HISLE", "KNOWLES"="PATRICIA KNOWLES", "MASON"="C C MASON",
+    "NAUMANN"="PAULINE NAUMANN", "PLAIN"="JIM PLAIN", "REAGAN"="RONALD REAGAN",
+    "REED"="OFFICER LEONARD A REED", "WINKLEY"="WILLIAM J WINKLEY", "CULLEN"="JIM CULLEN",
+    "FUENTES"="SUSIE FUENTES", "NEGLEY"="LAURA B NEGLEY", "PFLUGER"="RALPH PFLUGER",
+    "RAMAGE"="LAMONT RAMAGE")
+  key <- function(x) { k <- sub(" SCHOOL$", "", school_name_key(x)); i <- match(k,names(aliases)); k[!is.na(i)] <- aliases[i[!is.na(i)]]; k }
   normalize <- function(x, district, field, label) {
     x <- st_transform(st_make_valid(x), 5070)
     x <- st_sf(assigned_school_label=as.character(x[[field]]), geometry=st_geometry(x)) |>
@@ -47,12 +54,21 @@ build_elementary_access <- function() {
   pf <- st_read(file.path(raw,"pflugerville_elementary.esrijson"),quiet=TRUE)
   dv <- st_read(file.path(raw,"del_valle_elementary.geojson"),quiet=TRUE)
   mi <- st_read(file.path(raw,"manor_elementary.geojson"),quiet=TRUE)
+  ea <- st_read(file.path(raw,"eanes_elementary.geojson"),quiet=TRUE)
+  le <- st_read(file.path(raw,"leander_elementary.geojson"),quiet=TRUE)
+  hy <- st_read(file.path(raw,"hays_elementary.geojson"),quiet=TRUE)
+  lt <- st_read(file.path(raw,"lake_travis_elementary.geojson"),quiet=TRUE)
   extra <- bind_rows(normalize(rr,"246909","ELEM_NAME","Round Rock ISD 2526 + The Everett"),
     normalize(pf,"227904","ELEM_NAME","Elementary Schools 2025-26"),
     normalize(dv,"227910","name","Current elementary scenario"),
-    normalize(mi,"227907","name","24-25 Elementary Schools"))
+    normalize(mi,"227907","name","24-25 Elementary Schools"),
+    normalize(ea,"227909","name","School Year 2026-27 / Elementary"),
+    normalize(le,"246913","DisplayName","Elementary School Zones / Leander_AZ_Finder_24_25_WFL1"),
+    normalize(hy,"105906","name","Elementary School Zones 2026-2027; assignments as of 2026-11-10"),
+    normalize(lt,"227913","name","Official elementary map; effective 2023-24; approximate PDF-derived polygons"))
   # Manor and Del Valle publish campus suffixes; independently reconcile names.
-  for (entry in list(list(x=mi,id="227907",field="name"),list(x=dv,id="227910",field="name"))) {
+  for (entry in list(list(x=mi,id="227907",field="name"),list(x=dv,id="227910",field="name"),
+                    list(x=ea,id="227909",field="name"))) {
     x <- entry$x
     ids <- if(entry$id=="227907") x$campus_id else paste0(entry$id,vapply(x$schools,function(s) jsonlite::fromJSON(s)$code[1],character(1)))
     matched <- extra$campus_id[match(paste(entry$id,x[[entry$field]]),paste(extra$district_id,extra$assigned_school_label))]
@@ -70,7 +86,10 @@ build_elementary_access <- function() {
   zones$assignment_school_year <- "2026-27"
   zones$growth_school_year <- "2025-26"
   zones$accountability_year <- 2026L
-  zones$boundary_year_basis <- ifelse(zones$district_id=="227901","Explicit 2026–27 layer","Current district-published locator; legacy layer label retained")
+  zones$boundary_year_basis <- ifelse(zones$district_id %in% c("227901","227909","105906"),
+    "Explicit 2026–27 layer", "Current district-published locator; legacy layer label retained")
+  zones$boundary_year_basis[zones$district_id=="227913"] <-
+    "Current district-linked PDF checked 2026-11-10; 2023–24 effective label; approximate map-derived boundaries"
   ix <- match(zones$campus_id,campuses$campus_id)
   zones$score_status <- ifelse(is.na(ix),"No matched neighborhood elementary campus",
     ifelse(!campuses$eligible[ix],campuses$exclusion_reason[ix],
@@ -97,6 +116,13 @@ build_elementary_access <- function() {
   checks <- zones |> group_by(district_name) |> summarise(polygons=n(),campuses=n_distinct(campus_id,na.rm=TRUE),
     overall_available=sum(!is.na(usable_growth)),subgroup_available=sum(!is.na(subgroup_growth)),.groups="drop") |> st_drop_geometry()
   write_csv(checks,file.path(qa,"district_summary.csv"))
+  inputs <- c(list.files(raw,pattern="\\.(geojson|esrijson|kml|pdf)$",full.names=TRUE),
+    file.path(raw,c("source_manifest.json","lake_travis_pdf_georeferencing.json")),
+    file.path(processed,"aisd_growth_assignments_2026_27.gpkg"),
+    "data/raw/tea_accountability/tea_2026_campus_rate.csv",
+    file.path(processed,"expanded_subgroup_comparison_2026.csv"))
+  write_csv(data.frame(path=inputs,sha256=vapply(inputs,function(p)digest::digest(file=p,algo="sha256"),character(1))),
+    file.path(qa,"input_manifest.csv"))
   print(checks)
   invisible(zones)
 }

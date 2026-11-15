@@ -194,7 +194,7 @@ write_benefit_assets <- function(data,tract,spec,zones,directory="site/assets",c
   # Column-oriented JSON keeps field names from being repeated for each origin.
   path <- file.path(directory,"benefits.json")
   spec$education <- list(level="elementary",assignment_year="2026-27",growth_year="2025-26",
-    districts=c("Austin","Round Rock","Pflugerville","Del Valle","Manor"),
+    districts=sort(unique(sub(" ISD$", "", schools$district_name))),
     coverage=if(is.null(coverage)) NULL else coverage$summary)
   jsonlite::write_json(list(spec=spec,series=data$series,
     education_origins=if(is.null(coverage)) NULL else coverage$origins[c("site_id","campus_id","overall","subgroup","status")],
@@ -243,7 +243,7 @@ write_benefit_brief <- function(files,spec,tract,site_profiles) {
     '<style>body{font:16px/1.55 system-ui;color:#233d46;margin:3rem auto;max-width:850px;padding:0 1rem}h1,h2{line-height:1.2}h2{margin-top:2rem}th,td{padding:.4rem .65rem;border-bottom:1px solid #ddd;text-align:left}th{background:#eef4ef}.table-scroll{overflow:auto}table{border-collapse:collapse;font-size:.9rem}a{color:#155e52}small{color:#52666b}</style><main>',
     paste0('<small>Housing siting research · DAM release ',spec$snapshot,'</small><h1>Which everyday destinations can a resident reach?</h1>'),
     '<p>Compare a proposed address under separate driving and transit scenarios. Count one point per destination type within the trial time budget. Use the component list to see which trip a resident would still need to make. Jobs and assigned-school growth are separate benefits.</p>',
-    '<h2>Three example locations</h2><p>Each cell is a count of reachable types. Driving and transit use the trial defaults shown below. The school column uses the current published elementary assignment at the example address. Austin, Round Rock, Pflugerville, Del Valle and Manor are integrated.</p>',report_html_table(examples),
+    '<h2>Three example locations</h2><p>Each cell is a count of reachable types. Driving and transit use the trial defaults shown below. The school column uses the current published elementary assignment at the example address. Austin, Round Rock, Pflugerville, Del Valle, Manor, Eanes, Leander, Hays and Lake Travis are integrated.</p>',report_html_table(examples),
     '<h2>Choosing a time budget</h2><p>The rows below count H8 origins. As the budget rises, more sites tie. At 15 minutes driving all three examples reach every family destination. At 30 minutes by transit the family basket distinguishes all three. At 45 minutes the South and East Austin examples tie as the South Austin library trip enters the budget.</p>',
     report_html_table(budget),
     '<h2>Which destinations drive the count?</h2><p>Share of modeled origins reaching each type at the trial default. A higher count of eligible facilities does not establish availability of a slot, appointment or program.</p>',

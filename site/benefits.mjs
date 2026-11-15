@@ -47,6 +47,7 @@ export function schoolDetail(zones,point) {
     <dl class="components"><div><dt>Overall growth</dt><dd>${finite(p.usable_growth)?number(p.usable_growth):esc(p.score_status)}</dd></div>
     <div><dt>Economically disadvantaged growth</dt><dd>${finite(p.subgroup_growth)?number(p.subgroup_growth):esc(p.subgroup_status)}</dd></div></dl>
     ${finite(p.minimum_growth_tests)&&p.minimum_growth_tests<20?'<p class="notice">Small subgroup sample: at least one growth subject has fewer than 20 evaluated tests.</p>':''}
+    ${p.boundary_year_basis?.includes('approximate')?'<p class="notice">Approximate attendance boundary extracted from the district’s published map. Confirm assignments near zone edges with Lake Travis ISD.</p>':''}
     <p>Current published assignment for 2026–27 · ${esc(p.growth_school_year)} growth. Elementary only; travel time is not scored.</p>
     <details><summary>Attendance boundary source</summary><p>${esc(p.source_layer_label)} · ${esc(p.boundary_year_basis)}</p></details>`;
 }
@@ -57,7 +58,7 @@ function educationCoverage(spec) {
     const i=c.scenario.findIndex((s,i)=>s===scenario && c.population_group[i]===group);
     return i<0?'Unavailable':number(100*c.population_coverage[i])+'%';
   };
-  const items=[['Five-district elementary assignment','Assigned elementary'],['Overall growth available','Overall growth'],['Subgroup growth; minimum 1 tests per subject','Subgroup growth']];
+  const items=[['Expanded elementary assignment','Assigned elementary'],['Overall growth available','Overall growth'],['Subgroup growth; minimum 1 tests per subject','Subgroup growth']];
   return `<details><summary>Education coverage · residents and children</summary>
     <table class="education-coverage"><thead><tr><th>Coverage</th><th>Residents</th><th>Under 18</th></tr></thead><tbody>${items.map(([key,label])=>`<tr><td>${label}</td><td>${value(key,'total_population')}</td><td>${value(key,'children_under_18')}</td></tr>`).join('')}</tbody></table>
     <p>Shares of known population weights in the prototype hexes. Children are residents under 18, not enrolled students. ${c.missing_weight_origins[0]} origins have missing population weights and are excluded from these denominators. Small-sample scores are flagged, not discarded.</p></details>`;
@@ -88,7 +89,7 @@ export function benefitProfile(row,selection,spec,isHex,zones,point,series,jobBe
     ${isHex?'':`<p class="small">H8 cells cover ${number(row?.area_coverage*100)}% of the clipped tract area. Resident weights cover ${number(row?.resident_weight_area_share*100)}% of tract area. Estimated resident weight: ${number(row?.resident_weight,0)}. Zero weight gives an unavailable mean.</p>`}
     ${profile==='supportive'?'<p class="notice">Partial basket. Behavioral health, supportive services and on-site supports require separate review.</p>':''}
     ${mode==='walk_transit'?'<p class="small">Provisional July morning routing. An unreached trip can reflect service coverage or model limits.</p>':''}
-    ${profile==='families'?`<h3>Assigned elementary school</h3><div class="small">Austin, Round Rock, Pflugerville, Del Valle and Manor${schoolDetail(zones,point)}${educationCoverage(spec)}</div>`:''}
+    ${profile==='families'?`<h3>Assigned elementary school</h3><div class="small">${esc((spec.education?.districts||[]).join(', '))}${schoolDetail(zones,point)}${educationCoverage(spec)}</div>`:''}
     ${isHex?`<p class="small">Mean trip to the nearest facility across this basket: ${number(row?.[`${mode}_${profile}_mean_minutes`])}${finite(row?.[`${mode}_${profile}_mean_minutes`])?' min':' (requires a time for every type)'}.</p>`:''}
     ${['families','single'].includes(profile)?`<h3>Access to employment</h3><p class="small">${number(lowWageJobs,0)} low-wage jobs of ${number(totalJobs,0)} total within ${jobMinutes} minutes by ${esc(modeLabels[mode].toLowerCase())}.</p>`:''}
     <details><summary>Jobs${isHex?', destination choice and park acreage':''} · ${esc(modeLabels[mode])}</summary>

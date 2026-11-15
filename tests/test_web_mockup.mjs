@@ -93,7 +93,9 @@ console.log('Benefit checks passed: complete profile sums, inclusive thresholds,
 // Compare browser point assignment with independently exported sf assignments.
 const {schoolAssignment}=await import('../site/benefits.mjs');
 assert.ok(schools.features.every(f=>f.properties.school_level==='elementary'));
-assert.deepEqual([...new Set(schools.features.map(f=>f.properties.district_name))].sort(),['Austin ISD','Del Valle ISD','Manor ISD','Pflugerville ISD','Round Rock ISD']);
+assert.deepEqual([...new Set(schools.features.map(f=>f.properties.district_name))].sort(),
+ ['Austin ISD','Del Valle ISD','Eanes ISD','Hays CISD','Lake Travis ISD','Leander ISD','Manor ISD','Pflugerville ISD','Round Rock ISD']);
+assert.equal(benefits.spec.education.districts.length,9);
 const education=benefits.education_origins;
 assert.equal(education.site_id.length,rows.length);
 for(let i=0;i<education.site_id.length;i++){
@@ -106,6 +108,14 @@ for(let i=0;i<education.site_id.length;i++){
 }
 assert.ok(!schoolProfile.includes('Assigned schools · AISD'));
 assert.match(schoolProfile,/Under 18/);
+for(const prefix of ['227909','246913','105906','227913']) {
+ const i=education.campus_id.findIndex(id=>id?.startsWith(prefix));
+ assert.ok(i>=0,`New district ${prefix} must serve a mapped origin`);
+ const [lat,lon]=h3.cellToLatLng(education.site_id[i]);
+ const profile=benefitProfile(benefitCells.get(education.site_id[i]),selection,benefits.spec,true,schools,[lon,lat],[]);
+ assert.ok(profile.includes(schoolAssignment(schools,[lon,lat]).campus_name));
+ if(prefix==='227913')assert.match(profile,/Approximate attendance boundary/);
+}
 console.log('Elementary-only browser assignment matches sf at every H8 origin; both growth measures and child coverage verified.');
 
 // Default destination budgets match the selected job-access budgets. The job

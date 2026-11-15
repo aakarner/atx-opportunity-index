@@ -34,7 +34,7 @@ stopifnot(all(abs(cs$denominator-cs$covered_population-cs$uncovered_population)<
   all(cs$covered_missing_weight_origins<=cs$missing_weight_origins))
 for(group in unique(cs$population_group)) {
   z <- cs[cs$population_group==group,]
-  stopifnot(z$covered_population[z$scenario=="Five-district elementary assignment"] >
+  stopifnot(z$covered_population[z$scenario=="Expanded elementary assignment"] >
     z$covered_population[z$scenario=="AISD elementary assignment"],
     all(diff(z$covered_population[grepl("Subgroup",z$scenario)])<=0))
 }

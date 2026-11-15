@@ -469,7 +469,7 @@ boundary year, unique source IDs, geometry, campus uniqueness, and area balance.
 This completes the campus/zone join and change audit, not the final weighted
 school-access indicator or its tract aggregation.
 
-## Active prototype: five districts, elementary only (2026-11-09)
+## Initial expanded prototype: five districts, elementary only (2026-11-09)
 
 The active pipeline now uses the assigned neighborhood elementary school only.
 Middle and high school outcomes do not enter the education measure. The older
@@ -528,3 +528,99 @@ they are disjoint. Geographic assignment and available scores have separate
 coverage measures. The `*_mean` compatibility fields in the scoring CSVs now
 contain the single elementary value. Percentile sensitivities use a pooled,
 fixed, five-district elementary reference, not separate district ranks.
+
+## Active prototype: nine districts (2026-11-10)
+
+The elementary measure now includes **Eanes, Leander, Hays, and Lake Travis**
+in addition to the five districts above. These are all nine districts containing
+prototype H8 routing origins in the City's independent school-district layer.
+The expansion adds 58 distinct elementary campuses (5 Eanes, 29 Leander,
+17 Hays, 7 Lake Travis), for 200 matched campuses and 214 source/dissolved
+polygons. All 58 added campuses have usable overall and economically
+disadvantaged growth. The existing 156 polygons retain their campus attributes
+and scores. Scoring thresholds, weights, exclusions and growth vintage are
+unchanged; the optional percentile reference now includes all nine districts.
+
+| Added district | Attendance source and treatment |
+| --- | --- |
+| Eanes | [District boundary page](https://www.eanesisd.net/district/maps) links SchoolSearch, whose `School Year 2026-27 / Elementary` collection contains five zones. Published campus codes independently verify name matches. Closed Valley View is absent. |
+| Leander | [District zone finder](https://www.leanderisd.org/attendancezones/) links PASA's ArcGIS app. Its elementary layer was edited August 4, 2026 and contains 29 zones, excluding Faubion following its conversion. The service/field names still say 24–25; those legacy labels are retained, not treated as effective years. |
+| Hays | [District map link](https://www.hayscisd.net/zonemap) points to Google My Maps. The exported KML folder `Elementary School Zones 2026-2027` supplies 17 campus zones. A separate Tom Green move-in polygon explicitly remains Sunfield before January 2027 and is assigned to Sunfield in this November 10 snapshot. Grandfathered attendance options are not modeled. |
+| Lake Travis | The [current district attendance page](https://www.ltisdschools.org/families/school-attendance-zones/elementary-school-attendance-zones-detail) still links the map approved April 19, 2023, effective 2023–24. No usable public current vector download was found. Its seven zones are extracted from the official georeferenced PDF and explicitly marked **approximate** in the map/profile. |
+
+### Lake Travis extraction and limits
+
+The PDF contains a colored raster map plus geographic control points in Texas
+Central State Plane feet. Extraction uses the seven legend colors, preserves
+image-strip placement and orientation, and converts the raster to polygons.
+The raster has approximately **2.36-meter pixels**; an affine fit to the four
+embedded controls has a maximum residual of **0.39 meters**. These values
+describe extraction resolution and control fit, not certified boundary accuracy.
+The source checksum is pinned: a changed PDF requires review before extraction.
+
+Gray/black cartographic marks are filled only when surrounded by one zone color.
+White areas and marks touching multiple colors remain unassigned. Six independent
+district-published campus points fall in their expected zone. Serene Hills lies
+inside an unassigned cartographic-symbol hole, 81 meters from its expected zone;
+this is recorded explicitly rather than filled by proximity. The extracted map
+was also visually checked against the PDF and the independent district footprint.
+The older district inventory and current attendance-map footprints differ at
+some edges; no snapping or arbitrary district precedence is imposed.
+
+### Coverage and remaining gaps
+
+Recognized elementary assignments increase from **864 to 998 of 1,029 origins**.
+Among known population weights, assignment coverage increases from **95.03% to
+99.36% of represented residents**, and **93.56% to 99.28% of children under 18**:
+about 41,670 additional represented residents and 9,844 children. These are
+population estimates, not enrollment counts. The same 71 origins have unknown
+population weights and are excluded from the population denominators.
+
+Usable education-score coverage (after campus exclusions) rises from **91.99%
+to 96.32% of represented residents**, and **90.45% to 96.17% of children**.
+Browser point assignment agrees with R at all 1,029 origins; the 12,348
+origin/profile/travel-scenario score comparisons pass. Existing districts'
+campus attributes and scores, non-education inputs, and non-family profile
+scores remain unchanged. The benchmark chart now derives its axis range from
+the data so the new growth-35 observation is displayed rather than clipped.
+
+Nine origins have conflicting assignments and 22 remain outside the published
+zone coverage. Another 29 origins have a recognized assignment but an excluded
+paired-accountability score. No missing score is replaced with zero. All nine
+districts are represented, but this does not establish complete geographic or
+score coverage. Lake Travis's independent district footprint contains six
+origins; four receive a source-map assignment, while two remain outside the
+extracted map at its edges. A roughly 0.0057 km² Bastrop intersection with the
+municipal boundary contains no prototype origins and is documented without
+claiming Bastrop attendance coverage. Elgin, Dripping Springs and Lago Vista
+have no municipal area or prototype origins in this inventory.
+
+`data/qaqc/elementary_access/` now includes `district_footprint_inventory.csv`,
+`origin_assignment_audit.csv`, `remaining_assignment_gaps.csv`,
+`district_geometry.csv`, `input_manifest.csv`, and Lake Travis control/campus
+validation CSVs. The source manifest records official URLs, snapshot dates,
+checksums and effective-year qualifications. The independent district inventory
+is an audit aid, not a substitute for attendance boundaries.
+
+### Reproduction
+
+After the existing AISD and TEA preparation, run from the repository root:
+
+```sh
+python3 scripts/prepare/pull_elementary_boundaries.py
+# Use a Python environment with pypdf, numpy and Pillow:
+python3 scripts/prepare/extract_lake_travis_pdf.py
+Rscript scripts/prepare/build_lake_travis_pdf.R
+Rscript scripts/prepare/build_elementary_access.R
+# With DAM_DATA_DIR set to the dated team snapshot:
+Rscript scripts/run_pipeline.R scoring_comparison web_mockup_data review_report
+Rscript scripts/prepare/audit_elementary_coverage.R
+python3 tests/test_elementary_boundary_formats.py
+Rscript tests/test_expanded_elementary_access.R
+Rscript tests/test_benefit_scoring_review.R
+```
+
+The PDF conversion also requires R's `terra` package. Source snapshots are
+cached; the Hays move-in rule is explicitly dated November 10, 2026 and must be
+revisited for a January 2027 or later assignment snapshot. Rebuilding the
+repository's map assets does not itself publish the website.

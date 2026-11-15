@@ -67,14 +67,16 @@ for(n in names(tables)) write.csv(tables[[n]],file.path(out,paste0(n,'.csv')),ro
 display <- distribution |> filter(group!='Residents with usable scores') |>
   mutate(group=factor(group,levels=c('Schools represented in prototype','Children with usable scores')),
     sample=ifelse(small,'Small sample: <20 tests in either subject','At least 20 tests in each subject'))
+bin_range <- range(display$bin)
 p<-ggplot(display,aes(bin+2.5,percent,fill=sample))+
   geom_col(width=4.5)+facet_wrap(~group,ncol=1)+
   scale_fill_manual(values=c('At least 20 tests in each subject'='#27677c','Small sample: <20 tests in either subject'='#d69c54'))+
-  scale_x_continuous(breaks=seq(40,100,5),limits=c(39,101))+
+  scale_x_continuous(breaks=seq(bin_range[1],bin_range[2]+5,5),
+    limits=c(bin_range[1]-1,bin_range[2]+6))+
   labs(title='Economically disadvantaged growth at assigned elementary schools',
     subtitle=paste0(nrow(local),' represented schools · ',format(round(coverage$scored_population[2]),big.mark=','),' children with usable scores'),
-    x='Growth score (five-point bins: 40-44, 45-49, ...)',y='Share of schools or children (%)',fill=NULL,
-    caption='Current assignments in five districts; 2025-26 growth. Children are residents under 18, not enrolled students.\nPopulation-weighted results use whole hexes classified at routing origins. Small samples remain included.')+
+    x='Growth score (five-point bins)',y='Share of schools or children (%)',fill=NULL,
+    caption='Current assignments in included districts; 2025-26 growth. Children are residents under 18, not enrolled students.\nPopulation-weighted results use whole hexes classified at routing origins. Small samples remain included.')+
   theme_minimal(base_size=12)+theme(legend.position='bottom',panel.grid.minor=element_blank(),plot.margin=margin(15,20,15,15))+
   guides(fill=guide_legend(ncol=1))
 ggsave(file.path(out,'education-growth-distribution.png'),p,width=10,height=8,dpi=180,bg='white')
@@ -99,7 +101,7 @@ names(child_scenarios)<-c('Full credit','Minimum growth','Minimum points','Below
 writeLines(paste0('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Elementary education benchmarks</title><style>body{max-width:1080px;margin:40px auto;padding:0 20px;font:16px/1.55 system-ui;color:#243541}img{width:100%}table{border-collapse:collapse;font-size:13px}td,th{padding:8px;border-bottom:1px solid #ccd6dc;text-align:right}th{background:#edf3f4}.table{overflow-x:auto}</style><h1>Elementary education benchmark options</h1>',
   '<p>Decision recorded: use economically disadvantaged growth; retain published scores and flag fewer than 20 evaluated tests in either subject. These counts are tests, not unique students. Overall growth remains context. The adopted rule gives full credit at growth 70 and requires growth of at least 50; other scenarios remain sensitivities.</p>',
   '<img src="education-growth-distribution.png" alt="School-count and child-population distributions of economically disadvantaged growth, with small samples highlighted">',
-  '<p>The main school distribution counts each of ',nrow(local),' represented campuses once. The wider five-district source includes ',nrow(regional),' scored zoned campuses, including schools with no assigned prototype origin; those additional campuses do not enter this distribution. Weighted quantiles use the inverse empirical cumulative distribution, including for school counts.</p>',
+  '<p>The main school distribution counts each of ',nrow(local),' represented campuses once. The wider source covering all included districts includes ',nrow(regional),' scored zoned campuses, including schools with no assigned prototype origin; those additional campuses do not enter this distribution. Weighted quantiles use the inverse empirical cumulative distribution, including for school counts.</p>',
   '<h2>Distribution and sample sizes</h2><p>Small-sample flags apply to ',sum(local$minimum_growth_tests<flag),' of ',nrow(local),' represented schools and ',round(summary$small_sample_percent[3],1),'% of children with usable scores. Scores range from ',min(local$subgroup),' to ',max(local$subgroup),'.</p><div class="table">',html_table(qdisplay),'</div>',
   '<h2>Candidate benchmarks and minimums</h2><p>Full credit: compare growth 65, 70, and 75. Minimum: independently compare growth 50, 55, and 60. Points = 100 × min(growth / full-credit benchmark, 1). A score equal to the minimum passes. A below-minimum flag is separate from points and cannot be offset by another domain. These are provisional local policy scenarios, not TEA adequacy standards. Growth is a points-based measure, not the percentage of students growing; subgroup values can exceed 100.</p>',
   '<h3>Share earning full credit</h3><div class="table">',html_table(options_table(spec$candidate_full_credit_growth)),

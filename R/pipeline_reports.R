@@ -127,10 +127,11 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
                                  name = "Campus academic growth score (0–100)") +
     ggplot2::guides(fill = ggplot2::guide_colourbar(barwidth = grid::unit(11, "cm"),
                                                   title.position = "top")) +
-    ggplot2::labs(title = "Assigned elementary-school academic growth · five districts",
+    ggplot2::labs(title = "Assigned elementary-school academic growth · nine districts",
       subtitle = paste0("Attendance zones: ", school_spec$assignment_year, " · growth: ", school_spec$growth_year,
                          " · TEA ", school_spec$accountability_year, " accountability release · clipped to Austin"),
-      caption = paste("Campus-wide descriptive growth scores; not causal estimates of school effectiveness. Austin, Round Rock, Pflugerville, Del Valle and Manor are integrated.",
+      caption = paste("Campus-wide descriptive growth scores; not causal estimates of school effectiveness. Nine districts included.",
+                      "Lake Travis uses approximate boundaries from its currently linked map, labeled effective 2023–24.",
                       "Grey = unavailable or excluded score. Near-white = outside the mapped elementary assignment coverage; outline = Austin.", sep = "\n"))
   school_path <- file.path(map_dir, "aisd_school_growth.png")
   ggplot2::ggsave(school_path, p, width = max(width, 12), height = height, dpi = dpi, bg = "white")
@@ -266,7 +267,7 @@ report_html_escape(job_spec$cutoff_minutes), ' minutes, using ', report_html_esc
 ' jobs and network snapshot ', report_html_escape(job_spec$network_snapshot), '.</p>
 <p>A point outside the mapped FEMA floodplain has no mapped overlap in that snapshot; this does not establish absence of flood risk. School growth is a campus-wide descriptive score, not a causal estimate of effectiveness. The school baseline uses ',
 report_html_escape(school_spec$assignment_year), ' assignments and ', report_html_escape(school_spec$growth_year),
-' growth, from the TEA ', report_html_escape(school_spec$accountability_year), ' accountability release. Coverage includes elementary assignments in Austin, Round Rock, Pflugerville, Del Valle and Manor; other districts remain incomplete.</p>
+' growth, from the TEA ', report_html_escape(school_spec$accountability_year), ' accountability release. Coverage includes elementary assignments in Austin, Round Rock, Pflugerville, Del Valle, Manor, Eanes, Leander, Hays and Lake Travis; source gaps and overlaps remain unscored.</p>
 <p>Site crash density describes the City-observed portion of a ',
 report_html_escape(format(crash_spec$buffer_meters / 1000, digits = 5, trim = TRUE)), '-kilometer buffer, using crashes from ',
 report_html_escape(crash_spec$first_year), '–', report_html_escape(crash_spec$last_year),

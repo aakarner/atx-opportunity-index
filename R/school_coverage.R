@@ -8,7 +8,7 @@ school_population_coverage <- function(schools, population, spec) {
     by=c("site_id"="h3_id"),relationship="one-to-one")
   recognized <- !is.na(a$campus_id)
   masks <- list("AISD elementary assignment"=a$aisd_assignment,
-    "Five-district elementary assignment"=recognized,
+    "Expanded elementary assignment"=recognized,
     "Overall growth available"=!is.na(a$overall))
   for(n in spec$subgroup_minimum_tests) masks[[paste0("Subgroup growth; minimum ",n," tests per subject")]] <-
     !is.na(a$subgroup) & !is.na(a$minimum_growth_tests) & a$minimum_growth_tests>=n
