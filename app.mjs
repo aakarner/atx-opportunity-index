@@ -1,12 +1,12 @@
-import {indexBurdens,assessBurden,burdenStyle,burdenLegend,burdenProfile} from './combined-burdens.mjs?v=025f1eef0701';
+import {indexBurdens,assessBurden,burdenStyle,burdenLegend,burdenProfile} from './combined-burdens.mjs?v=29688c65a5ae';
 import {indexFlood,floodProfile,floodLabels,floodColors} from './flood-eligibility.mjs?v=bf508730dc50';
 import {columnRows,assessBenefits,aggregateTract,normalizedWeights,requiredDomains,combinedStyle,combinedProfile,tractCombinedProfile,statusLabels,statusColors} from './combined-benefits.mjs?v=d292eb7f93ca';
 import {finite, locate, candidates, escapeHTML as esc} from './logic.mjs?v=36c8cf2733c4';
-import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile, schoolAssignment} from './benefits.mjs?v=ba4547469589';
+import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile, schoolAssignment} from './benefits.mjs?v=6025cee5814f';
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
 let combinedData, combinedOrigins, tractWeights, tractCoverage, assessments=new Map(), tractAssessments=new Map();
 const selection={profile:'families',mode:'walk_transit',minutes:45,display:'combined',weights:null,jobSensitivity:false};
-const DATA_VERSION='ab02002a0a74';
+const DATA_VERSION='f7138f233bac';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 let map, metadata, tracts, city, hexes, tractLayer, hexLayer, selected, dimension=location.hash==='#burdens'?'burdens':'benefits', controller, searchSequence=0;
 let floodIndex, excludedLayer, floodplainLayer;

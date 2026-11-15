@@ -54,12 +54,13 @@ export function burdenStyle(r,a,measure){
  else if(measure==='heat_quality')color=r?.heat_thin_coverage===true?'#d5a448':r?.heat_thin_coverage===false?'#73a7a6':'#a8b4be';
  else if(measure==='industrial_review')color=a.flags.industrial===true?'#943958':r?.industrial_air_review_band===true?'#e6a34a':a.flags.industrial===false?'#dce5e5':'#a8b4be';
  else color=burdenColor(burdenValue(r,a,measure));
- const flagged=measure==='combined'?a.high.length>0:measure==='street'?(a.flags.crash===true||a.flags.gap===true):a.flags[measure]===true;
+ const flagged=measure==='combined'?a.overallHigh===true:measure==='street'?(a.flags.crash===true||a.flags.gap===true):a.flags[measure]===true;
  return {fillColor:color,fillOpacity:.88,color:flagged?'#98422c':'#fff',weight:flagged?1.7:.5,dashArray:flagged?'4 2':null};
 }
 export function burdenLegend(measure,{quarterMile=false,trafficSensitivity=false}={}){
  const radius=quarterMile?'¼-mile sensitivity':'½-mile neighborhoods';
  let rule='Heat ⅓ · Street safety ⅓ · Air ⅓ (split equally)',entries=[],note='Higher = greater burden. Dashed orange outlines mark high component burden. Gray = unavailable.';
+ if(measure==='combined')note='Higher = greater burden. Dashed orange outlines mark overall high burden (2+ high components). Gray = unavailable score; a known overall high burden still receives an outline.';
  if(measure==='flags'){rule='Overall high burden requires at least 2 high components';entries=Object.entries(burdenLabels).map(([k,l])=>[burdenColors[k],l]);note='Crashes and pedestrian gaps count separately. Individual component warnings remain visible in profiles; secondary industrial review and limited heat observations do not count.';}
  else if(measure==='heat_quality'){rule='Dates with at least half of hex land observed';entries=[['#d5a448','Fewer than 8 eligible dates'],['#73a7a6','At least 8 eligible dates']];note='Scores are retained when observations are limited.';}
  else if(measure==='industrial_review'){rule='RSEI toxicity-weighted concentration';entries=[['#943958','High burden · ≥351.1'],['#e6a34a','Secondary review · 100 to <351.1'],['#dce5e5','Below review band']];note='Thresholds rounded here; flags use exact frozen values. These are screening bands, not health standards.';}
