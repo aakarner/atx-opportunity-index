@@ -13,21 +13,63 @@ as a sensitivity in the public map. The street-safety score retains its internal
 50/50 crash/gap split.
 
 All four inputs must be present; missingness withholds the composite without
-redistributing weights. Any primary component warning remains visible regardless
-of the average. Known high burden plus missing data is labeled high/incomplete;
-missing data without a known high component is incomplete, not unflagged.
-Secondary industrial review and limited heat observations remain separate badges.
+redistributing weights. On **November 15, 2026**, the user adopted an overall
+high-burden classification requiring **at least two high components**, independent
+of the weighted score. The five components are heat, industrial air, near-road
+traffic, crashes, and pedestrian gaps. Crashes and gaps count separately even
+though they share the street-safety domain; this is not a two-domain rule.
+Each primary component warning remains visible regardless of the average or
+overall classification. At least two known high components plus missing data is
+labeled high/incomplete. Fewer than two known high components plus missing data
+is incomplete, not unflagged. Complete assessments with zero or one high component
+are labeled below the overall high-burden threshold, not free of component warnings.
+Secondary industrial review and limited heat observations remain separate badges
+and do not count toward the two-component threshold. Flood eligibility is separate.
 The public map includes the approved quarter-mile street and 25% traffic-flag
 sensitivities. Flood eligibility stays independent and overrides score colors.
-The exported snapshot has 880 complete scores, 480 high/complete, 38
-high/incomplete, 400 without a primary high flag, and 111 incomplete without a
-known high flag. The 149 incomplete scores lack pedestrian-gap inputs.
+The exported snapshot has 880 complete scores, **154 high/complete**, **2
+high/incomplete**, **726 below the overall high-burden threshold with complete
+assessments**, and **147 incomplete without two known high components**.
+The 149 incomplete scores lack pedestrian-gap inputs. Individual high-component
+warnings remain present in 518 cells.
+
+| Classification rule | Hexes | Share of 1,029 hexes | Known estimated residents | Share of known population |
+|---|---:|---:|---:|---:|
+| Previous: at least one high component | 518 | 50.34% | 477,692 | 49.57% |
+| Adopted: at least two high components | 156 | 15.16% | 143,916 | 14.93% |
+| Comparison only: at least two high domains | 152 | 14.77% | 138,060 | 14.33% |
+
+The four cells distinguishing the latter two rules have high crashes and gaps
+but no other high components; they contain approximately 5,856 known estimated
+residents. Population shares use approximately 963,741 known estimated residents.
+There are 71 cells with unknown population, including eight in the adopted
+high-burden group; unknowns are excluded from population sums, not treated as zero.
+These are whole-hex ACS-derived estimates, not exact City-boundary counts or
+individual exposure estimates.
 
 Implementation: `R/combined_burdens.R`, `combined_burden_assets` target,
 `site/assets/combined-burdens.json`, and `site/combined-burdens.mjs`. The browser
 recomputes every assessment and checks its agreement with the R export before
 drawing the map. Run `Rscript tests/test_combined_burdens.R` and
-`node tests/test_combined_burdens.mjs`. Component review sections below record the
+`node tests/test_combined_burdens.mjs`. Rebuild with
+`Rscript scripts/run_pipeline.R combined_burden_assets`, or use
+`Rscript scripts/build_combined_burdens.R` to rebuild just the combined export
+from existing component analyses (their policies must match current configuration).
+The export uses schema version 2: `overall_high` and `high_component_count`
+describe the adopted classification, while `any_high` retains its individual-warning
+meaning. `counts.high` counts overall high classifications; `counts.any_component_high`
+counts cells with at least one warning. Both street radii and both traffic-flag
+settings apply the same two-component rule. The quarter-mile setting identifies
+146 overall high cells; the 25% traffic flag identifies 194 at half mile and 172
+at quarter mile. Sensitivities change classification but not score weights.
+The map classification layer, count, and profile badge use the overall rule;
+dashed outlines on score maps continue to identify individual component warnings.
+The two-component update was published on November 15, 2026 and verified in the
+live map: 156 overall high-burden cells, 880 complete scores, and 149 incomplete
+scores. The release preserves the previously published benefits and school data.
+Deployment verification is recorded in
+`output/components/combined-burdens/publication.json`.
+Component review sections below record the
 analysis sequence; their earlier publication and open-decision notes are historical.
 
 Tree canopy is protective context rather than
@@ -235,7 +277,8 @@ Mean contributions among the complete origins are 17.60 heat, 10.67 street safet
 4.65 and 3.32 under equal domains. This reflects different score distributions,
 not equivalent health effects or a causal influence decomposition.
 
-Under the proposed weight-independent warning rule, 480 origins have known high
+Under the then-proposed one-component weight-independent warning rule (superseded
+for overall classification on November 15, 2026), 480 origins have known high
 burden with complete assessments, 38 have high burden with incomplete assessments,
 400 have no high flags and complete assessments, and 111 have incomplete
 assessments without a known high flag. The same warnings apply to both presets;

@@ -1,6 +1,6 @@
-# Adopted scoring and equal-theme weights through 2026-11-10.
+# Adopted scoring and equal-theme weights; overall classification updated 2026-11-15.
 combined:
-  version: combined_burdens_2026_11_10_v1
+  version: combined_burdens_2026_11_15_v2
   default: equal_thirds_by_theme
   relative_weights:
     heat_score: 2
@@ -9,6 +9,8 @@ combined:
     traffic_score: 1
   missing_rule: require_all_four_domains_no_renormalization
   warning_rule: any_primary_component_high_independent_of_score
+  classification_rule: at_least_two_primary_components_high_independent_of_score
+  high_component_minimum: 2
   secondary_review_role: separate_badge_not_primary_warning
   observation_quality_role: retain_score_and_separate_badge
   flood_role: separate_hard_eligibility_constraint

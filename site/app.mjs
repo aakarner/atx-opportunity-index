@@ -102,8 +102,8 @@ function renderMap(){
    const legend=burdenLegend(burdenMeasure,burdenOptions);
    $('legend-title').textContent=legend.title;$('legend-rule').textContent=legend.rule;
    $('legend').innerHTML=legend.entries.map(([c,l])=>`<div class="legend-row"><span class="swatch" style="background:${c}"></span>${esc(l)}</div>`).join('')+`<p class="small">${esc(legend.note)}</p>`;
-   const results=[...burdenAssessments.values()],scored=results.filter(a=>finite(a.score)).length,high=results.filter(a=>a.high.length).length;
-   $('map-count').textContent=`${scored} of ${results.length} complete combined scores · ${high} with high-burden warnings · ${results.length-scored} incomplete scores`;
+   const results=[...burdenAssessments.values()],scored=results.filter(a=>finite(a.score)).length,high=results.filter(a=>a.overallHigh===true).length;
+   $('map-count').textContent=`${scored} of ${results.length} complete combined scores · ${high} classified overall high burden (2+ high components) · ${results.length-scored} incomplete scores`;
  }else if(benefit && combinedView()){
    const isHex=$('hex-mode').checked,minimums=selection.display==='minimums';
    $('legend-title').textContent=minimums?(isHex?'Minimum status':'Residents meeting all minimums'):'Combined benefits score';

@@ -1,11 +1,12 @@
 import {finite,escapeHTML as esc} from './logic.mjs';
-export const burdenLabels={high:'High burden identified',high_incomplete:'High burden identified · incomplete assessment',not_flagged:'No high-burden flags identified',incomplete:'Incomplete assessment'};
+export const burdenLabels={high:'Overall high burden · 2+ high components',high_incomplete:'Overall high burden · incomplete assessment',not_flagged:'Below overall high-burden threshold',incomplete:'Incomplete assessment'};
 export const burdenColors={high:'#b94f39',high_incomplete:'#7d343e',not_flagged:'#dce5e5',incomplete:'#a8b4be'};
 const names={heat:'Heat',street:'Street safety',industrial:'Industrial air',traffic:'Near-road traffic'};
 const flagNames={heat:'Heat',crash:'Fatal / serious-injury crashes',gap:'Pedestrian gaps',industrial:'Industrial air',traffic:'Near-road traffic'};
 const fmt=(v,d=1)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
-export const burdenMeasures={combined:'Combined burden score',flags:'High-burden warnings',heat:'Heat score',street:'Street-safety score',industrial:'Industrial-air score',traffic:'Traffic-exposure score',crash:'Crash score',gap:'Pedestrian-gap score',heat_quality:'Heat observation quality',industrial_review:'Industrial-air screening bands'};
+export const burdenMeasures={combined:'Combined burden score',flags:'Overall high-burden classification',heat:'Heat score',street:'Street-safety score',industrial:'Industrial-air score',traffic:'Traffic-exposure score',crash:'Crash score',gap:'Pedestrian-gap score',heat_quality:'Heat observation quality',industrial_review:'Industrial-air screening bands'};
 export function assessBurden(row,policy,{trafficSensitivity=false}={}){
+ if(policy.classification_rule!=='at_least_two_primary_components_high_independent_of_score'||policy.high_component_minimum!==2)throw Error('Unsupported overall burden classification');
  const r=row||{},domains={heat:r.heat_score??null,street:r.street_safety_score??null,industrial:r.industrial_air_score??null,traffic:r.traffic_score??null};
  const fields={heat:'heat_score',street:'street_safety_score',industrial:'industrial_air_score',traffic:'traffic_score'};
  const weights=policy.relative_weights,total=Object.values(weights).reduce((a,b)=>a+b,0);
@@ -13,12 +14,13 @@ export function assessBurden(row,policy,{trafficSensitivity=false}={}){
  const score=missing.length?null:Object.keys(domains).reduce((n,k)=>n+domains[k]*weights[fields[k]]/total,0);
  const flags={heat:r.heat_high??null,crash:r.crash_high??null,gap:r.pedestrian_high??null,industrial:r.industrial_air_high??null,traffic:(trafficSensitivity?r.traffic_sensitivity_high:r.traffic_high)??null};
  const high=Object.keys(flags).filter(k=>flags[k]===true),unknown=Object.values(flags).some(v=>v!==true&&v!==false);
- const status=high.length?(unknown?'high_incomplete':'high'):(unknown?'incomplete':'not_flagged');
- return {score,status,domains,flags,high,missing,weights:Object.fromEntries(Object.keys(domains).map(k=>[k,weights[fields[k]]/total]))};
+ const overallHigh=high.length>=policy.high_component_minimum?true:unknown?null:false;
+ const status=overallHigh===true?(unknown?'high_incomplete':'high'):(unknown?'incomplete':'not_flagged');
+ return {score,status,overallHigh,domains,flags,high,missing,weights:Object.fromEntries(Object.keys(domains).map(k=>[k,weights[fields[k]]/total]))};
 }
 function rows(columns){const ids=columns.id;if(!Array.isArray(ids))throw Error('Missing burden origin IDs');for(const v of Object.values(columns))if(!Array.isArray(v)||v.length!==ids.length)throw Error('Mismatched burden columns');return ids.map((_,i)=>Object.fromEntries(Object.entries(columns).map(([k,v])=>[k,v[i]])));}
 export function indexBurdens(data,ids){
- if(data.schema_version!==1||data.policy?.default!=='equal_thirds_by_theme'||data.policy.four_domain_sensitivity!==false)throw Error('Unsupported burden policy');
+ if(data.schema_version!==2||data.policy?.default!=='equal_thirds_by_theme'||data.policy.four_domain_sensitivity!==false)throw Error('Unsupported burden policy');
  const w=data.policy.relative_weights;
  if(w.heat_score!==2||w.street_safety_score!==2||w.industrial_air_score!==1||w.traffic_score!==1)throw Error('Burden weights differ from adopted preset');
  const result={data};
@@ -36,6 +38,8 @@ export function indexBurdens(data,ids){
    for(const [k,v] of Object.entries(expected))if(r[k]!==v)throw Error('Burden component flag mismatch: '+k);
    const a=assessBurden(r,data.policy),b=assessBurden(r,data.policy,{trafficSensitivity:true});
    if(a.score===null?r.combined_burden_score!==null:!finite(r.combined_burden_score)||Math.abs(a.score-r.combined_burden_score)>1e-8)throw Error('Combined burden score mismatch');
+   if(a.high.length!==r.high_component_count||a.overallHigh!==r.overall_high)throw Error('Combined burden classification mismatch');
+   if((a.high.length?true:Object.values(a.flags).some(v=>v===null)?null:false)!==r.any_high)throw Error('Combined burden warning mismatch');
    if(a.status!==r.burden_status||b.status!==r.traffic_sensitivity_status)throw Error('Combined burden status mismatch');
   }
   result[key]=map;
@@ -56,7 +60,7 @@ export function burdenStyle(r,a,measure){
 export function burdenLegend(measure,{quarterMile=false,trafficSensitivity=false}={}){
  const radius=quarterMile?'¼-mile sensitivity':'½-mile neighborhoods';
  let rule='Heat ⅓ · Street safety ⅓ · Air ⅓ (split equally)',entries=[],note='Higher = greater burden. Dashed orange outlines mark high component burden. Gray = unavailable.';
- if(measure==='flags'){rule='Warnings stay separate from the weighted average';entries=Object.entries(burdenLabels).map(([k,l])=>[burdenColors[k],l]);note='Secondary industrial review and limited heat observations are separate badges in profiles.';}
+ if(measure==='flags'){rule='Overall high burden requires at least 2 high components';entries=Object.entries(burdenLabels).map(([k,l])=>[burdenColors[k],l]);note='Crashes and pedestrian gaps count separately. Individual component warnings remain visible in profiles; secondary industrial review and limited heat observations do not count.';}
  else if(measure==='heat_quality'){rule='Dates with at least half of hex land observed';entries=[['#d5a448','Fewer than 8 eligible dates'],['#73a7a6','At least 8 eligible dates']];note='Scores are retained when observations are limited.';}
  else if(measure==='industrial_review'){rule='RSEI toxicity-weighted concentration';entries=[['#943958','High burden · ≥351.1'],['#e6a34a','Secondary review · 100 to <351.1'],['#dce5e5','Below review band']];note='Thresholds rounded here; flags use exact frozen values. These are screening bands, not health standards.';}
  else {
@@ -75,7 +79,7 @@ export function burdenProfile(r,a,options={}){
   street:`${fmt(r.street_radius_miles,2)}-mile windows · crash ${fmt(r.crash_score)} / gaps ${fmt(r.pedestrian_gap_score)} points`,
   industrial:`RSEI ToxConc ${fmt(r.rsei_tox_conc)} · ${r.industrial_air_review_band?'secondary review band':a.flags.industrial===true?'high burden':a.flags.industrial===false?'below review band':'unavailable'}`,
   traffic:`${fmt(finite(r.traffic_buffer_share)?100*r.traffic_buffer_share:null)}% corridor overlap · ${fmt(r.traffic_distance_ft,0)} ft from hex center to nearest qualifying road`};
- return `<section class="combined-score burden-score"><div class="metric-label">Combined burdens · equal thirds by theme</div><div class="metric-value">${fmt(a.score)}${finite(a.score)?' <small>/ 100</small>':''}</div><p class="small">Higher means greater burden. Heat ⅓ · street safety ⅓ · air ⅓, split equally between industrial air and traffic.</p><span class="minimum-status ${a.high.length?'below':a.status==='incomplete'?'incomplete':'neutral'}">${esc(burdenLabels[a.status])}</span><p class="minimum-reason">${esc(warning)}</p>${a.missing.length?`<p class="notice">Missing domains: ${a.missing.map(k=>names[k]).join(', ')}. No combined score is assigned; weights are not redistributed.</p>`:''}
+ return `<section class="combined-score burden-score"><div class="metric-label">Combined burdens · equal thirds by theme</div><div class="metric-value">${fmt(a.score)}${finite(a.score)?' <small>/ 100</small>':''}</div><p class="small">Higher means greater burden. Heat ⅓ · street safety ⅓ · air ⅓, split equally between industrial air and traffic.</p><span class="minimum-status ${a.overallHigh===true?'below':a.status==='incomplete'?'incomplete':'neutral'}">${esc(burdenLabels[a.status])}</span><p class="minimum-reason">${esc(warning)} ${a.high.length} known high component${a.high.length===1?'':'s'}; overall high burden requires at least 2. Crashes and pedestrian gaps count separately.</p>${a.missing.length?`<p class="notice">Missing domains: ${a.missing.map(k=>names[k]).join(', ')}. No combined score is assigned; weights are not redistributed.</p>`:''}
  ${inventoryNote?`<p class="quality-badge">${esc(inventoryNote)}</p>`:''}
  ${options.quarterMile||options.trafficSensitivity?`<p class="notice">Sensitivity active: ${[options.quarterMile?'¼-mile street-safety windows':null,options.trafficSensitivity?'traffic flag at 25% overlap':null].filter(Boolean).join(' · ')}. Default uses ½ mile and a 50% traffic flag.</p>`:''}
  ${r.heat_thin_coverage?'<p class="quality-badge">Limited heat observations: fewer than 8 eligible dates. Score retained.</p>':''}${r.industrial_air_review_band?'<p class="quality-badge">Industrial air: secondary review band. This is separate from a high-burden flag.</p>':''}${r.completion_date_review?'<p class="quality-badge">Pedestrian inventory review: planned facilities carry a past completion date.</p>':''}

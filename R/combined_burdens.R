@@ -1,13 +1,18 @@
 combined_burden_assessment <- function(x,spec,traffic_sensitivity=FALSE) {
+  stopifnot(identical(spec$classification_rule,'at_least_two_primary_components_high_independent_of_score'),
+    isTRUE(spec$high_component_minimum==2))
   w<-unlist(spec$relative_weights);w<-w/sum(w)
   m<-as.matrix(x[,names(w)]);valid<-apply(is.finite(m),1,all)
   score<-rep(NA_real_,nrow(x));score[valid]<-as.numeric(m[valid,,drop=FALSE]%*%w)
   f<-x[,c('heat_high','crash_high','pedestrian_high','industrial_air_high')]
   f$traffic_high<-if(traffic_sensitivity)x$traffic_sensitivity_high else x$traffic_high
-  high<-rowSums(f==TRUE,na.rm=TRUE)>0;complete<-rowSums(is.na(f))==0
+  count<-rowSums(f==TRUE,na.rm=TRUE)
+  high<-count>=spec$high_component_minimum;complete<-rowSums(is.na(f))==0
   data.frame(combined_burden_score=score,
     burden_status=ifelse(high,ifelse(complete,'high','high_incomplete'),ifelse(complete,'not_flagged','incomplete')),
-    any_high=ifelse(high,TRUE,ifelse(complete,FALSE,NA)))
+    high_component_count=count,
+    overall_high=ifelse(high,TRUE,ifelse(complete,FALSE,NA)),
+    any_high=ifelse(count>0,TRUE,ifelse(complete,FALSE,NA)))
 }
 build_combined_burdens <- function(heat,street,industrial,traffic,spec) {
   h<-heat$scores;i<-industrial$scores;t<-traffic$scores
@@ -36,12 +41,13 @@ write_combined_burdens <- function(result,directory='site/assets',output='output
   dir.create(directory,recursive=TRUE,showWarnings=FALSE);dir.create(output,recursive=TRUE,showWarnings=FALSE)
   for(k in names(result$results))write.csv(result$results[[k]],file.path(output,paste0(k,'.csv')),row.names=FALSE,na='')
   x<-result$results$primary
-  counts<-list(origins=nrow(x),scored=sum(is.finite(x$combined_burden_score)),high=sum(x$any_high,na.rm=TRUE),
+  counts<-list(origins=nrow(x),scored=sum(is.finite(x$combined_burden_score)),high=sum(x$overall_high,na.rm=TRUE),
+    any_component_high=sum(x$any_high,na.rm=TRUE),
     statuses=as.list(table(factor(x$burden_status,levels=c('high','high_incomplete','not_flagged','incomplete')))),
     heat_thin=sum(x$heat_thin_coverage,na.rm=TRUE),industrial_review=sum(x$industrial_air_review_band,na.rm=TRUE))
-  public<-list(schema_version=1,policy=result$spec$combined,rules=result$provenance,
+  public<-list(schema_version=2,policy=result$spec$combined,rules=result$provenance,
     primary=result$results$primary,quarter_mile=result$results$sensitivity,counts=counts,
-    interpretation='Higher scores mean greater burden. Local screening, not health risk. Primary warnings are separate from scores; flood eligibility remains independent.')
+    interpretation='Overall high burden requires at least two high components, counting crashes and pedestrian gaps separately. Individual component warnings remain visible independently of classification and score. Higher scores mean greater burden. Local screening, not health risk; flood eligibility remains independent.')
   path<-file.path(directory,'combined-burdens.json')
   jsonlite::write_json(public,path,dataframe='columns',digits=NA,auto_unbox=TRUE,na='null',null='null')
   saveRDS(result,file.path(output,'analysis.rds'))

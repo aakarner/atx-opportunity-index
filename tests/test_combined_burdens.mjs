@@ -4,7 +4,8 @@ import {indexBurdens,assessBurden,burdenColor,burdenStyle,burdenProfile,burdenLe
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const data=read('site/assets/combined-burdens.json'),ids=read('site/assets/hexagons.json').map(r=>r.id);
 const index=indexBurdens(data,ids),close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-assert.deepEqual(data.counts.statuses,{high:480,high_incomplete:38,not_flagged:400,incomplete:111});
+assert.deepEqual(data.counts.statuses,{high:154,high_incomplete:2,not_flagged:726,incomplete:147});
+assert.equal(data.counts.high,156);assert.equal(data.counts.any_component_high,518);
 for(const key of ['primary','quarter_mile']){
  const rows=[...index[key].values()];
  assert.equal(rows.length,1029);
@@ -27,10 +28,17 @@ for(const key of ['primary','quarter_mile']){
 }
 const complete=[...index.primary.values()].find(r=>r.combined_burden_score!==null);
 const synthetic={...complete,heat_score:90,street_safety_score:0,industrial_air_score:0,traffic_score:0,heat_high:true,crash_high:false,pedestrian_high:false,industrial_air_high:false,traffic_high:false};
-let a=assessBurden(synthetic,data.policy);close(a.score,30);assert.equal(a.status,'high');
+let a=assessBurden(synthetic,data.policy);close(a.score,30);assert.equal(a.status,'not_flagged');assert.equal(a.overallHigh,false);
+assert.match(burdenProfile(synthetic,a),/Below overall high-burden threshold/);
+assert.match(burdenProfile(synthetic,a),/High components: Heat/);
+assert.equal(burdenStyle(synthetic,a,'flags').fillColor,'#dce5e5');
 synthetic.street_safety_score=null;synthetic.pedestrian_gap_score=null;synthetic.pedestrian_high=null;
-a=assessBurden(synthetic,data.policy);assert.equal(a.score,null);assert.equal(a.status,'high_incomplete');assert.deepEqual(a.high,['heat']);
+a=assessBurden(synthetic,data.policy);assert.equal(a.score,null);assert.equal(a.status,'incomplete');assert.equal(a.overallHigh,null);assert.deepEqual(a.high,['heat']);
 assert.equal(burdenStyle(synthetic,a,'combined').dashArray,'4 2');
+synthetic.industrial_air_high=true;
+a=assessBurden(synthetic,data.policy);assert.equal(a.status,'high_incomplete');assert.equal(a.overallHigh,true);
+const streetOnly={...complete,heat_high:false,industrial_air_high:false,traffic_high:false,crash_high:true,pedestrian_high:true};
+assert.equal(assessBurden(streetOnly,data.policy).status,'high');
 const absent=assessBurden(null,data.policy);assert.equal(absent.score,null);assert.equal(absent.status,'incomplete');
 assert.notEqual(burdenColor(0),burdenColor(null));
 const missingContext={...synthetic,traffic_buffer_share:null,observed_area_share:null,denominator_m:null};
@@ -38,7 +46,19 @@ assert.match(burdenProfile(missingContext,a),/Unavailable% corridor overlap/);
 assert.match(burdenProfile(missingContext,a),/denominator: Unavailable miles/);
 assert.match(burdenProfile(null,absent),/No burden flags can be inferred/);
 assert.equal(burdenLegend('flags').entries.length,4);
-for(const mutation of [x=>x.policy.relative_weights.heat_score=1,x=>x.policy.four_domain_sensitivity=true,x=>x.primary.id[0]=x.primary.id[1],x=>x.primary.combined_burden_score[0]=999,x=>x.primary.heat_high[0]=!x.primary.heat_high[0]]){
+const componentFields=['heat_high','crash_high','pedestrian_high','industrial_air_high','traffic_high'];
+for(let code=0;code<3**5;code++){
+ let rest=code;const row={...complete},values=[];
+ for(const f of componentFields){const v=[false,true,null][rest%3];rest=Math.floor(rest/3);row[f]=v;values.push(v);}
+ row.traffic_sensitivity_high=row.traffic_high;
+ const count=values.filter(v=>v===true).length,unknown=values.includes(null);
+ const expected=count>=2?(unknown?'high_incomplete':'high'):(unknown?'incomplete':'not_flagged');
+ for(const trafficSensitivity of [false,true]){
+  const result=assessBurden(row,data.policy,{trafficSensitivity});
+  assert.equal(result.status,expected);assert.equal(result.overallHigh,count>=2?true:unknown?null:false);
+ }
+}
+for(const mutation of [x=>x.schema_version=1,x=>x.policy.high_component_minimum=1,x=>delete x.policy.classification_rule,x=>x.primary.overall_high[0]=true,x=>x.primary.high_component_count[0]=99,x=>x.policy.relative_weights.heat_score=1,x=>x.policy.four_domain_sensitivity=true,x=>x.primary.id[0]=x.primary.id[1],x=>x.primary.combined_burden_score[0]=999,x=>x.primary.heat_high[0]=!x.primary.heat_high[0]]){
  const invalid=structuredClone(data);mutation(invalid);assert.throws(()=>indexBurdens(invalid,ids));
 }
 console.log('Combined burdens: 1,029 origins, R/JS agreement, both radii and traffic flags, fixed weights, missingness, component warnings and display checks passed.');
