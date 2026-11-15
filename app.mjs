@@ -1,4 +1,4 @@
-import {indexBurdens,assessBurden,burdenStyle,burdenLegend,burdenProfile} from './combined-burdens.mjs?v=fcaa8d70c724';
+import {indexBurdens,assessBurden,burdenStyle,burdenLegend,burdenProfile} from './combined-burdens.mjs?v=025f1eef0701';
 import {indexFlood,floodProfile,floodLabels,floodColors} from './flood-eligibility.mjs?v=bf508730dc50';
 import {columnRows,assessBenefits,aggregateTract,normalizedWeights,requiredDomains,combinedStyle,combinedProfile,tractCombinedProfile,statusLabels,statusColors} from './combined-benefits.mjs?v=d292eb7f93ca';
 import {finite, locate, candidates, escapeHTML as esc} from './logic.mjs?v=36c8cf2733c4';
@@ -6,7 +6,7 @@ import {profileLabels, modeLabels, records, basketColor, palette, differenceColo
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
 let combinedData, combinedOrigins, tractWeights, tractCoverage, assessments=new Map(), tractAssessments=new Map();
 const selection={profile:'families',mode:'walk_transit',minutes:45,display:'combined',weights:null,jobSensitivity:false};
-const DATA_VERSION='ed167504976f';
+const DATA_VERSION='ab02002a0a74';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 let map, metadata, tracts, city, hexes, tractLayer, hexLayer, selected, dimension=location.hash==='#burdens'?'burdens':'benefits', controller, searchSequence=0;
 let floodIndex, excludedLayer, floodplainLayer;
@@ -102,8 +102,8 @@ function renderMap(){
    const legend=burdenLegend(burdenMeasure,burdenOptions);
    $('legend-title').textContent=legend.title;$('legend-rule').textContent=legend.rule;
    $('legend').innerHTML=legend.entries.map(([c,l])=>`<div class="legend-row"><span class="swatch" style="background:${c}"></span>${esc(l)}</div>`).join('')+`<p class="small">${esc(legend.note)}</p>`;
-   const results=[...burdenAssessments.values()],scored=results.filter(a=>finite(a.score)).length,high=results.filter(a=>a.high.length).length;
-   $('map-count').textContent=`${scored} of ${results.length} complete combined scores · ${high} with high-burden warnings · ${results.length-scored} incomplete scores`;
+   const results=[...burdenAssessments.values()],scored=results.filter(a=>finite(a.score)).length,high=results.filter(a=>a.overallHigh===true).length;
+   $('map-count').textContent=`${scored} of ${results.length} complete combined scores · ${high} classified overall high burden (2+ high components) · ${results.length-scored} incomplete scores`;
  }else if(benefit && combinedView()){
    const isHex=$('hex-mode').checked,minimums=selection.display==='minimums';
    $('legend-title').textContent=minimums?(isHex?'Minimum status':'Residents meeting all minimums'):'Combined benefits score';
