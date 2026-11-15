@@ -63,7 +63,10 @@ settings apply the same two-component rule. The quarter-mile setting identifies
 146 overall high cells; the 25% traffic flag identifies 194 at half mile and 172
 at quarter mile. Sensitivities change classification but not score weights.
 The map classification layer, count, and profile badge use the overall rule;
-dashed outlines on score maps continue to identify individual component warnings.
+dashed orange outlines on the combined-score map also require at least two high
+components, including known overall high burden with an incomplete score.
+Individual component maps retain their own high-component outlines, and profiles
+retain all individual warnings. The combined-map legend explains this distinction.
 The two-component update was published on November 15, 2026 and verified in the
 live map: 156 overall high-burden cells, 880 complete scores, and 149 incomplete
 scores. The release preserves the previously published benefits and school data.

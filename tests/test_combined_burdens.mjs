@@ -34,9 +34,11 @@ assert.match(burdenProfile(synthetic,a),/High components: Heat/);
 assert.equal(burdenStyle(synthetic,a,'flags').fillColor,'#dce5e5');
 synthetic.street_safety_score=null;synthetic.pedestrian_gap_score=null;synthetic.pedestrian_high=null;
 a=assessBurden(synthetic,data.policy);assert.equal(a.score,null);assert.equal(a.status,'incomplete');assert.equal(a.overallHigh,null);assert.deepEqual(a.high,['heat']);
-assert.equal(burdenStyle(synthetic,a,'combined').dashArray,'4 2');
+assert.equal(burdenStyle(synthetic,a,'combined').dashArray,null);
+assert.equal(burdenStyle(synthetic,a,'heat').dashArray,'4 2');
 synthetic.industrial_air_high=true;
 a=assessBurden(synthetic,data.policy);assert.equal(a.status,'high_incomplete');assert.equal(a.overallHigh,true);
+assert.equal(burdenStyle(synthetic,a,'combined').dashArray,'4 2');
 const streetOnly={...complete,heat_high:false,industrial_air_high:false,traffic_high:false,crash_high:true,pedestrian_high:true};
 assert.equal(assessBurden(streetOnly,data.policy).status,'high');
 const absent=assessBurden(null,data.policy);assert.equal(absent.score,null);assert.equal(absent.status,'incomplete');
@@ -46,6 +48,14 @@ assert.match(burdenProfile(missingContext,a),/Unavailable% corridor overlap/);
 assert.match(burdenProfile(missingContext,a),/denominator: Unavailable miles/);
 assert.match(burdenProfile(null,absent),/No burden flags can be inferred/);
 assert.equal(burdenLegend('flags').entries.length,4);
+assert.match(burdenLegend('combined').note,/overall high burden \(2\+ high components\)/);
+assert.match(burdenLegend('heat').note,/high component burden/);
+for(const key of ['primary','quarter_mile'])for(const trafficSensitivity of [false,true]){
+ const rows=[...index[key].values()];
+ const outlined=rows.filter(r=>burdenStyle(r,assessBurden(r,data.policy,{trafficSensitivity}),'combined').dashArray!==null);
+ assert.equal(outlined.length,key==='primary'?(trafficSensitivity?194:156):(trafficSensitivity?172:146));
+}
+
 const componentFields=['heat_high','crash_high','pedestrian_high','industrial_air_high','traffic_high'];
 for(let code=0;code<3**5;code++){
  let rest=code;const row={...complete},values=[];
