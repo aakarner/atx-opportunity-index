@@ -69,7 +69,9 @@ benefit_scores <- function(inputs,spec) {
     stopifnot(all(budgets>0 & budgets<=limit),spec$defaults[[mode]] %in% budgets)
     nearest <- data.frame(row.names=ids)
     for (dest in names(spec$destinations)) {
-      x <- r[r$mode==mode & r$scenario==paste0(dest,"_nearest"),]
+      scenario <- spec$scenario_map[[dest]]
+      if (is.null(scenario)) scenario <- paste0(dest,"_nearest")
+      x <- r[r$mode==mode & r$scenario==scenario,]
       stopifnot(nrow(x)==length(ids), all(x$unit=="minutes"))
       x <- x[match(ids,x$h3_id),]
       v <- x$value
@@ -83,13 +85,20 @@ benefit_scores <- function(inputs,spec) {
       report[[paste(mode,profile,"mean_minutes",sep="_")]] <- mean_minutes
     }
     ref <- paste0(mode,"__essential_destinations__")
-    complete_mean <- rowMeans(nearest)
+    # Check historical eight-type export against historical components, even when
+    # current profiles explicitly map to the new center/clinic scenarios.
+    legacy_nearest <- sapply(c("grocery","childcare","pharmacy","urgent_care","hospital","park","library","public_center"), function(d) {
+      z <- r[r$mode==mode & r$scenario==paste0(d,"_nearest"),]
+      z <- z[match(ids,z$h3_id),]
+      v <- z$value; v[z$result_status=="not_reached_within_model"] <- Inf; v
+    })
+    complete_mean <- rowMeans(legacy_nearest)
     complete_mean[!is.finite(complete_mean)] <- NA_real_
     stopifnot(isTRUE(all.equal(complete_mean,report[[paste0(ref,"mean_nearest__8")]],tolerance=1e-6,check.attributes=FALSE)))
     for (budget in unique(c(15,30,60,spec$budgets[[mode]]))) {
       passed <- nearest <= budget
       if (budget %in% c(15,30,60)) stopifnot(isTRUE(all.equal(
-        rowSums(passed),report[[paste0(ref,"category_count__",budget)]],check.attributes=FALSE)))
+        rowSums(legacy_nearest <= budget),report[[paste0(ref,"category_count__",budget)]],check.attributes=FALSE)))
       if (!budget %in% spec$budgets[[mode]]) next
       prefix <- paste(mode,budget,sep="_")
       for (dest in names(nearest)) scored[[paste(prefix,dest,sep="_")]] <- as.numeric(passed[,dest])
