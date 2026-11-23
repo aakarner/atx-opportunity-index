@@ -2,6 +2,7 @@ import {finite,escapeHTML as esc} from './logic.mjs?v=e2b7c16e95d7';
 export const burdenLabels={high:'Overall high burden · 2+ high components',high_incomplete:'Overall high burden · incomplete assessment',not_flagged:'Below overall high-burden threshold',incomplete:'Incomplete assessment'};
 export const burdenColors={high:'#b94f39',high_incomplete:'#7d343e',not_flagged:'#dce5e5',incomplete:'#a8b4be'};
 const names={heat:'Heat',crash:'Fatal / serious-injury crashes',frontage:'Sidewalk gaps on major streets',industrial:'Industrial air',traffic:'Near-road traffic'};
+export {names as burdenComponentLabels};
 const scoreFields={heat:'heat_score',crash:'crash_score',frontage:'major_frontage_score',industrial:'industrial_air_score',traffic:'traffic_score'};
 const fmt=(v,d=1)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 export const burdenMeasures={combined:'Combined burden score',flags:'Overall high-burden classification',heat:'Heat score',industrial:'Industrial-air score',traffic:'Traffic-exposure score',crash:'Crash score',frontage:'Sidewalk gaps on major streets',heat_quality:'Heat observation quality',industrial_review:'Industrial-air screening bands'};
