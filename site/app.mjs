@@ -303,7 +303,7 @@ function setupBenefitControls(){
  function note(){
    const names=spec.profiles[selection.profile].map(key=>spec.destinations[key]);
    $('group-note').textContent=names.join(' · ')+(selection.profile==='supportive'?'. Partial service inventory.':'')+
-     (selection.mode==='walk_transit'?' · Provisional morning transit coverage.':'');
+     (selection.mode==='walk_transit'?' · Morning transit coverage.':'');
    $('budget-note').textContent=`Destinations and jobs: ${spec.defaults[selection.mode]} minutes ${modeLabels[selection.mode].toLowerCase()}.`;
  }
  function update(){

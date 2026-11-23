@@ -90,7 +90,7 @@ export function benefitProfile(row,selection,spec,isHex,zones,point,series,jobBe
     <dl class="components">${components}</dl>
     ${isHex?'':`<p class="small">H8 cells cover ${number(row?.area_coverage*100)}% of the clipped tract area. Resident weights cover ${number(row?.resident_weight_area_share*100)}% of tract area. Estimated resident weight: ${number(row?.resident_weight,0)}. Zero weight gives an unavailable mean.</p>`}
     ${profile==='supportive'?'<p class="notice">Partial basket. Behavioral health, supportive services and on-site supports require separate review.</p>':''}
-    ${mode==='walk_transit'?'<p class="small">Provisional July morning routing. An unreached trip can reflect service coverage or model limits.</p>':''}
+    ${mode==='walk_transit'?'<p class="small">Transit estimates use July 13 morning departures. An unreached trip can reflect service coverage or model limits.</p>':''}
     ${profile==='families'?`<h3>Assigned elementary school</h3><div class="small">${esc((spec.education?.districts||[]).join(', '))}${schoolDetail(zones,point)}${educationCoverage(spec)}</div>`:''}
     ${isHex?`<p class="small">Mean trip to the nearest facility across this basket: ${number(row?.[`${mode}_${profile}_mean_minutes`])}${finite(row?.[`${mode}_${profile}_mean_minutes`])?' min':' (requires a time for every type)'}.</p>`:''}
     ${['families','single'].includes(profile)?`<h3>Access to employment</h3><p class="small">${number(lowWageJobs,0)} low-wage jobs of ${number(totalJobs,0)} total within ${jobMinutes} minutes by ${esc(modeLabels[mode].toLowerCase())}.</p>`:''}
