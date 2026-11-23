@@ -1,4 +1,4 @@
-import {finite,escapeHTML as esc} from './logic.mjs?v=36c8cf2733c4';
+import {finite,escapeHTML as esc} from './logic.mjs?v=e2b7c16e95d7';
 export const domainLabels={destinations:'Everyday destinations',jobs:'Jobs',education:'Education'};
 export const statusLabels={meets:'Meets all minimums',below:'Below minimum',incomplete:'Incomplete'};
 export const statusColors={meets:'#26765d',below:'#b65c2e',incomplete:'#87949c'};

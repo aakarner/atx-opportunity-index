@@ -1,4 +1,4 @@
-import {finite,escapeHTML as esc} from './logic.mjs?v=36c8cf2733c4';
+import {finite,escapeHTML as esc} from './logic.mjs?v=e2b7c16e95d7';
 
 export const floodLabels={ineligible:'Ineligible for development',address_check_required:'Partial overlap — check the address',not_excluded:'Not excluded by flood rule',unknown:'Flood eligibility unavailable'};
 export const floodColors={ineligible:'#384452',address_check_required:'#80bdd6',not_excluded:'#e5ecec',unknown:'#b3bbc0'};
