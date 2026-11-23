@@ -1,7 +1,7 @@
 import {contains, escapeHTML as esc, finite} from './logic.mjs?v=e2b7c16e95d7';
 
 export const profileLabels = {
-  general:'All eight destinations', families:'Families with children', older:'Older adults',
+  general:'All destination types', families:'Families with children', older:'Older adults',
   single:'Single adults', supportive:'Adult PSH—provisional'
 };
 export const modeLabels = {drive:'Driving',walk_transit:'Transit + walk'};
@@ -68,7 +68,9 @@ export function benefitProfile(row,selection,spec,isHex,zones,point,series,jobBe
   const {mode,minutes,profile}=selection, names=spec.profiles[profile];
   const prefix=`${mode}_${minutes}_`, count=scoreValue(row,selection);
   const components=names.map(name=>{
-    const reached=row?.[prefix+name], key=`${mode}__${name}_nearest__${name==='park'?'park':'facility'}_count__1`;
+    const scenario=spec.scenario_map?.[name] ?? `${name}_nearest`;
+    const key=`${mode}__${scenario}__${name==='park'?'park':'facility'}_count__1`;
+    const reached=row?.[prefix+name];
     let label=finite(reached)?number(reached*100)+'% of represented residents within budget':'Unavailable';
     if(isHex) {
       const status=row?.[`${mode}_${name}_status`];
