@@ -33,9 +33,7 @@ The `industrial_air_burden` and `industrial_air_burden_assets` targets were buil
 successfully. Results in `output/components/industrial-air-burden/` include
 `review.html`, maps, scores and separate flags, population summaries, GIS data,
 and frozen policy/source metadata. The comparison below and the earlier mockup
-remain historical review artifacts. Public-map deployment is separate and has
-not been changed by this analytical implementation. Traffic scoring was adopted
-subsequently; overall burden weights remain open.
+remain historical review artifacts. The combined score gives industrial air one sixth of the total weight.
 
 ## November 10, 2026 score and flag review
 
@@ -229,14 +227,14 @@ classification cutoffs, and ties. The isolated integration test uses the acquire
 source read-only, checks the existing pipeline behavior, and verifies that changing
 classification rules does not rebuild the underlying RSEI or access measurements.
 
-## Selected mockup rules
+## Historical classification comparison
 
-The mockup uses **strong access >50,000 total jobs reachable in 45 minutes** and
+The earlier map used **strong access >50,000 total jobs reachable in 45 minutes** and
 **elevated burden at RSEI ToxConc >=100**, configured under `mockup` in
 `config/classification-review.yml`. The access comparison is strict: exactly
 50,000 does not qualify. No lower access cutoff was selected; other observed
 values are simply not flagged as strong, and missing values remain unknown.
-These are mockup choices, not adopted policy or health standards.
+The separate classification review retains these thresholds for reproduction.
 
 The review report highlights this selection. `mockup_thresholds.csv` records the
 operators and cutoffs; `mockup_summary.csv` records counts at both scales. Detailed

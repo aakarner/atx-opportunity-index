@@ -174,13 +174,11 @@ write_rsei_outputs <- function(cells, h8, output_dir) {
 }
 
 rsei_registry <- function(registry, spec) {
-  i <- match("Industrial air-toxic burden", registry$indicator)
-  registry$status[i] <- "tract_H8_and_native_grid_site_query"
-  registry$units[i] <- "Air toxicity-weighted concentration (RSEI ToxConc)"
-  registry$vintage[i] <- paste("EPA RSEI", spec$version, "reporting year", spec$reporting_year)
-  registry$limitation[i] <- paste("810 m modeled TRI-related air contributions; no population multiplier;",
-    "area averages for tracts/H8, containing EPA cell for sites; not total pollution or a health standard.")
-  registry
+  rbind(registry, data.frame(indicator = "Industrial air-toxic burden", role = "burden",
+    status = "tract_H8_and_native_grid_site_query", units = "Air toxicity-weighted concentration (RSEI ToxConc)",
+    vintage = paste("EPA RSEI", spec$version, "reporting year", spec$reporting_year),
+    limitation = paste("810 m modeled TRI-related air contributions; no population multiplier;",
+    "area averages for tracts/H8, containing EPA cell for sites; not total pollution or a health standard.")))
 }
 
 rsei_qa <- function(cells, h8, tracts) {

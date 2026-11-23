@@ -76,13 +76,13 @@ flood_address_screen <- function(points, flood, study = NULL, id = "site_id") {
 attach_flood_constraint <- function(profiles, constraint) {
   if (!setequal(profiles$site_id, constraint$site_id)) stop("Site flood constraint IDs differ.")
   result <- dplyr::left_join(profiles, constraint, by = "site_id", relationship = "one-to-one")
-  result$overall_screen[result$flood_ineligible %in% TRUE] <-
-    "Ineligible for development: City fully developed floodplain"
+  result$overall_screen <- ifelse(is.na(result$flood_ineligible), "Flood eligibility unknown",
+    ifelse(result$flood_ineligible, "Ineligible for development: City fully developed floodplain",
+           "Outside the mapped City fully developed floodplain"))
   result
 }
 
 flood_constraint_registry <- function(registry, source) {
-  registry$role[registry$indicator == "Mapped FEMA floodplain"] <- "legacy_context"
   rbind(registry, data.frame(indicator = "City fully developed floodplain", role = "eligibility_constraint",
     status = "hex_and_address_screen", units = "Entire-hex coverage / actual-point intersection",
     vintage = source$manifest$retrieved_at_utc,

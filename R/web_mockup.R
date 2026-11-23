@@ -1,5 +1,5 @@
 # Small public snapshot for a static GitHub Pages client. No private site inputs.
-web_component_rows <- function(x, geography, spec) {
+web_component_rows <- function(x, geography) {
   is_hex <- geography == "hex"
   x <- sf::st_drop_geometry(x)
   fields <- if (is_hex) c("access_total_jobs", "access_low_wage_jobs", "access_middle_wage_jobs", "access_high_wage_jobs") else
@@ -12,25 +12,20 @@ web_component_rows <- function(x, geography, spec) {
     traffic_coverage_share=if(is_hex) as.numeric(is.finite(x$traffic_distance_ft) & is.finite(x$traffic_buffer_share)) else x$traffic_coverage_share,
     access_method=if(is_hex) "H8 origin estimate" else x$access_aggregation_method,
     stringsAsFactors=FALSE)
-  flags <- classify_mockup(out$jobs_total, out$rsei, spec)
-  out$strong_access <- flags$mockup_strong_access
-  out$elevated_burden <- flags$mockup_elevated_burden
   stopifnot(!anyDuplicated(out$id))
   out
 }
 
-write_web_mockup_data <- function(h8, tracts, city, classification_spec, directory="site/assets", traffic_metadata=NULL) {
+write_web_mockup_data <- function(h8, tracts, city, directory="site/assets", traffic_metadata=NULL) {
   dir.create(directory, recursive=TRUE, showWarnings=FALSE)
-  spec <- classification_spec$mockup
-  validate_mockup_spec(spec)
-  hex <- web_component_rows(h8, "hex", spec)
-  tract <- web_component_rows(tracts, "tract", spec)
+  hex <- web_component_rows(h8, "hex")
+  tract <- web_component_rows(tracts, "tract")
   city_projected <- sf::st_geometry(sf::st_transform(city,5070))
   covered <- suppressWarnings(sf::st_intersection(sf::st_union(sf::st_geometry(sf::st_transform(h8,5070))),city_projected))
   metadata <- list(boundary=list(snapshot=city$boundary_snapshot,source=city$boundary_source,
     sha256=city$boundary_sha256,area_km2=as.numeric(sf::st_area(city_projected))/1e6,
     hex_coverage_share=sum(as.numeric(sf::st_area(covered)))/sum(as.numeric(sf::st_area(city_projected)))),
-    schema_version=1L, thresholds=spec, h3_resolution=8L,
+    schema_version=2L, h3_resolution=8L,
     jobs_year=unique(h8$jobs_year), network_snapshot=unique(h8$network_snapshot),
     gtfs_snapshot=unique(h8$gtfs_snapshot), departure_datetime=unique(as.character(h8$departure_datetime)),
     rsei_year=unique(h8$rsei_year), rsei_version=unique(h8$rsei_version),
@@ -39,11 +34,7 @@ write_web_mockup_data <- function(h8, tracts, city, classification_spec, directo
       distance_units="feet", overlap_units="fraction",
       tract_method="Area-weighted H8 means over covered tract area",
       coverage="Share of tract area represented by H8 cells with both measurements"),
-    counts=list(hexagons=nrow(hex), tracts=nrow(tract),
-      strong_hex=sum(hex$strong_access,na.rm=TRUE), elevated_hex=sum(hex$elevated_burden,na.rm=TRUE),
-      both_hex=sum(hex$strong_access & hex$elevated_burden,na.rm=TRUE),
-      both_tract=sum(tract$strong_access & tract$elevated_burden,na.rm=TRUE),
-      strong_tract=sum(tract$strong_access,na.rm=TRUE), elevated_tract=sum(tract$elevated_burden,na.rm=TRUE)))
+    counts=list(hexagons=nrow(hex), tracts=nrow(tract)))
   json <- function(x, filename) {
     p <- file.path(directory,filename)
     jsonlite::write_json(x,p,auto_unbox=TRUE,na="null",null="null",digits=15,pretty=FALSE)

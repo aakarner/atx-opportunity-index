@@ -244,7 +244,7 @@ write_classification_review <- function(comparison, thresholds, h8, tracts, site
     '<title>Austin: candidate benefit and burden flags</title><style>body{font:16px/1.5 system-ui;color:#24383e;background:#f4f5f1;margin:0}main{max-width:1300px;margin:auto;padding:32px}h1{line-height:1.15}h2{margin-top:2em}.notice{background:#fff1d7;padding:18px;border-left:5px solid #b48030}table{border-collapse:collapse;font-size:13px;background:white;width:100%}td,th{padding:8px;text-align:left;border-bottom:1px solid #ddd}th{background:#e2eae6}img{width:100%;height:auto}figure{margin:24px 0;background:white}.table-scroll{overflow:auto}p{max-width:1050px}a{color:#126d70}</style><main>',
     '<p>AUSTIN OPPORTUNITY INDEX / METHODS REVIEW</p><h1>What gets flagged?</h1><p>Real job-access estimates and EPA industrial-air modeling, with alternative rules for discussion.</p>',
     '<div class="notice"><b>These are candidate classifications, not adopted standards.</b> The fixed thresholds are sensitivity scenarios. The tertile rules are relative comparisons. No combined score, development recommendation, or health/safety determination is made.</div>',
-    '<h2>Selected rules for the mockup</h2><p><strong>Strong access: &gt; ',
+    '<h2>Historical rules from the earlier map</h2><p><strong>Strong access: &gt; ',
     format(spec$mockup$strong_access_above,big.mark=",",scientific=FALSE,trim=TRUE),
     ' jobs reachable within 45 minutes. Elevated industrial burden: RSEI &ge; ',
     spec$mockup$elevated_rsei_at_least,'.</strong> These fixed rules apply to H8 cells and tract means. Exactly the access cutoff does not qualify as strong access. Missing values remain unknown. No lower access cutoff has been selected.</p>',

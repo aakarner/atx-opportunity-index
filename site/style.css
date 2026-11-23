@@ -13,9 +13,6 @@
 .group-preview{flex:0 0 auto;padding:16px}
 .group-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
 .group-heading h2{font-size:15px;margin:0}.group-heading .prototype{display:inline-block;padding:4px 8px}
-.group-buttons{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.group-buttons button{font-size:12px;line-height:1.35;padding:8px;border-color:#b8c0c6}
-.group-buttons button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
 .group-preview .small{margin:10px 0 0}.profile-column .empty-icon{font-size:48px;padding:8px}
 @media(min-width:1500px){.profile-column{width:350px}}
 @media(max-width:1050px) and (min-width:1001px){.profile-column{width:280px}}

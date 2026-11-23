@@ -1,31 +1,23 @@
 # Adopted scoring and equal-theme weights; overall classification updated 2026-11-15.
 combined:
-  version: combined_burdens_2026_11_15_v2
+  version: combined_burdens_2026_11_23_v4
   default: equal_thirds_by_theme
   relative_weights:
     heat_score: 2
-    street_safety_score: 2
+    crash_score: 1
+    major_frontage_score: 1
     industrial_air_score: 1
     traffic_score: 1
-  missing_rule: require_all_four_domains_no_renormalization
+  missing_rule: require_all_five_components_no_renormalization
   warning_rule: any_primary_component_high_independent_of_score
   classification_rule: at_least_two_primary_components_high_independent_of_score
   high_component_minimum: 2
   secondary_review_role: separate_badge_not_primary_warning
   observation_quality_role: retain_score_and_separate_badge
   flood_role: separate_hard_eligibility_constraint
-  four_domain_sensitivity: false
-scored_domains:
-  - industrial_air_pollution
-  - traffic_pollution
-  - heat
-  - street_safety_pedestrian_environment
 domain_components:
   street_safety_pedestrian_environment:
     status: scoring_and_flags_adopted
-    weights:
-      crash_density: 0.5
-      pedestrian_gaps: 0.5
     spatial_review:
       direction: smaller_windows_for_both_components
       candidate_radii_miles: [0.25, 0.5]
@@ -33,16 +25,16 @@ domain_components:
       adopted_radius_miles: 0.5
       sensitivity_radius_miles: 0.25
     scoring:
-      version: street_safety_2026_11_09_v1
+      version: crashes_and_major_frontage_2026_11_23
       crash_method: linear_to_frozen_p95_capped_at_100
       crash_full_burden_density: 6.1118601065110614
       crash_high_burden_density: 4.2772765182635766
-      pedestrian_high_burden_score: 50
+      major_frontage_high_burden_score: 50
       reference: 1029_half_mile_origins_2020_2024_crashes
       reference_quantile_method: R_type_7_unweighted
       crash_first_year: 2020
       crash_last_year: 2024
-      missing_rule: combined_unavailable_if_either_component_missing
+      missing_rule: retain_each_available_component
       warning_rule: either_component_high_even_if_other_missing
       sensitivity_anchors: same_as_half_mile
 excluded_domains: [power_outages]
@@ -99,18 +91,10 @@ heat:
     source_manifest:
       path: data/raw/peter_heat/d90d74f38a/manifest.json
       sha256: 5e0160af4846b8840b8311ee72d2017897209b0a10a0aa8a0cab24a930c5dcc0
-pedestrian:
-  url: https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/Sidewalks_(Public)/FeatureServer/0
-  snapshot_dir: data/raw/austin_pedestrian_inventory/2026-11-09
-  crs: 26914
-  # Original inventory build baseline; adopted combined-domain radius is above.
-  # Matching half-/quarter-mile results are in the radius-comparison analysis.
-  buffer_m: 1609.344
-  measure: planned_length_divided_by_completed_plus_planned_length
-  potential_sidewalks: sensitivity_only
-  observation_boundary: city_full_and_limited_purpose
-  missing_rule: no_classified_length_or_unclassified_length_is_unavailable
-  high_burden_cutoff: 50
+major_frontage:
+  inventory_dir: data/raw/austin_pedestrian_inventory/2026-11-09
+  transport_dir: data/raw/pedestrian_alternatives/2026-11-23
+
 flood:
   role: eligibility_constraint
   source: City of Austin Fully Developed Floodplain

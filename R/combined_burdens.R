@@ -4,7 +4,7 @@ combined_burden_assessment <- function(x,spec,traffic_sensitivity=FALSE) {
   w<-unlist(spec$relative_weights);w<-w/sum(w)
   m<-as.matrix(x[,names(w)]);valid<-apply(is.finite(m),1,all)
   score<-rep(NA_real_,nrow(x));score[valid]<-as.numeric(m[valid,,drop=FALSE]%*%w)
-  f<-x[,c('heat_high','crash_high','pedestrian_high','industrial_air_high')]
+  f<-x[,c('heat_high','crash_high','major_frontage_high','industrial_air_high')]
   f$traffic_high<-if(traffic_sensitivity)x$traffic_sensitivity_high else x$traffic_high
   count<-rowSums(f==TRUE,na.rm=TRUE)
   high<-count>=spec$high_component_minimum;complete<-rowSums(is.na(f))==0
@@ -17,7 +17,7 @@ combined_burden_assessment <- function(x,spec,traffic_sensitivity=FALSE) {
 build_combined_burdens <- function(heat,street,industrial,traffic,spec) {
   h<-heat$scores;i<-industrial$scores;t<-traffic$scores
   columns<-list(heat=c('heat_score','heat_high','heat_thin_coverage','dates_half_land','quality_hot_pixel_share'),
-    street=c('street_safety_score','crash_score','pedestrian_gap_score','crash_high','pedestrian_high','annual_ksi_density','ksi_count','observed_area_sqmi','observed_area_share','denominator_m','completion_date_review','status'),
+    street=c('crash_score','major_frontage_score','crash_high','major_frontage_high','annual_ksi_density','ksi_count','observed_area_sqmi','observed_area_share','major_frontage_m','major_served_m','major_coverage_pct','frontage_status','inventory_observed'),
     industrial=c('industrial_air_score','industrial_air_high','industrial_air_review_band','rsei_tox_conc'),
     traffic=c('traffic_score','traffic_high','traffic_sensitivity_high','traffic_buffer_share','traffic_distance_ft'))
   result<-list()
@@ -25,7 +25,7 @@ build_combined_burdens <- function(heat,street,industrial,traffic,spec) {
     parts<-list(heat=h,street=street$results[[k]],industrial=i,traffic=t)
     x<-data.frame(id=h$h3_id,population=h$total_population,children=h$children_under_18)
     for(name in names(parts)){
-      p<-parts[[name]];stopifnot(!anyDuplicated(p$h3_id),setequal(p$h3_id,x$id))
+      p<-parts[[name]];stopifnot(all(columns[[name]] %in% names(p)), !anyDuplicated(p$h3_id),setequal(p$h3_id,x$id))
       for(col in columns[[name]])x[[col]]<-p[[col]][match(x$id,p$h3_id)]
     }
     x$street_radius_miles<-if(k=='primary')spec$domain_components$street_safety_pedestrian_environment$spatial_review$adopted_radius_miles else spec$domain_components$street_safety_pedestrian_environment$spatial_review$sensitivity_radius_miles
@@ -45,9 +45,9 @@ write_combined_burdens <- function(result,directory='site/assets',output='output
     any_component_high=sum(x$any_high,na.rm=TRUE),
     statuses=as.list(table(factor(x$burden_status,levels=c('high','high_incomplete','not_flagged','incomplete')))),
     heat_thin=sum(x$heat_thin_coverage,na.rm=TRUE),industrial_review=sum(x$industrial_air_review_band,na.rm=TRUE))
-  public<-list(schema_version=2,policy=result$spec$combined,rules=result$provenance,
+  public<-list(schema_version=4,policy=result$spec$combined,rules=result$provenance,
     primary=result$results$primary,quarter_mile=result$results$sensitivity,counts=counts,
-    interpretation='Overall high burden requires at least two high components, counting crashes and pedestrian gaps separately. Individual component warnings remain visible independently of classification and score. Higher scores mean greater burden. Local screening, not health risk; flood eligibility remains independent.')
+    interpretation='Overall high burden requires at least two high components, counting crashes and sidewalk gaps on major streets separately. Individual component warnings remain visible independently of classification and score. Higher scores mean greater burden. Local screening, not health risk; flood eligibility remains independent.')
   path<-file.path(directory,'combined-burdens.json')
   jsonlite::write_json(public,path,dataframe='columns',digits=NA,auto_unbox=TRUE,na='null',null='null')
   saveRDS(result,file.path(output,'analysis.rds'))
