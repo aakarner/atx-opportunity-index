@@ -25,6 +25,6 @@ jobs:
           trap 'kill "$server_pid"' EXIT
           url=http://127.0.0.1:8765/tests/test_tract_toggle.html
           curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 "$url" -o /dev/null
-          google-chrome --headless --disable-dev-shm-usage --host-resolver-rules="MAP * ~NOTFOUND" --virtual-time-budget=30000 --dump-dom "$url" > "$RUNNER_TEMP/map-test.html"
+          google-chrome --headless --disable-dev-shm-usage --host-resolver-rules="MAP tile.openstreetmap.org ~NOTFOUND" --virtual-time-budget=30000 --dump-dom "$url" > "$RUNNER_TEMP/map-test.html"
           grep -F '<output id="result">' "$RUNNER_TEMP/map-test.html"
           grep -Fq '<output id="result">PASS</output>' "$RUNNER_TEMP/map-test.html"
