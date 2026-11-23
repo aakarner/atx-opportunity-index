@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Rendered census tract layer test</title>
+<output id="result">Waiting for the map</output>
+<iframe title="Map under test" src="../site/#combined" width="1200" height="800"></iframe>
+<script type="module">
+  import {scoreGroups} from '../site/score-comparison.mjs';
+
+  const frame = document.querySelector('iframe');
+  const result = document.querySelector('output');
+  function check(condition, message) {
+    if (!condition) throw new Error(message);
+  }
+
+  try {
+    const {counts} = await (await fetch('../site/assets/metadata.json')).json();
+    if (frame.contentDocument.readyState !== 'complete' || !frame.contentDocument.getElementById('map')) {
+      await new Promise(resolve => frame.addEventListener('load', resolve, {once: true}));
+    }
+    const doc = frame.contentDocument;
+    const byId = id => doc.getElementById(id);
+    const legend = byId('legend-title');
+    if (legend.textContent !== 'Hexagons by score') {
+      await new Promise(resolve => {
+        const observer = new MutationObserver(() => {
+          if (legend.textContent === 'Hexagons by score') {
+            observer.disconnect();
+            resolve();
+          }
+        });
+        observer.observe(legend, {childList: true});
+      });
+    }
+
+    const toggle = byId('hex-mode');
+    const paths = () => [...byId('map').querySelectorAll('path.leaflet-interactive')];
+    const opacity = path => Number(frame.contentWindow.getComputedStyle(path).fillOpacity);
+    const groupColors = new Set(Object.values(scoreGroups).map(group => group.color));
+    for (const view of ['combined', 'benefits', 'burdens', 'combined']) {
+      byId(view).click();
+      toggle.click();
+      const tracts = paths();
+      check(!toggle.checked && tracts.length === counts.tracts, view + ': expected all tract polygons');
+      check(tracts.every(path => opacity(path) > 0), view + ': transparent tract fills');
+      if (view === 'combined') {
+        const fills = new Set(tracts.map(path => path.getAttribute('fill')));
+        check([...groupColors].every(color => fills.has(color)), 'Missing comparison group colors');
+      }
+      toggle.click();
+      check(toggle.checked && tracts.every(path => opacity(path) === 0), view + ': tract fills still visible under hexagons');
+      check(paths().filter(path => opacity(path) > 0).length === counts.hexagons, view + ': missing hexagon fills');
+    }
+    result.textContent = 'PASS';
+  } catch (error) {
+    result.textContent = 'FAIL · ' + error.message;
+  }
+</script>
+</html>

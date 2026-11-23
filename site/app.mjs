@@ -92,7 +92,7 @@ function showTract(feature,latlng){
 function style(row){
  const floodRow=floodIndex?.rows.get(row.id);
  if(floodRow?.excluded)return {fillColor:floodColors.ineligible,fillOpacity:.9,color:'#142534',weight:1.5};
- if(dimension==='combined')return {fillColor:scoreGroups[groupFor(row.id)].color,color:'#fff',weight:.6,dashArray:null};
+ if(dimension==='combined')return {fillColor:scoreGroups[groupFor(row.id)].color,fillOpacity:.82,color:'#fff',weight:.6,dashArray:null};
  if(dimension==='benefits' && combinedView()){
    const tract=tractAssessments.has(row.id);
    return combinedStyle(tract?tractAssessments.get(row.id):assessments.get(row.id),selection.display,tract);
