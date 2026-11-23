@@ -23,9 +23,17 @@ Crashes and sidewalk gaps use a half-mile radius by default. The quarter-mile
 radius and 25% traffic-overlap flag are available as sensitivities. See
 [burden methods](burdens.md).
 
-**Eligibility** shows the city’s fully developed floodplain over hex outlines.
-Entirely covered hexagons are excluded. For partial overlap, the address profile
-tests the selected coordinate. The floodplain overlay is available in every view.
+**Combined** opens directly at `/#combined`. It compares the active housing
+profile’s benefit score at each hexagon’s routing origin with its combined burden
+score. Each breakpoint defaults to the unweighted median of the available scores
+for that measure under the current settings. Ties count as high. The legend
+counts all study hexagons and reports missing score pairs separately. Users can
+move either breakpoint on the 0–100 scale. Custom breakpoints stay fixed across
+changes in settings until the user selects **Reset to medians**.
+
+**Show actual floodplain** displays the City’s fully developed floodplain in
+every view. Fully covered hexagons use the flood exclusion color. For partial
+overlap, the address profile tests the selected coordinate.
 
 ## Rebuild and preview
 

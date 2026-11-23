@@ -201,9 +201,9 @@ Outputs:
   unsimplified per-hex flood geometry separately.
 - `output/components/flood-eligibility/`: hex, tract, and example-site CSVs plus
   point fixtures for independent browser-versus-sf verification.
-- Public-client source: separate Eligibility view; persistent dark flags for
-  fully excluded hexes across map modes; actual-point status at the top of each
-  address profile. The browser uses unsimplified per-hex flood polygons, exported
+- The public map marks fully excluded hexes in dark gray across map modes and
+  gives the selected point’s flood status at the top of each address profile.
+  The browser uses unsimplified per-hex flood polygons, exported
   at ten decimal places. Benefits remain visible as descriptive information.
 
 Publication uses the repository’s `scripts/site/publish.sh` workflow. It validates
@@ -246,8 +246,7 @@ remain part of the published layer; no additional generic FEMA layer is added.
 
 `Rscript scripts/flood/audit_overlap.R` reproduces the count and area audit in
 `output/components/flood-eligibility/overlap-audit.json` using cached targets.
-The Eligibility view now defaults to the actual floodplain footprint over
-lightly outlined hexes. “Show actual floodplain” can be toggled in every view.
+“Show actual floodplain” displays the floodplain footprint in every map view.
 The drawing uses the same unsimplified geometry as point classification, clipped
 to the study hexes; Leaflet simplifies screen rendering at each zoom. No geometry
 or eligibility thresholds were changed for this display update.

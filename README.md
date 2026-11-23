@@ -32,7 +32,8 @@ cached sources. See
 
 - **Benefits.** Housing profiles combine destination access, jobs, and assigned elementary-school growth for families. The map shows the weighted score and minimum status for each travel mode. [Benefit methods](docs/benefits.md)
 - **Burdens.** Heat contributes one third of the score. Industrial air, near-road traffic, fatal and serious-injury crashes, and sidewalk gaps on major streets each contribute one sixth. At least two high components flag a hexagon for overall high burden. [Burden methods](docs/burdens.md)
-- **Eligibility.** The City of Austin fully developed floodplain determines flood eligibility. Partial overlap with a hexagon requires a check at the selected address.
+- **Combined.** Compare hexagon benefit and burden scores using four high/low groups. Each score has its own adjustable breakpoint, initially set at its median.
+- **Flood eligibility.** The City of Austin fully developed floodplain determines flood eligibility. Partial overlap with a hexagon requires a check at the selected address.
 - **Context.** The tract component report includes demographics, housing, displacement, and three editable example sites. The examples illustrate how to interpret the data.
 
 ## Repository layout
