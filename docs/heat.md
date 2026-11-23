@@ -30,9 +30,8 @@ validation workflow below. A changed input hash requires review and an explicit
 reference-version update; display filters and observation flags cannot silently
 change rankings.
 
-The targets route requires `DAM_DATA_DIR` to point to the existing dated benefits
-snapshot (`index-development/data/dam-accessibility/2026-11-03`) for the shared
-population inputs. The heat targets were successfully built against that snapshot.
+The targets route requires `DAM_DATA_DIR` to point to the dated benefits
+snapshot pinned in `config/benefits.yml` for the shared population inputs.
 
 Results in `output/components/heat-burden/` include the review report, maps,
 per-origin scores and context, daily reference, population summaries, GeoPackage

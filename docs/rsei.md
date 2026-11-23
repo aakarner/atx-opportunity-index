@@ -20,7 +20,7 @@ All 1,029 origins are scored: 103 are high burden, 231 are secondary review and
 contain 3.87% and 26.91% of known estimated residents, respectively.
 
 `R/industrial_air_burden.R` provides scoring, aggregation and exports. Reproduce
-with the existing `DAM_DATA_DIR` environment pointing to the November 3 snapshot:
+with the existing `DAM_DATA_DIR` environment pointing to the snapshot pinned in `config/benefits.yml`:
 
 ```sh
 Rscript scripts/run_pipeline.R industrial_air_burden_assets

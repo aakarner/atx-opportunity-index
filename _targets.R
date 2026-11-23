@@ -117,7 +117,7 @@ list(
                                                flood_union, crash_points, crash_spec, city_boundary),
                                                site_rsei, by = "site_id", relationship = "one-to-one"),
                                                site_traffic, by = "site_id", relationship = "one-to-one"), site_flood_constraint)),
-  tar_target(registry, flood_constraint_registry(traffic_registry(rsei_registry(indicator_registry(job_spec, school_spec, crash_spec, census_spec, displacement_spec), rsei_spec), traffic_metadata), flood_constraint_source)),
+  tar_target(registry, flood_constraint_registry(traffic_registry(rsei_registry(indicator_registry(job_spec, school_spec, crash_spec, census_spec, displacement_spec, benefit_spec$snapshot), rsei_spec), traffic_metadata), flood_constraint_source)),
   tar_target(manifest, source_manifest(c(dam=dam_release, benefit_configuration=benefit_config, rsei = rsei_source_files, configuration = config_file, acs = acs_files,
     tract_boundaries = tract_boundary_files, city_boundaries = city_boundary_files,
     displacement = displacement_file, jobs = job_file, schools = school_file,

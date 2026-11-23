@@ -108,7 +108,7 @@ pipeline_qa <- function(tracts, jobs, schools, sites) {
     status = c("info", "pass", rep("info", 8), "pass", rep("info", length(school_counts)+1)))
 }
 
-indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, displacement_spec) {
+indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, displacement_spec, dam_snapshot) {
   entry <- function(indicator, role, status, units, vintage, limitation) {
     data.frame(indicator, role, status, units, vintage, limitation, stringsAsFactors = FALSE)
   }
@@ -131,9 +131,9 @@ indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, d
     entry("Sidewalk gaps on major streets", "burden", "H8_scored", "Percentage of major-street length without a mapped sidewalk or parallel path, counting each side separately",
       "November 2026 City street, sidewalk and urban trail inventories", "City-clipped half-mile circles. Count each outside street side separately. No eligible frontage or no inventory evidence yields no estimate"),
     entry("Non-job destination access", "benefit", "available", "Destination types reached",
-      "DAM release 2026-11-03", "Counts depend on housing profile, travel mode and time budget"),
+      paste("DAM release", dam_snapshot), "Counts depend on housing profile, travel mode and time budget"),
     entry("Driving access", "benefit", "available", "Jobs and destination types reached",
-      "DAM release 2026-11-03", "Prepared morning drive matrices"),
+      paste("DAM release", dam_snapshot), "Prepared morning drive matrices"),
     entry("Demographic and market context", "overlay", "source_derived_tract_context", "Indicator-specific",
       paste(census_spec$acs_year, "ACS; City", displacement_spec$source_year, "displacement"),
       "Whole-tract ACS attributes despite city-clipped geometry"))

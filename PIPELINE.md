@@ -9,7 +9,7 @@ previous tract analytical output.
 
 ## Setup and execution
 
-Set `DAM_DATA_DIR` to the dated 2026-11-03 DAM snapshot. Run from the repository root:
+Set `DAM_DATA_DIR` to the dated 2026-11-17 DAM snapshot. Run from the repository root:
 
 ```sh
 Rscript scripts/setup_pipeline.R

@@ -9,7 +9,7 @@ Vendored browser library licenses are in `site/vendor/`.
 
 **Benefits** opens on families, using 45 minutes by transit and walking. The
 combined score and minimum status use the selected housing profile. Other views
-show destination counts or compare a profile with all eight destination types.
+show destination counts or compare a profile with all nine destination types.
 Elementary assignments use the selected point for address profiles and the
 routing origin for map scores. See [benefit methods](benefits.md).
 
@@ -32,7 +32,7 @@ tests the selected coordinate. The floodplain overlay is available in every view
 From the repository root:
 
 ```sh
-# Set DAM_DATA_DIR to the 2026-11-03 snapshot before rebuilding.
+# Set DAM_DATA_DIR to the 2026-11-17 snapshot before rebuilding.
 Rscript scripts/run_pipeline.R web_mockup_data
 Rscript scripts/site/configure_basemap.R /path/to/.Renviron
 for test in tests/*.mjs; do node "$test" || exit 1; done
