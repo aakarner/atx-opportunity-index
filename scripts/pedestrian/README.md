@@ -1,4 +1,4 @@
-# Unserved major-street frontage
+# Sidewalk gaps on major streets
 
 For each H3 resolution 8 center, the pipeline draws a half-mile circle and clips it to Austin's full- and limited-purpose boundary. The quarter-mile sensitivity repeats the calculation in a smaller circle. Each map hexagon displays its center's result.
 

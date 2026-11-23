@@ -63,7 +63,7 @@ dimensions, and the output directory.
 | Crash points | `data/processed/crash_injuries/austin_open_data_ksi_crashes.gpkg`, containing fatal and suspected-serious-injury crashes. |
 | City flood eligibility | City of Austin Fully Developed Floodplain polygons from the snapshot in `config/burdens.yml`. |
 | Heat | Pinned 2026 daytime surface-temperature observations in `config/burdens.yml`. |
-| Unserved major-street frontage | City street network, sidewalk inventory and existing urban trails. Percent of eligible frontage without a sidewalk or parallel path in City-clipped half-mile windows. |
+| Sidewalk gaps on major streets | City street network, sidewalk inventory and existing urban trails. Percent of major-street length without a mapped sidewalk or parallel path, counting each side separately in City-clipped half-mile windows. |
 | Near-road traffic | Prepared H8 distance and corridor overlap in `scripts/aadt/aadt_metrics.csv`. |
 | Destination access | DAM morning accessibility series for driving and transit/walking. |
 | Example sites | `config/example_sites.csv`, containing WGS84 coordinates, labels, and selection notes. |
@@ -196,7 +196,7 @@ location profile as context. See [traffic methods](scripts/aadt/README.md).
 
 **Hexagon scoring.** The map combines five burden measures and applies an
 independent flag for two or more high components. The primary crash and
-major-street frontage scores use half-mile circles. Benefits use profile-specific
+sidewalk gap scores use half-mile circles. Benefits use profile-specific
 weights and minimums. See the [burden](docs/burdens.md) and [benefit](docs/benefits.md)
 methods for scoring, sensitivity settings, and missing data.
 

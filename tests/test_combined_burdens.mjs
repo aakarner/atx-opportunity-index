@@ -39,7 +39,7 @@ assert.equal(burdenStyle(synthetic,a,'flags').fillColor,'#dce5e5');
 synthetic.major_frontage_score=null;synthetic.major_frontage_high=null;
 a=assessBurden(synthetic,data.policy);assert.equal(a.score,null);assert.equal(a.status,'incomplete');assert.equal(a.overallHigh,null);assert.deepEqual(a.high,['heat']);
 assert.deepEqual(a.missing,['frontage']);
-assert.match(burdenProfile(synthetic,a),/Missing components: Unserved major-street frontage/);
+assert.match(burdenProfile(synthetic,a),/Missing components: Sidewalk gaps on major streets/);
 assert.equal(burdenStyle(synthetic,a,'crash').fillColor,burdenColor(0));
 assert.equal(burdenStyle(synthetic,a,'frontage').fillColor,burdenColor(null));
 assert.equal(burdenStyle(synthetic,a,'combined').dashArray,null);

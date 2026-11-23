@@ -105,7 +105,7 @@ function renderMap(){
    const results=[...burdenAssessments.values()],scored=results.filter(a=>finite(a.score)).length,high=results.filter(a=>a.overallHigh===true).length;
    if(burdenMeasure==='frontage'){
     const rows=[...currentBurdenRows().values()],available=rows.filter(r=>r.frontage_status==='available').length;
-    $('map-count').textContent=`${available} of ${rows.length} frontage scores · ${rows.filter(r=>r.major_frontage_high===true).length} high · ${rows.length-available} unavailable`;
+    $('map-count').textContent=`${available} of ${rows.length} sidewalk gap scores · ${rows.filter(r=>r.major_frontage_high===true).length} high · ${rows.length-available} unavailable`;
    }else {
     $('map-count').textContent=`${scored} of ${results.length} complete combined scores · ${high} classified overall high burden (2+ high components) · ${results.length-scored} incomplete scores`;
    }

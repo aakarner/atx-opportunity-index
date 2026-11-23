@@ -1,11 +1,11 @@
-# Compare the crash and major-street frontage indicators at the two study radii.
+# Compare the crash and sidewalk gap indicators at the two study radii.
 .libPaths(c(".R-library", .libPaths()))
 suppressPackageStartupMessages({library(sf); library(ggplot2); library(patchwork)})
 source("R/pipeline_reports.R")
 root <- "output/components/street-safety"
 analysis <- readRDS(file.path(root, "analysis.rds"))
 policy <- analysis$policy$scoring
-components <- c(crash_score = "Fatal and serious-injury crashes", major_frontage_score = "Unserved major-street frontage")
+components <- c(crash_score = "Fatal and serious-injury crashes", major_frontage_score = "Sidewalk gaps on major streets")
 flags <- c(crash_score = "crash_high", major_frontage_score = "major_frontage_high")
 
 component_map <- function(geometry, field) {
@@ -39,15 +39,15 @@ for (scenario in names(analysis$results)) {
 }
 summary <- do.call(rbind, summary_rows)
 write.csv(summary, file.path(root, "summary.csv"), row.names = FALSE)
-html <- paste0('<!doctype html><html lang="en"><meta charset="utf-8"><title>Crashes and unserved major-street frontage</title>',
+html <- paste0('<!doctype html><html lang="en"><meta charset="utf-8"><title>Crashes and sidewalk gaps on major streets</title>',
   '<style>body{font:17px/1.5 system-ui;max-width:1100px;margin:36px auto;padding:0 20px}img{width:100%}th,td{padding:8px;text-align:left}</style>',
-  '<h1>Crashes and unserved major-street frontage</h1><p>Both indicators use circles around hexagon centers clipped to Austin. ',
+  '<h1>Crashes and sidewalk gaps on major streets</h1><p>Both indicators use circles around hexagon centers clipped to Austin. ',
   'Crash scores reach 100 at ', round(policy$crash_full_burden_density, 3),
   ' fatal or serious-injury crashes per year per observed square mile. The high flag starts at ',
-  round(policy$crash_high_burden_density, 3), '. The frontage score is the percentage of major-street sides without a mapped sidewalk or parallel path. ',
+  round(policy$crash_high_burden_density, 3), '. The sidewalk gap score is the percentage of major-street length without a mapped sidewalk or parallel path, counting each side separately. ',
   'The high flag starts at ', policy$major_frontage_high_burden_score, '%. Each high component counts toward the overall threshold of two.</p>',
-  '<h2>Half-mile neighborhoods</h2><img src="primary_map.png" alt="Half-mile crash and major-street frontage scores">',
-  '<h2>Quarter-mile sensitivity</h2><img src="sensitivity_maps.png" alt="Quarter-mile crash and major-street frontage scores">',
+  '<h2>Half-mile neighborhoods</h2><img src="primary_map.png" alt="Half-mile crash and sidewalk gap scores">',
+  '<h2>Quarter-mile sensitivity</h2><img src="sensitivity_maps.png" alt="Quarter-mile crash and sidewalk gap scores">',
   '<h2>Coverage and flags</h2>', report_html_table(summary),
   '<p><a href="primary.csv">Half-mile data</a> · <a href="sensitivity.csv">Quarter-mile data</a> · ',
   '<a href="summary.csv">Summary</a> · <a href="primary_map.pdf">Half-mile maps (PDF)</a></p></html>')

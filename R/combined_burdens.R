@@ -47,7 +47,7 @@ write_combined_burdens <- function(result,directory='site/assets',output='output
     heat_thin=sum(x$heat_thin_coverage,na.rm=TRUE),industrial_review=sum(x$industrial_air_review_band,na.rm=TRUE))
   public<-list(schema_version=4,policy=result$spec$combined,rules=result$provenance,
     primary=result$results$primary,quarter_mile=result$results$sensitivity,counts=counts,
-    interpretation='Overall high burden requires at least two high components, counting crashes and unserved major-street frontage separately. Individual component warnings remain visible independently of classification and score. Higher scores mean greater burden. Local screening, not health risk; flood eligibility remains independent.')
+    interpretation='Overall high burden requires at least two high components, counting crashes and sidewalk gaps on major streets separately. Individual component warnings remain visible independently of classification and score. Higher scores mean greater burden. Local screening, not health risk; flood eligibility remains independent.')
   path<-file.path(directory,'combined-burdens.json')
   jsonlite::write_json(public,path,dataframe='columns',digits=NA,auto_unbox=TRUE,na='null',null='null')
   saveRDS(result,file.path(output,'analysis.rds'))

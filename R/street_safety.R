@@ -32,7 +32,7 @@ score_street_safety <- function(x, policy) {
   x$flag_detail <- 'Incomplete assessment'
   x$flag_detail[which(both_known & !x$any_high)] <- 'Below both flags'
   x$flag_detail[which(both_known & x$crash_high & !x$major_frontage_high)] <- 'Crash only'
-  x$flag_detail[which(both_known & !x$crash_high & x$major_frontage_high)] <- 'Major frontage only'
+  x$flag_detail[which(both_known & !x$crash_high & x$major_frontage_high)] <- 'Sidewalk gaps on major streets only'
   x$flag_detail[which(both_known & x$crash_high & x$major_frontage_high)] <- 'Both components'
   x$flag_detail[which(!both_known & x$any_high)] <- 'High; other component unavailable'
   x$scoring_version <- s$version

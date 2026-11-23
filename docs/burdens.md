@@ -2,8 +2,8 @@
 
 The combined burden score requires five components. Heat contributes one third.
 Industrial air, near-road traffic, fatal and serious-injury crashes, and
-unserved major-street frontage each contribute one sixth. A missing component withholds
-the score. Crashes and frontage use the same observation windows and are scored and
+sidewalk gaps on major streets each contribute one sixth. A missing component withholds
+the score. Crashes and sidewalk gaps use the same observation windows and are scored and
 mapped individually.
 
 Overall high burden requires **at least two high components**, independent
@@ -48,13 +48,13 @@ It has no weight and cannot be compensated by benefits or low values elsewhere.
 The policy is recorded in `config/burdens.yml`. No existing benefit inputs,
 profile weights, minima, or descriptive scores change when flood status changes.
 
-## Crashes and unserved major-street frontage
+## Crashes and sidewalk gaps on major streets
 
 Both components use straight-line circles around each H3 center, clipped to Austin. The adopted radius is half a mile and the sensitivity radius is a quarter mile.
 
-**Unserved major-street frontage** is the percentage of eligible street-side length without a mapped sidewalk or parallel path. Each side of a collector, arterial or eligible public service road counts separately. A mile with a sidewalk along only one side has one of two frontage miles served and scores 50. Local residential streets are outside the denominator. The component is high at 50 or above. The map profile reports served and unserved percentages and the underlying frontage miles. The measure describes infrastructure along major roads. It does not estimate walking activity or the comfort of walking on a local street.
+**Sidewalk gaps on major streets** measures the percentage of major-street length without a mapped sidewalk or parallel path, counting each side separately. Eligible streets include collectors, arterials and public service roads. A mile with a sidewalk along only one side has one of two frontage miles served and scores 50. Local residential streets are outside the denominator. The component is high at 50 or above. The map profile reports served and unserved percentages and the underlying frontage miles. The measure describes infrastructure along major roads. It does not estimate walking activity or the comfort of walking on a local street.
 
-| City-clipped radius | Scored | High frontage burden | No eligible major street | Coverage unknown |
+| City-clipped radius | Scored | High sidewalk gap burden | No eligible major street | Coverage unknown |
 |---|---:|---:|---:|---:|
 | Half mile | 874 | 358 | 125 | 30 |
 | Quarter mile | 731 | 297 | 271 | 27 |

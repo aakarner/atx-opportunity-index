@@ -16,10 +16,10 @@ routing origin for map scores. See [benefit methods](benefits.md).
 **Burdens** opens directly at `/#burdens`. The selector includes the combined
 score, overall classification, five component scores, heat observation quality,
 and industrial-air screening bands. Heat contributes one third. Crashes,
-unserved major-street frontage, industrial air, and near-road traffic contribute one sixth each.
+sidewalk gaps on major streets, industrial air, and near-road traffic contribute one sixth each.
 An unavailable component withholds the combined score. Two known high components
 are sufficient to flag a hexagon, even when another observation is missing.
-The default crash and major-street frontage radius is half a mile. The quarter-mile
+Crashes and sidewalk gaps use a half-mile radius by default. The quarter-mile
 radius and 25% traffic-overlap flag are available as sensitivities. See
 [burden methods](burdens.md).
 

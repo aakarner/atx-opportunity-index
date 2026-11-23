@@ -128,7 +128,7 @@ indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, d
       "City-clipped windows; primary H8 scores use a half mile. Crash density does not measure risk per trip"),
     entry("Heat exposure", "burden", "H8_scored", "Relative daytime surface-temperature percentile",
       "May–September 2026 satellite observations", "Limited observation flag below eight eligible dates"),
-    entry("Unserved major-street frontage", "burden", "H8_scored", "Percent of eligible major-street frontage without a sidewalk or parallel path",
+    entry("Sidewalk gaps on major streets", "burden", "H8_scored", "Percentage of major-street length without a mapped sidewalk or parallel path, counting each side separately",
       "November 2026 City street, sidewalk and urban trail inventories", "City-clipped half-mile circles. Count each outside street side separately. No eligible frontage or no inventory evidence yields no estimate"),
     entry("Non-job destination access", "benefit", "available", "Destination types reached",
       "DAM release 2026-11-03", "Counts depend on housing profile, travel mode and time budget"),
