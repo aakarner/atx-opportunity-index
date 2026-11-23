@@ -6,10 +6,8 @@ prior<-read.csv('output/components/pedestrian-gaps/radius-comparison/origin_resu
 p<-r$policy;s<-p$scoring
 for(k in names(r$results)) {
   x<-r$results[[k]];stopifnot(nrow(x)==1029,!anyDuplicated(x$h3_id))
-  ok<-is.finite(x$street_safety_score)
-  stopifnot(all(x$street_safety_score[ok]>=0 & x$street_safety_score[ok]<=100),
-    all(is.na(x$street_safety_score)==(is.na(x$crash_score)|is.na(x$pedestrian_gap_score))),
-    all(abs(x$street_safety_score[ok]-(x$crash_score[ok]+x$pedestrian_gap_score[ok])/2)<1e-10),
+  stopifnot(isTRUE(all.equal(x$crash_score, pmin(100,100*x$annual_ksi_density/s$crash_full_burden_density))),
+    identical(x$pedestrian_gap_score,x$gap_score),
     all(x$crash_high== (x$annual_ksi_density>=s$crash_high_burden_density),na.rm=TRUE),
     all(x$pedestrian_high==(x$gap_score>=50),na.rm=TRUE))
   old<-prior[prior$radius_miles==unique(x$radius_miles),]
@@ -20,7 +18,8 @@ for(k in names(r$results)) {
     all(x$dated_as_completed_score<=x$gap_score+1e-10,na.rm=TRUE))
   exported<-read.csv(file.path('output/components/street-safety',paste0(k,'.csv')))
   stopifnot(nrow(exported)==1029,
-    isTRUE(all.equal(exported$street_safety_score,x$street_safety_score,tolerance=1e-12)))
+    isTRUE(all.equal(exported$crash_score,x$crash_score,tolerance=1e-12)),
+    isTRUE(all.equal(exported$pedestrian_gap_score,x$pedestrian_gap_score,tolerance=1e-12)))
   g<-st_read('output/components/street-safety/street_safety.gpkg',layer=paste0(k,'_hex'),quiet=TRUE)
   stopifnot(nrow(g)==1029,st_crs(g)$epsg==26914)
 }

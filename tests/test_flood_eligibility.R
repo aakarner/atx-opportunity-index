@@ -23,11 +23,12 @@ stopifnot(identical(flood_address_screen(hole_pts,donut)$flood_ineligible,c(FALS
 # Several adjoining polygons can jointly cover a full cell; dissolve before testing.
 joined<-st_union(st_sfc(square(0,0,.5,1),square(.5,0,1,1),crs=5070))
 stopifnot(flood_area_screen(areas[1,],joined,'h3_id')$rows$excluded)
-profiles<-data.frame(site_id=c('wet','dry','missing'),benefit_score=c(100,0,100),overall_screen='Incomplete')
+profiles<-data.frame(site_id=c('wet','dry','missing'),benefit_score=c(100,0,100))
 constraint<-data.frame(site_id=profiles$site_id,flood_ineligible=c(TRUE,FALSE,NA),
  flood_eligibility_status=c('ineligible','not_excluded','unknown'))
 combined<-attach_flood_constraint(profiles,constraint)
 stopifnot(grepl('Ineligible',combined$overall_screen[1]),
- combined$overall_screen[2]=='Incomplete',combined$overall_screen[3]=='Incomplete',
+ combined$overall_screen[2]=='Outside the mapped City fully developed floodplain',
+ combined$overall_screen[3]=='Flood eligibility unknown',
  identical(combined$benefit_score,profiles$benefit_score))
 cat('Flood tests passed: full coverage, partial coverage, tiny dry slivers, actual points, boundaries, holes, unknown coverage, and dissolved polygons.\n')

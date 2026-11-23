@@ -4,8 +4,8 @@
 # Floodplain layer from its official ArcGIS service. It retains probability-
 # based physical hazard zones rather than a social-vulnerability index, clips
 # the polygons to the current City boundary, and writes source and QA/QC files.
-# The output supplies the interim FEMA component; improved City flood measures
-# remain a separate pending source.
+# The output supplies tract and site context. The City fully developed floodplain
+# is prepared separately for the eligibility screen.
 
 source("scripts/prepare/packages.R")
 setup_project_packages(c(

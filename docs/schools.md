@@ -1,4 +1,6 @@
-# AISD school opportunity: preparation and methods
+# Assigned elementary-school growth
+
+The map uses 2026–27 elementary attendance zones across nine districts and 2025–26 growth outcomes. See the [active nine-district methods and reproduction steps](#active-prototype-nine-districts-2026-11-10). The AISD analyses below document the original source and indicator comparisons.
 
 ## Economically disadvantaged subgroup comparison (October 12, 2026)
 

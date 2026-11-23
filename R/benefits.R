@@ -248,7 +248,7 @@ write_benefit_brief <- function(files,spec,tract,site_profiles) {
     report_html_table(budget),
     '<h2>Which destinations drive the count?</h2><p>Share of modeled origins reaching each type at the trial default. A higher count of eligible facilities does not establish availability of a slot, appointment or program.</p>',
     report_html_table(reach),
-    '<h2>How much the housing profile changes the result</h2><p>Each percentage uses all reporting origins as its denominator. The older-adult and single-adult baskets currently have identical members. A separate job-access measure can still distinguish the questions staff ask about these developments. The supportive-housing basket omits behavioral health and supportive services.</p>',
+    '<h2>How much the housing profile changes the result</h2><p>Each percentage uses all reporting origins as its denominator. The older-adult basket adds libraries and parks to the four types in the single-adult basket. The supportive-housing basket omits behavioral health and supportive services.</p>',
     report_html_table(summary),
     '<p>Compare the fraction of the selected basket reached with the fraction of all eight types reached in the same cell. Higher, same and lower are counts of cells at the default budget. The mean difference is expressed on a 0–1 scale. Smaller baskets can score fully even where several other types are unavailable.</p>',report_html_table(comparisons),
     '<h2>Coverage and interpretation</h2>',

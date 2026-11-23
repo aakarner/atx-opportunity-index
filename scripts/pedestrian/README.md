@@ -1,9 +1,9 @@
 # Pedestrian-network gap measure
 
-## Combined street-safety score
+## Crash and pedestrian-gap scores
 
-The adopted half-mile score and quarter-mile sensitivity combine crash and gap
-scores at 50/50, with fixed anchors and independent component flags. Reproduce:
+The half-mile and quarter-mile maps show crashes and pedestrian gaps separately.
+The two measures each contribute one sixth of the combined burden score.
 
 ```sh
 Rscript scripts/pedestrian/build_street_safety.R
@@ -130,7 +130,7 @@ corresponding planned length as complete. This is not an automatic source repair
 Past construction may describe work other than completion of the planned facility.
 The largest change is 7.81 points at hex scale and 2.13 at neighborhood scale.
 
-## Current results
+## Original inventory results
 
 | Geography | Available main scores | Median gap score | Known residents represented |
 |---|---:|---:|---:|
@@ -152,10 +152,7 @@ particularly where the main network is sparse. These are consequential choices.
 
 One-mile gap score and matching-window annual KSI crash density have Spearman
 correlation about 0.009 among available pairs. They describe complementary
-conditions rather than empirically redundant rankings in this snapshot. The
-agreed 50/50 internal weights are recorded in `config/burdens.yml`; no combined
-score is produced until the crash-score transformation is selected. No high-gap
-cutoff, broader burden weights, or public deployment is adopted by this analysis.
+conditions rather than empirically redundant rankings in this snapshot. The adopted half-mile scores and thresholds are documented in [burden methods](../../docs/burdens.md).
 
 Outputs in `output/components/pedestrian-gaps/` include `review.html`, PNG/PDF
 maps, category/coverage/sensitivity tables, per-origin CSVs, a GeoPackage with

@@ -5,29 +5,27 @@ https://aakarner.github.io/atx-opportunity-index/ . It uses Leaflet 1.9.4,
 H3-js 4.2.1, CARTO Positron, and the public City of Austin address locator.
 Vendored browser library licenses are in `site/vendor/`.
 
-## Current combined burdens (November 10, 2026)
+## Map views
 
-Open `/#burdens` to share the Burdens view directly. It defaults to equal thirds
-for heat, air, and street safety, with industrial air and traffic each receiving
-half the air weight. No equal-four-domain sensitivity is offered. The fixed
-weighted score and component warnings are separate. Missing any domain withholds
-the score; known warnings remain visible. Secondary industrial review, limited
-heat observations, and pedestrian completion-date reviews have separate badges.
+**Benefits** opens on families, using 45 minutes by transit and walking. The
+combined score and minimum status use the selected housing profile. Other views
+show destination counts or compare a profile with all eight destination types.
+Elementary assignments use the selected point for address profiles and the
+routing origin for map scores. See [benefit methods](benefits.md).
 
-The Burdens selector offers the composite, warnings, individual scores, heat
-observation quality, and industrial screening bands. Burdens use H8 geometry;
-tract aggregation is not inferred. Half-mile street neighborhoods and a 50%
-traffic-overlap warning are the defaults; quarter-mile neighborhoods and a 25%
-traffic warning remain explicit sensitivities. Benefits and flood eligibility
-retain their independent rules. The legacy “Earlier flags” map, transit-job benchmark map option, and benchmark
-profile section have been removed. Their historical source data remain in the
-export for reproducibility; current scores and rules are unchanged.
+**Burdens** opens directly at `/#burdens`. The selector includes the combined
+score, overall classification, five component scores, heat observation quality,
+and industrial-air screening bands. Heat contributes one third. Crashes,
+pedestrian gaps, industrial air, and near-road traffic contribute one sixth each.
+An unavailable component withholds the combined score. Two known high components
+are sufficient to flag a hexagon, even when another observation is missing.
+The default crash and pedestrian-gap radius is half a mile. The quarter-mile
+radius and 25% traffic-overlap flag are available as sensitivities. See
+[burden methods](burdens.md).
 
-Rebuild with `Rscript scripts/run_pipeline.R combined_burden_assets` after setting
-`DAM_DATA_DIR`. Validate with `Rscript tests/test_combined_burdens.R` and
-`node tests/test_combined_burdens.mjs`. Publication versions the burden data and
-module alongside all existing assets, and runs all four browser-module checks.
-The baseline-export and earlier-screen descriptions below document legacy layers.
+**Eligibility** shows the city’s fully developed floodplain over hex outlines.
+Entirely covered hexagons are excluded. For partial overlap, the address profile
+tests the selected coordinate. The floodplain overlay is available in every view.
 
 ## Rebuild and preview
 
@@ -35,9 +33,9 @@ From the repository root:
 
 ```sh
 # Set DAM_DATA_DIR to the 2026-11-03 snapshot before rebuilding.
-Rscript scripts/run_pipeline.R web_mockup_data benefit_brief
+Rscript scripts/run_pipeline.R web_mockup_data
 Rscript scripts/site/configure_basemap.R /path/to/.Renviron
-node tests/test_web_mockup.mjs
+for test in tests/*.mjs; do node "$test" || exit 1; done
 Rscript tests/test_web_mockup.R
 python3 -m http.server 8765 --bind 127.0.0.1 --directory site
 ```
@@ -47,18 +45,11 @@ server, not a `file://` URL. There is no Node package install or frontend build.
 The R export test uses the existing targets store; the Node checks operate on
 the committed public snapshot and run in GitHub Actions on PRs and main pushes.
 
-`web_mockup_data` depends on the pipeline's H8, tract, city-boundary, and
-classification objects. Its baseline exporter writes four compact data files in
-`site/assets/`. It does not duplicate source acquisition or spatial analysis.
-Commit regenerated snapshots with any corresponding method/configuration change.
-Thresholds come from `config/classification-review.yml`:
-
-- Strong access: **strictly >50,000** jobs reachable by walk/transit in 45 minutes.
-- Elevated burden: **RSEI air ToxConc >=100**.
-
-The client checks every exported flag against its metadata before showing the
-map. Missing values become JSON null and remain unknown. `site/assets/metadata.json` records current counts, flags, boundary date,
-source checksum, and measured hex coverage. These are prototype classifications, not adopted adequacy/health standards.
+`web_mockup_data` builds all map assets, including benefits, combined burdens,
+and flood eligibility. Its geography export supplies the city boundary, hexagon
+and tract source values, observation metadata, and coverage. The browser checks
+the combined assessments against the exported component values and flags. Commit
+regenerated snapshots with their corresponding method or configuration changes.
 
 ## Address lookup and geography
 
@@ -113,38 +104,3 @@ only `site/` into a temporary checkout, and commits/pushes the `gh-pages` branch
 It preserves deployment history and never force-pushes. `deployment.json` records
 the source commit. Repository Pages settings must serve **gh-pages / (root)**.
 GitHub's branch deployment builds after the push; source PRs do not auto-publish.
-The initial source work is in a review branch; future iterations use the same
-script. For a larger public rollout, revisit basemap capacity, geocoder service
-availability, keyboard tract navigation, and the draft thresholds.
-
-## Historical combined map (removed November 10, 2026)
-
-The Combined tab cross-classifies the existing tract flags: both (purple, 29
-tracts), strong access only (green, 51), elevated burden only (orange, 58), and
-neither (light gray, 137). Missing either flag is unknown, never neither. Legend
-counts are calculated from the displayed tract snapshot. The same categories
-apply when inspecting hexagons. This is a combination of flags, not a net score;
-thresholds and underlying component values are unchanged.
-
-## Historical destination-benefit preview
-
-The Benefits tab opens on all eight destination types at 30 minutes by transit and walking. Choose a housing profile, mode and trial budget, or compare the share reached with the general basket. Use the benchmark option to view the earlier jobs flag. Selecting a site in the family profile looks up its elementary, middle and high school attendance zones at the selected coordinate. The two extra assets, `benefits.json` and `school-zones.geojson`, are generated by `benefit_assets`. The public prototype serves the derived fields for review. See [benefit measures and coverage](benefits.md).
-
-Boundary updates follow `docs/municipal-boundary.md`. The publisher versions all
-six data requests together with the app so returning visitors load the updated
-footprint and its matching measures.
-
-## Historical traffic-layer preview
-
-Under Burdens, select industrial air releases, traffic distance, or traffic
-buffer coverage. Traffic uses the corrected H8 source described in
-`scripts/aadt/README.md`. The pipeline adds `traffic_distance_ft`,
-`traffic_buffer_share`, and `traffic_coverage_share` to the public geography
-assets. Both measurements appear in profiles. Tract profiles identify the
-represented area, and uncovered tracts display Unavailable. The hexagon toggle
-shows the underlying H8 surface. Legend ranges are descriptive display bins.
-The Combined tab uses the transit-job and RSEI flags.
-
-## Flood eligibility constraint (November 9, 2026)
-
-The prototype includes a separate Eligibility view using the City fully developed floodplain. Entirely covered full hexes are ineligible and retain dark flags in other map views; partial hexes require actual-point checks. Address profiles test the selected coordinate and show eligibility ahead of descriptive benefit scores. Flooding has no score weight; outages are excluded. See [docs/burdens.md](burdens.md) for source, geometry, and scope rules. The Eligibility view defaults to the actual floodplain footprint over hex outlines. The overlay can be toggled on other views. Release validation checks the flood geometry checksum and 1,942 independent point classifications; the publisher versions the flood assets and module with the rest of the map.

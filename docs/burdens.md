@@ -1,23 +1,13 @@
 # Environmental and safety burdens: current scope
 
-User decisions, November 9, 2026: remove recurring power outages and combine
-crash density with pedestrian gaps in one street-safety/pedestrian-environment
-domain, with provisional internal weights of **50% each**. The four domains
-are industrial air pollution, traffic-related pollution, heat, and the combined
-street-safety/pedestrian-environment domain. All four domains now have adopted
-component scoring rules. On November 10, 2026, the user adopted **equal thirds
-across heat, air, and street safety**. Air is split equally between industrial
-air and traffic: the four input weights are 1/3 heat, 1/3 street safety,
-1/6 industrial air, and 1/6 traffic. Equal four-domain weighting is not retained
-as a sensitivity in the public map. The street-safety score retains its internal
-50/50 crash/gap split.
+The combined burden score requires five components. Heat contributes one third.
+Industrial air, near-road traffic, fatal and serious-injury crashes, and
+pedestrian network gaps each contribute one sixth. A missing component withholds
+the score. Crashes and gaps use the same observation windows and are scored and
+mapped individually.
 
-All four inputs must be present; missingness withholds the composite without
-redistributing weights. On **November 15, 2026**, the user adopted an overall
-high-burden classification requiring **at least two high components**, independent
-of the weighted score. The five components are heat, industrial air, near-road
-traffic, crashes, and pedestrian gaps. Crashes and gaps count separately even
-though they share the street-safety domain; this is not a two-domain rule.
+Overall high burden requires **at least two high components**, independent
+of the weighted score. The classification rule was adopted November 15, 2026.
 Each primary component warning remains visible regardless of the average or
 overall classification. At least two known high components plus missing data is
 labeled high/incomplete. Fewer than two known high components plus missing data
@@ -55,7 +45,7 @@ drawing the map. Run `Rscript tests/test_combined_burdens.R` and
 `Rscript scripts/run_pipeline.R combined_burden_assets`, or use
 `Rscript scripts/build_combined_burdens.R` to rebuild just the combined export
 from existing component analyses (their policies must match current configuration).
-The export uses schema version 2: `overall_high` and `high_component_count`
+The version 3 export stores the five component scores and their weights directly. `overall_high` and `high_component_count`
 describe the adopted classification, while `any_high` retains its individual-warning
 meaning. `counts.high` counts overall high classifications; `counts.any_component_high`
 counts cells with at least one warning. Both street radii and both traffic-flag
@@ -66,14 +56,7 @@ The map classification layer, count, and profile badge use the overall rule;
 dashed orange outlines on the combined-score map also require at least two high
 components, including known overall high burden with an incomplete score.
 Individual component maps retain their own high-component outlines, and profiles
-retain all individual warnings. The combined-map legend explains this distinction.
-The two-component update was published on November 15, 2026 and verified in the
-live map: 156 overall high-burden cells, 880 complete scores, and 149 incomplete
-scores. The release preserves the previously published benefits and school data.
-Deployment verification is recorded in
-`output/components/combined-burdens/publication.json`.
-Component review sections below record the
-analysis sequence; their earlier publication and open-decision notes are historical.
+retain all individual warnings.
 
 Tree canopy is protective context rather than
 an additional independent heat burden. Noise has not been adopted separately.
@@ -83,76 +66,14 @@ It has no weight and cannot be compensated by benefits or low values elsewhere.
 The policy is recorded in `config/burdens.yml`. No existing benefit inputs,
 profile weights, minima, or descriptive scores change when flood status changes.
 
-## Pedestrian-gap readiness review, November 9, 2026
+## Crashes and pedestrian gaps
 
-The September 15 technical meeting proposed sidewalk-network coverage. The
-September 28 meeting broadened “pedestrian barriers” to missing sidewalks,
-high speeds, and conditions discouraging walking. October 12 notes explicitly
-said this indicator remained under development; the accompanying slides listed
-sidewalk gaps, unsafe crossings, and highway/arterial barriers. These are design
-records, not evidence of a completed indicator. A search of the working checkout,
-current GitHub main tree, and shared project files found no prepared pedestrian
-gap layer, extraction script, or H8 score. The registry still marks it as not
-integrated and its source as to be selected.
-
-Public sources identified for preparation:
-
-- [City pedestrian-facility inventory](https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/Sidewalks_%28Public%29/FeatureServer/0):
-  existing sidewalks, driveways, shared-use/protected paths, completed shared
-  streets, planned shared streets, planned sidewalks, and potential sidewalks.
-  The service describes daily maintenance; freeze and validate a dated snapshot.
-- [2023 Sidewalks, Crossings and Shared Streets Plan](https://www.austintexas.gov/transportation-public-works/sidewalks-crossings-and-shared-streets-plan):
-  a documented crossing-suitability and spacing-gap analysis already exists.
-  Obtain and verify the underlying GIS outputs and their vintage/completion
-  status before integrating. Its prioritized crossing analysis excludes frontage
-  roads, so it cannot represent every highway barrier. Project-priority scores
-  include equity considerations and should not substitute for physical gaps.
-
-Recommended first measure (not yet adopted): length of inventoried unbuilt
-facilities in the City's planned pedestrian network divided by the corresponding
-existing-plus-planned network length. “Required network” was conversational
-shorthand, not a verified City GIS classification or a parcel-level legal finding.
-The 2023 plan's sections 2.1 and 2.3.1 describe sidewalks on both sides of
-arterial/collector streets and one side of some existing residential streets;
-new residential streets are described separately as requiring both sides.
-Suitable shared streets can substitute for sidewalks on some local streets.
-The plan combines universal pedestrian access with context-sensitive retrofit
-choices and funding/time constraints; project priority is a separate decision.
-The GIS encoding of these rules, particularly potential facilities and one-sided
-residential coverage, still needs validation before fixing a denominator.
-Establish a consistent street-side/frontage denominator; audit
-driveways, potential facilities, shared streets, alternative paths, duplicates,
-and missing coverage. Completed shared streets need not have conventional
-sidewalks; planned shared streets remain unbuilt. Missing inventories or an
-empty denominator remain unavailable, not zero gaps. Compare the measure over
-the same one-mile origin neighborhoods as crashes and within full hexes before
-selecting its geography. Retain crossing gaps as separately visible diagnostics
-until their data and integration rules are validated. This initial measure would
-describe network completion, not full ADA compliance or walking-route quality.
-
-## Pedestrian-gap implementation
-
-The inventory-based measure is now prepared for all 1,029 current origins, with
-explicit unavailable results where appropriate. The main score is 100 times
-planned length divided by completed-plus-planned length; potential sidewalks are
-a sensitivity. Both City-clipped hex and one-mile neighborhood versions are
-provided. See [the reproducible workflow and findings](../scripts/pedestrian/README.md).
-The preceding readiness discussion records the earlier design stage. The current
-implementation uses inventoried line length, rather than claiming independently
-verified required frontage or a universal two-sided sidewalk denominator.
-That initial inventory build preceded selection of the spatial scale and flags.
-
-Following review, the user adopted **half a mile for both crashes and pedestrian
-gaps**, keeping **quarter mile as a sensitivity**. `scripts/pedestrian/compare_radii.R` compares matched quarter-
-and half-mile windows against the original one-mile baseline, retaining the
-2020–2024 crash period. It checks sparse counts, ranking sensitivity, network
-denominators and City observation areas. The original one-mile inventory build
-configuration remains a historical baseline; the adopted radius is recorded in
-the combined-domain spatial policy. Matching half- and quarter-mile data are
-already available in the comparison outputs. The combined-domain implementation
-below now scores both adopted radii; public-map publication remains separate.
-
-## Adopted street-safety scoring
+The city pedestrian-facility inventory distinguishes existing, planned and
+potential facilities. The gap score is 100 times planned length divided by
+existing-plus-planned length. Potential facilities enter a separate inventory
+sensitivity. A window with an empty denominator or unclassified length has an
+unavailable gap score. The [inventory workflow](../scripts/pedestrian/README.md)
+documents the data audit and radius comparisons.
 
 The primary radius is half a mile, with quarter mile as a sensitivity. Both
 components use the same City-clipped origin windows. The crash component is
@@ -160,8 +81,7 @@ components use the same City-clipped origin windows. The crash component is
 suspected serious-injury crashes across all road users, 2020–2024, per year per
 observed square mile. The anchor is the frozen 95th percentile across the original
 1,029 half-mile origins (unweighted R type-7 quantile), not a safety standard.
-The gap component retains its raw missing-network percentage. The combined
-score is 50% of each; higher is greater burden.
+The gap component retains its raw missing-network percentage.
 
 Independently retain high-component flags at crash density
 `>= 4.2772765182635766` (frozen original 90th percentile) or gaps `>= 50`.
@@ -180,14 +100,10 @@ runner is `Rscript scripts/pedestrian/build_street_safety.R`, followed by
 per-origin scores, GIS layers and frozen policy/provenance metadata. Tests are
 `tests/test_street_safety.R` and `tests/test_street_safety_snapshot.R`.
 
-The half-mile result covers 880 of 1,029 origins and 98.53% of known estimated
-residents. Median score is 32.36, with 363 origins triggering at least one flag
-and 18 triggering both. One high-crash warning is retained despite an unavailable
-gap score. The 149 unavailable scores consist of 145 empty main-network
-denominators and four unknown-inventory cases. Among 798 origins scored at both
-radii, median absolute score change is 6.98 points and Spearman correlation is
-0.794. These are local burden scores, separate from benefits and flood eligibility;
-this analytical implementation does not publish the public map.
+The half-mile gap measure is available at 880 of 1,029 origins. The remaining 149
+have 145 empty network denominators and four unclassified inventories. One of
+these origins still has a high crash flag. Both component scores use the same
+anchors at the quarter-mile radius.
 
 ## Adopted heat scoring, November 10, 2026
 
@@ -202,20 +118,7 @@ All 1,029 origins are scored; 103 are high heat and 257 have limited observation
 including 21 that have both flags. High-heat cells contain 14.70% of known estimated
 residents and 15.73% of known estimated children. See [the heat workflow](heat.md)
 for the validation, pinned inputs and reproducible scoring/report commands.
-The report is `output/components/heat-burden/review.html`. Overall burden weights
-remain open, and the public map is unchanged by this analysis.
-
-## Industrial-air review, November 10, 2026
-
-An analysis-only comparison now evaluates a linear score capped at the current
-95th-percentile RSEI ToxConc (622.7302) and a flag at the 90th percentile (351.1041)
-against the existing mockup flag of 100. The proposed flag identifies 103 origins
-containing 3.87% of known estimated residents, versus 334 origins and 30.78% under
-the existing threshold. The 231 origins losing their flag contain approximately
-259,352 known residents. The continuous candidate score has median 8.39.
-See [industrial-air methods and reproduction](rsei.md) and the local report at
-`output/components/industrial-air-review/review.html`. These remain discussion
-candidates in that historical review report; the subsequent adoption is below.
+The report is `output/components/heat-burden/review.html`.
 
 ## Adopted industrial-air scoring, November 10, 2026
 
@@ -230,8 +133,7 @@ estimated residents), 231 secondary-review hexes (26.91%), and 695 below the rev
 band. The median score is 8.39. `industrial_air_burden_assets` builds per-origin
 scores/flags, GIS exports and provenance. The report is
 `output/components/industrial-air-burden/review.html`; see [the RSEI workflow](rsei.md)
-for reproduction and tests. Overall domain weights remain open. The public
-prototype remains at its prior deployment pending publication.
+for reproduction and tests.
 
 ## Adopted near-road traffic score, November 10, 2026
 
@@ -254,14 +156,12 @@ standards or pollutant concentrations.
 GIS exports and metadata. The report is
 `output/components/near-road-traffic/review.html`; see
 [the traffic workflow](../scripts/aadt/README.md) for reproduction and tests.
-All four burden domains now have adopted component scoring rules. Overall
-weights, overall burden status and public-map publication remain to be settled.
 
 ## Historical overall weight comparison, November 10, 2026
 
 The user requested a comparison of equal thirds by broad theme (heat 1/3, street
 safety 1/3, industrial air 1/6, traffic 1/6) against equal quarters across the four
-domains. No default preset has been selected. Both require every weighted domain;
+domains. The equal-theme preset was adopted. Both require every weighted domain;
 missing data do not cause weights to be redistributed. Component high-burden
 flags, industrial-air secondary review and heat observation flags remain fixed.
 
@@ -293,7 +193,7 @@ Reproduce with `Rscript scripts/air/compare_burden_weights.R`, then run
 `Rscript tests/test_burden_weight_review.R`. Candidate weights are isolated in
 `config/burden-weight-review.yml`. The report and all per-origin scores, rank
 changes, contribution tables, maps and source hashes are under
-`output/components/burden-weight-review/`. The public map is unchanged.
+`output/components/burden-weight-review/`.
 
 ## Flood eligibility rule
 
@@ -356,7 +256,7 @@ stop the build rather than substituting zero overlap.
 `R/flood_eligibility.R` implements union, area and point screens, provenance, and
 exports. The targets graph builds the constraint separately from legacy FEMA
 context. Existing site profiles receive `flood_ineligible` and
-`flood_eligibility_status`; a positive exclusion overrides `overall_screen`.
+`flood_eligibility_status`; `overall_screen` describes the point’s flood status.
 The indicator registry identifies the City layer as `eligibility_constraint` and
 the old FEMA measure as `legacy_context`.
 

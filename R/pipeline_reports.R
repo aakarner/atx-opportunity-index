@@ -56,7 +56,7 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
       title = "Mapped 1%-annual-chance floodplain",
       subtitle = "Share of each City-clipped tract within the existing FEMA flood snapshot",
       legend = "Mapped overlap (% of tract area)",
-      caption = paste("Physical area overlap, not population exposure. FEMA snapshot; City flood data remain pending.",
+      caption = paste("FEMA floodplain overlap by tract area. The City fully developed floodplain determines site eligibility.",
                       "Zero mapped overlap does not establish absence of flood risk. Grey = missing.", sep = "\n")),
     ksi_crashes = list(field = "annual_ksi_crash_density", scale = 1,
       title = "Fatal and serious-injury crash density",
@@ -192,12 +192,12 @@ site_report_labels <- function(fields, job_spec, crash_spec) {
     transit_jobs_45min = paste("Jobs reachable by transit in", job_spec$cutoff_minutes, "minutes"),
     transit_low_wage_jobs_45min = paste("Low-wage jobs reachable by transit in", job_spec$cutoff_minutes, "minutes"),
     fema_point_intersects = "Point intersects mapped FEMA floodplain",
-    flood_screen = "Flood interpretation", ksi_crashes_in_window = paste0("KSI crashes, ", crash_spec$first_year,
+    flood_screen = "FEMA floodplain context", ksi_crashes_in_window = paste0("KSI crashes, ", crash_spec$first_year,
                                                                           "–", crash_spec$last_year),
     crash_observed_area_sqmi = "City-observed buffer area (square miles)",
     crash_buffer_meters = "Crash buffer radius (m)", crash_observation_years = "Crash observation period (years)",
     crash_observed_window_share = "Share of crash buffer within City observation area",
-    annual_ksi_crash_density = "Annual KSI crashes per square mile", overall_screen = "Screening completeness")
+    annual_ksi_crash_density = "Annual KSI crashes per square mile", overall_screen = "City flood eligibility")
   for (level in c("elementary", "middle", "high")) {
     prefix <- paste0("school_", level, "_")
     labels[paste0(prefix, c("campus_id", "campus_name", "growth", "status"))] <-
@@ -254,7 +254,7 @@ a{color:#075a75}p{max-width:960px}.kicker{font-size:.85rem;letter-spacing:.09em;
 <p class="kicker">Austin Opportunity Index · component pipeline</p>
 <h1>Benefits, burdens, and illustrative site profiles</h1>
 <div class="notice"><p><strong>Provisional component review.</strong> Tract geography and ACS context are rebuilt from Census sources, crash measures from recorded crash points, and displacement context from the City source. Job access, schools, flood, and crash points use prepared snapshots. These products do not constitute a completed opportunity index, adopted screening rules, or recommendations about housing locations.</p>
-<p>No composite score, clustering, or site exclusion is applied. <a href="benefits/review.html">Review destination benefits, trial baskets, school examples and sensitivity results</a>. Heat and City flood data remain pending; missing components are unknown, never evidence of zero burden.</p></div>
+<p>These tract maps show individual measures. Site profiles report City flood eligibility. The <a href="https://aakarner.github.io/atx-opportunity-index/">interactive map</a> shows combined benefits, five burden components and the overall high-burden classification. <a href="benefits/review.html">Review destination access and school examples</a>.</p></div>
 <p>The same evidence supports tract summaries and finer-scale demonstration profiles. See the indicator registry, source checksums, and QA below for the current scope.</p>
 <p><a href="tract_components.csv">Tract component table (CSV)</a> · <a href="tract_components.gpkg">Tract geometries and components (GeoPackage)</a> · <a href="site_profiles.csv">Site profiles (CSV)</a></p>
 <p>Industrial pollution uses EPA RSEI 2022 v2.3.12 air toxicity-weighted concentrations. Tracts use area-weighted means; sites query the native 810 m cell. These are modeled TRI-related contributions, not total pollution, measured exposure, or health-risk estimates. <a href="rsei_and_h8.gpkg">Native EPA grid and H8 components</a> · <a href="h8_components.csv">H8 table</a></p>

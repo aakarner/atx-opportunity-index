@@ -16,7 +16,7 @@ burden_fixed:
   - id: burden_500
     label: 'RSEI: 500 threshold'
     elevated_at_least: 500
-# Selected for the website mockup; independent of the sensitivity scenarios above.
+# Historical map thresholds retained for the classification review.
 mockup:
   strong_access_above: 50000
   elevated_rsei_at_least: 100

@@ -3,12 +3,18 @@ import {readFileSync} from 'node:fs';
 import {indexBurdens,assessBurden,burdenColor,burdenStyle,burdenProfile,burdenLegend,burdenMeasures} from '../site/combined-burdens.mjs';
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const data=read('site/assets/combined-burdens.json'),ids=read('site/assets/hexagons.json').map(r=>r.id);
+const html=readFileSync('site/index.html','utf8');
+const selector=html.match(/<select id="burden-measure">([\s\S]*?)<\/select>/)[1];
+const options=Object.fromEntries([...selector.matchAll(/<option value="([^"]+)">([^<]+)<\/option>/g)].map(m=>[m[1],m[2]]));
+assert.deepEqual(options,burdenMeasures);
+assert.deepEqual(Object.keys(options).sort(),['combined','flags','heat','industrial','traffic','crash','gap','heat_quality','industrial_review'].sort());
 const index=indexBurdens(data,ids),close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 assert.deepEqual(data.counts.statuses,{high:154,high_incomplete:2,not_flagged:726,incomplete:147});
 assert.equal(data.counts.high,156);assert.equal(data.counts.any_component_high,518);
 for(const key of ['primary','quarter_mile']){
  const rows=[...index[key].values()];
  assert.equal(rows.length,1029);
+ assert.ok(!('street_safety_score' in data[key]));
  assert.equal(rows.filter(r=>r.combined_burden_score!==null).length,key==='primary'?880:800);
  for(const r of rows){
   close(r.traffic_score,100*r.traffic_buffer_share);
@@ -16,24 +22,26 @@ for(const key of ['primary','quarter_mile']){
   close(r.crash_score,Math.min(100,100*r.annual_ksi_density/data.rules.street.scoring.crash_full_burden_density));
   assert.equal(r.heat_thin_coverage,r.dates_half_land<8);
   assert.equal(r.industrial_air_review_band,r.rsei_tox_conc>=100&&!r.industrial_air_high);
-  if(r.pedestrian_gap_score===null)assert.equal(r.street_safety_score,null);
-  else close(r.street_safety_score,(r.crash_score+r.pedestrian_gap_score)/2);
   const a=assessBurden(r,data.policy),b=assessBurden(r,data.policy,{trafficSensitivity:true});
   assert.equal(a.score,b.score); // Traffic sensitivity changes flags, never scores.
   assert.ok(a.high.every(k=>b.high.includes(k)));
   for(const m of Object.keys(burdenMeasures))assert.match(burdenStyle(r,a,m).fillColor,/^#[a-f0-9]{6}$/i);
-  if(a.score!==null)close(a.score,r.heat_score/3+r.street_safety_score/3+r.industrial_air_score/6+r.traffic_score/6);
+  if(a.score!==null)close(a.score,r.heat_score/3+(r.crash_score+r.pedestrian_gap_score)/6+r.industrial_air_score/6+r.traffic_score/6);
   if(a.status==='high_incomplete')assert.match(burdenProfile(r,a),/No combined score is assigned/);
  }
 }
 const complete=[...index.primary.values()].find(r=>r.combined_burden_score!==null);
-const synthetic={...complete,heat_score:90,street_safety_score:0,industrial_air_score:0,traffic_score:0,heat_high:true,crash_high:false,pedestrian_high:false,industrial_air_high:false,traffic_high:false};
+const synthetic={...complete,heat_score:90,crash_score:0,pedestrian_gap_score:0,industrial_air_score:0,traffic_score:0,heat_high:true,crash_high:false,pedestrian_high:false,industrial_air_high:false,traffic_high:false};
 let a=assessBurden(synthetic,data.policy);close(a.score,30);assert.equal(a.status,'not_flagged');assert.equal(a.overallHigh,false);
 assert.match(burdenProfile(synthetic,a),/Below overall high-burden threshold/);
 assert.match(burdenProfile(synthetic,a),/High components: Heat/);
 assert.equal(burdenStyle(synthetic,a,'flags').fillColor,'#dce5e5');
-synthetic.street_safety_score=null;synthetic.pedestrian_gap_score=null;synthetic.pedestrian_high=null;
+synthetic.pedestrian_gap_score=null;synthetic.pedestrian_high=null;
 a=assessBurden(synthetic,data.policy);assert.equal(a.score,null);assert.equal(a.status,'incomplete');assert.equal(a.overallHigh,null);assert.deepEqual(a.high,['heat']);
+assert.deepEqual(a.missing,['gap']);
+assert.match(burdenProfile(synthetic,a),/Missing components: Pedestrian gaps/);
+assert.equal(burdenStyle(synthetic,a,'crash').fillColor,burdenColor(0));
+assert.equal(burdenStyle(synthetic,a,'gap').fillColor,burdenColor(null));
 assert.equal(burdenStyle(synthetic,a,'combined').dashArray,null);
 assert.equal(burdenStyle(synthetic,a,'heat').dashArray,'4 2');
 synthetic.industrial_air_high=true;
@@ -68,7 +76,7 @@ for(let code=0;code<3**5;code++){
   assert.equal(result.status,expected);assert.equal(result.overallHigh,count>=2?true:unknown?null:false);
  }
 }
-for(const mutation of [x=>x.schema_version=1,x=>x.policy.high_component_minimum=1,x=>delete x.policy.classification_rule,x=>x.primary.overall_high[0]=true,x=>x.primary.high_component_count[0]=99,x=>x.policy.relative_weights.heat_score=1,x=>x.policy.four_domain_sensitivity=true,x=>x.primary.id[0]=x.primary.id[1],x=>x.primary.combined_burden_score[0]=999,x=>x.primary.heat_high[0]=!x.primary.heat_high[0]]){
+for(const mutation of [x=>x.schema_version=1,x=>x.policy.high_component_minimum=1,x=>delete x.policy.classification_rule,x=>x.primary.overall_high[0]=true,x=>x.primary.high_component_count[0]=99,x=>x.policy.relative_weights.heat_score=1,x=>x.policy.relative_weights.street_safety_score=2,x=>x.primary.id[0]=x.primary.id[1],x=>x.primary.combined_burden_score[0]=999,x=>x.primary.heat_high[0]=!x.primary.heat_high[0]]){
  const invalid=structuredClone(data);mutation(invalid);assert.throws(()=>indexBurdens(invalid,ids));
 }
 console.log('Combined burdens: 1,029 origins, R/JS agreement, both radii and traffic flags, fixed weights, missingness, component warnings and display checks passed.');

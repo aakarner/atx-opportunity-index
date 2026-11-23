@@ -73,14 +73,11 @@ traffic_at_sites <- function(sites, traffic) {
 }
 
 traffic_registry <- function(registry, metadata) {
-  i <- match("Near-road traffic pollution", registry$indicator)
-  registry$indicator[i] <- "Near-road traffic exposure"
-  registry$status[i] <- "H8_and_area_weighted_tract_summary"
-  registry$units[i] <- "Feet to nearest >50,000-AADT road; H8 fraction within 300 m"
-  registry$vintage[i] <- paste("TxDOT extraction", paste(metadata$source_extract_dates, collapse = ", "))
-  registry$limitation[i] <- paste("Traffic proximity proxy; observation years unspecified.",
-    "Tract means describe covered H8 area; full-cell overlap fractions are spatial approximations.")
-  registry
+  rbind(registry, data.frame(indicator = "Near-road traffic exposure", role = "burden",
+    status = "H8_and_area_weighted_tract_summary", units = "Feet to nearest >50,000-AADT road; H8 fraction within 300 m",
+    vintage = paste("TxDOT extraction", paste(metadata$source_extract_dates, collapse = ", ")),
+    limitation = paste("Traffic proximity proxy; observation years unspecified.",
+    "Tract means describe covered H8 area; full-cell overlap fractions are spatial approximations.")))
 }
 
 traffic_qa <- function(h8, tracts) {

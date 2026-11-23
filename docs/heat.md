@@ -46,8 +46,7 @@ estimates, not counts of people exposed to the measured surface temperature.
 
 The percentile median is 50.05 by construction; it is not an absolute thermal
 severity measure. Scores describe daytime land-surface heat in one season, not
-air temperature, nighttime heat or health risk. No air score, overall burden
-weights, or public-map publication is adopted by this implementation.
+air temperature, nighttime heat or health risk. The heat score contributes one third of combined burden.
 
 ## Source and reproduction
 

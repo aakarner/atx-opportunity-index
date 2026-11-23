@@ -1,22 +1,19 @@
 # Higher scores mean greater burden. Fixed anchors are policy, not recalculated quantiles.
 score_street_safety <- function(x, policy) {
-  s <- policy$scoring; weights <- unlist(policy$weights)
+  s <- policy$scoring
   stopifnot(is.finite(s$crash_full_burden_density), s$crash_full_burden_density>0,
     s$crash_high_burden_density>0, s$crash_high_burden_density<=s$crash_full_burden_density,
-    s$pedestrian_high_burden_score>=0,s$pedestrian_high_burden_score<=100,
-    all(is.finite(weights)), all(weights>=0), abs(sum(weights)-1)<1e-12)
+    s$pedestrian_high_burden_score>=0,s$pedestrian_high_burden_score<=100)
   if(any(x$annual_ksi_density<0,na.rm=TRUE) || any(x$gap_score<0 | x$gap_score>100,na.rm=TRUE))
     stop('Invalid raw street-safety measure')
   density <- x$annual_ksi_density; gap <- x$gap_score
   density[!is.finite(density)]<-NA_real_;gap[!is.finite(gap)]<-NA_real_
   x$crash_score <- pmin(100,100*density/s$crash_full_burden_density)
   x$pedestrian_gap_score <- gap
-  x$street_safety_score <- weights[['crash_density']]*x$crash_score + weights[['pedestrian_gaps']]*gap
   x$crash_high <- density>=s$crash_high_burden_density
   x$pedestrian_high <- gap>=s$pedestrian_high_burden_score
   # R's three-valued OR retains known warnings but never infers a pass from missing data.
   x$any_high <- x$crash_high | x$pedestrian_high
-  x$score_status <- ifelse(is.finite(x$street_safety_score),'available','unavailable')
   x$flag_status <- ifelse(is.na(x$any_high),'Incomplete assessment',
     ifelse(x$any_high,'High component burden','Below both flags'))
   both_known <- !is.na(x$crash_high)&!is.na(x$pedestrian_high)

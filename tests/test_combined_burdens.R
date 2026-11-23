@@ -8,7 +8,7 @@ stopifnot(nrow(x)==1029,!anyDuplicated(x$id),sum(is.finite(x$combined_burden_sco
   sum(x$burden_status=='not_flagged')==726,sum(x$burden_status=='incomplete')==147,
   sum(is.finite(r$results$sensitivity$combined_burden_score))==800,
   sum(x$heat_thin_coverage)==257,sum(x$industrial_air_review_band)==231)
-expected<-x$heat_score/3+x$street_safety_score/3+x$industrial_air_score/6+x$traffic_score/6
+expected<-x$heat_score/3+(x$crash_score+x$pedestrian_gap_score)/6+x$industrial_air_score/6+x$traffic_score/6
 stopifnot(isTRUE(all.equal(expected,x$combined_burden_score,tolerance=1e-10)))
 # Exhaust all five-component combinations, including unavailable components.
 fields<-c('heat_high','crash_high','pedestrian_high','industrial_air_high','traffic_high')
@@ -29,7 +29,7 @@ for(sensitivity in c(FALSE,TRUE)){
 z<-x[1,,drop=FALSE];z[fields]<-FALSE;z$crash_high<-TRUE;z$pedestrian_high<-TRUE
 stopifnot(combined_burden_assessment(z,r$spec$combined)$overall_high)
 # One known component warning survives missing data without becoming overall high.
-z$pedestrian_high<-NA;z$street_safety_score<-NA_real_
+z$pedestrian_high<-NA;z$pedestrian_gap_score<-NA_real_
 a<-combined_burden_assessment(z,r$spec$combined)
 stopifnot(is.na(a$combined_burden_score),a$burden_status=='incomplete',is.na(a$overall_high),a$any_high)
 z$heat_high<-TRUE
@@ -45,6 +45,7 @@ for(pair in list(c('heat-burden','heat_score'),c('industrial-air-burden','indust
 street<-readRDS('output/components/street-safety/analysis.rds')
 for(k in names(r$results)){
  z<-r$results[[k]];s<-street$results[[k]]
- stopifnot(isTRUE(all.equal(z$street_safety_score,s$street_safety_score[match(z$id,s$h3_id)],tolerance=1e-10)))
+ for(field in c('crash_score','pedestrian_gap_score'))
+   stopifnot(isTRUE(all.equal(z[[field]],s[[field]][match(z$id,s$h3_id)],tolerance=1e-10)))
 }
 cat('Combined burden policy and snapshot checks passed: fixed thirds, missingness, retained warnings and all source joins.\n')

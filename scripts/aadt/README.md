@@ -27,8 +27,7 @@ All 1,029 origins have scores; 717 have zero corridor overlap. The primary flag
 identifies 123 origins containing about 117,244 known estimated residents
 (12.17%). The sensitivity identifies 201 origins, containing about 211,782
 known residents (21.97%), adding 78 origins. Distance context describes canonical
-hex centers, not actual development addresses. Overall burden weights and public
-deployment remain separate decisions.
+hex centers, not actual development addresses. Near-road traffic contributes one sixth of the combined burden score.
 
 ## Source preparation
 
@@ -110,8 +109,8 @@ The tract buffer measure is an area-weighted mean of full-H8 fractions. It
 assumes those fractions represent intersecting parts of each cell. It is an
 approximate summary of the H8 surface. No population weighting is applied.
 
-The map includes both layers under Burdens and both values in hexagon and
-tract profiles. Tract profiles show represented area. Colors display measurement
-ranges; the combined access/industrial-air flags retain their existing rules.
+The traffic-exposure map shows the percentage of each hexagon within the road
+buffer. Hexagon profiles also show distance from the hexagon center to the
+nearest qualifying road.
 The pipeline exports the fields in its H8, tract, and site tables, component
 maps, source manifest, registry, QA, and public map assets.

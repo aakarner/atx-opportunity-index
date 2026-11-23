@@ -88,7 +88,7 @@ function renderMap(){
  $('burden-controls').hidden=dimension!=='burdens';
  $('hex-mode').disabled=dimension==='eligibility'||burden;
  if(burden)$('hex-mode').checked=true;
- $('map-help').textContent=burden?'Burden maps use hexagon neighborhoods. Click a location for all domain scores and flags.':dimension==='eligibility'?'Click a location to check its flood status and the share of its hexagon affected. Hex outlines stay on in this view.':$('hex-mode').checked?'Click a hexagon for its assessment. Turn off hexagons to inspect tract population summaries.':'Click a tract for its profile. Address searches always select a hexagon.';
+ $('map-help').textContent=burden?'Burden maps use hexagon neighborhoods. Click a location for all five component scores and flags.':dimension==='eligibility'?'Click a location to check its flood status and the share of its hexagon affected. Hex outlines stay on in this view.':$('hex-mode').checked?'Click a hexagon for its assessment. Turn off hexagons to inspect tract population summaries.':'Click a tract for its profile. Address searches always select a hexagon.';
  for(const view of ['benefits','burdens','eligibility'])$(view).setAttribute('aria-pressed',String(dimension===view));
  if(dimension==='eligibility'){
    $('legend-title').textContent='Flood eligibility';
@@ -162,7 +162,7 @@ async function init(){
   benefitHex=new Map(records(benefitData.hex));benefitTracts=new Map(records(benefitData.tract));
   benefitSeries=benefitData.series.field.map((key,i)=>Object.fromEntries(Object.entries(benefitData.series).map(([name,col])=>[name,col[i]])));
   if([...hexes.keys()].some(id=>!benefitHex.has(id))||tracts.features.some(f=>!benefitTracts.has(f.properties.id)))throw Error('Benefit geography mismatch');
-  if(metadata.schema_version!==1||typeof L==='undefined'||typeof h3==='undefined')throw Error('Map library or data version unavailable');
+  if(metadata.schema_version!==2||typeof L==='undefined'||typeof h3==='undefined')throw Error('Map library or data version unavailable');
   map=L.map('map',{zoomControl:true,minZoom:8,maxZoom:19,zoomSnap:.25});
   for(const [name,z] of [['floodplain',450],['exclusions',460],['selection',470]]){const pane=map.createPane(name);pane.style.zIndex=z;pane.style.pointerEvents='none';}
   let basemap={url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'};

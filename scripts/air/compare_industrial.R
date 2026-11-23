@@ -60,12 +60,12 @@ map_change<-ggplot(g)+geom_sf(aes(fill=flag_comparison),color=NA)+
   guides(fill=guide_legend(ncol=1))+labs(title='What changes with the higher cutoff')+theme_map
 p<-map_score+map_change+plot_annotation(title='Industrial air burden | Scoring and flag comparison',
   subtitle='Candidate score reaches 100 at ToxConc 622.7. Compare existing flag at 100 with proposed flag at 351.1.',
-  caption='2022 EPA RSEI v2.3.12; full-hex area-weighted toxicity-weighted concentration. Neither threshold is a health standard.\nPurple cells remain flagged; orange cells lose the flag. No production rule or public-map change has been adopted.')
+  caption='2022 EPA RSEI v2.3.12; full-hex area-weighted toxicity-weighted concentration. Neither threshold is a health standard.\nPurple cells remain flagged; orange cells lose the flag. The adopted high-burden flag uses the higher threshold.')
 ggsave(file.path(out,'comparison_map.png'),p,width=12,height=8,dpi=160,bg='white')
 ggsave(file.path(out,'comparison_map.pdf'),p,width=12,height=8)
 flag_map<-function(field,title){d<-g;d$flag<-ifelse(is.na(d[[field]]),'Unavailable',ifelse(d[[field]],'Flagged','Below cutoff'))
   ggplot(d)+geom_sf(aes(fill=flag),color=NA)+scale_fill_manual(values=c('Flagged'='#943958','Below cutoff'='#dce5e5','Unavailable'='#b5bdc1'),name=NULL)+labs(title=title)+theme_map}
-p<-flag_map('flag_mockup_100','Existing: ToxConc at least 100')+flag_map('flag_candidate_p90','Proposed: ToxConc at least 351.1')+
+p<-flag_map('flag_mockup_100','Earlier flag: ToxConc at least 100')+flag_map('flag_candidate_p90','Adopted flag: ToxConc at least 351.1')+
   plot_annotation(title='Alternative high-burden flags',caption='Same raw concentrations and geography. The proposed flag is nested within the existing flag; no locations are newly flagged.')
 ggsave(file.path(out,'flag_maps.png'),p,width=12,height=8,dpi=160,bg='white')
 # Population weighting describes where residents are assigned, not their measured exposure.

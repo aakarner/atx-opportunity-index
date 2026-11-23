@@ -1,9 +1,9 @@
 # Austin Opportunity Index
 
-A reproducible framework for describing neighborhood benefits and burdens in
-Austin, with tract-level maps and more detailed profiles of example sites.
-Benefits focus on access to opportunities; burdens remain separate physical
-conditions. Demographic, housing, and displacement measures provide context.
+The [interactive map](https://aakarner.github.io/atx-opportunity-index/) describes
+access to opportunities, environmental burdens, and flood eligibility for housing
+locations in Austin. It covers 1,029 H3 resolution 8 hexagons and includes tract
+summaries of benefits. Demographic, housing, and displacement measures provide context.
 
 The repository has one analytical entrypoint: [`_targets.R`](_targets.R).
 
@@ -30,22 +30,10 @@ cached sources. See
 
 ## Current scope
 
-- **Benefits:** driving and transit access to essential destinations and jobs, trial resident-specific baskets, and AISD assigned-school academic growth. See [the benefits review](output/components/benefits/review.html) and [methods](docs/benefits.md).
-- **Burdens:** mapped FEMA floodplain overlap, recorded severe-crash density,
-  EPA RSEI modeled industrial air-toxic concentration, and H8 traffic proximity
-  (road distance and 300-meter buffer coverage). Heat and improved City flood measures
-  are pending.
-- **Context:** selected tract demographic, housing, and displacement attributes.
-- **Outputs:** tract component maps and three editable site examples. Site
-  profiles query the underlying spatial data where available and report the
-  limits of approximating access with existing H8 origins.
-
-For candidate benefit/burden flags, open `output/components/classification-review/review.html`.
-This separate analysis compares provisional rules without adopting screening thresholds;
-see [RSEI methods and classification review](docs/rsei.md).
-
-The basket counts summarize destination types reached. Jobs, schools and burdens retain their own units. Point rules and site exclusions require City review. Example
-locations are demonstrations, not proposed housing developments.
+- **Benefits.** Housing profiles combine destination access, jobs, and assigned elementary-school growth for families. The map shows the weighted score and minimum status for each travel mode. [Benefit methods](docs/benefits.md)
+- **Burdens.** Heat contributes one third of the score. Industrial air, near-road traffic, fatal and serious-injury crashes, and pedestrian network gaps each contribute one sixth. At least two high components flag a hexagon for overall high burden. [Burden methods](docs/burdens.md)
+- **Eligibility.** The City of Austin fully developed floodplain determines flood eligibility. Partial overlap with a hexagon requires a check at the selected address.
+- **Context.** The tract component report includes demographics, housing, displacement, and three editable example sites. The examples illustrate how to interpret the data.
 
 ## Repository layout
 
@@ -70,9 +58,7 @@ See [`PIPELINE.md`](PIPELINE.md) for the complete run guide,
 [`docs/schools.md`](docs/schools.md) for the school measures, and
 [`docs/glossary.md`](docs/glossary.md) for project terminology.
 
-## Interactive map prototype
+## Map preview and publication
 
-[Open the public prototype map](https://aakarner.github.io/atx-opportunity-index/).
-The Benefits tab adds housing profiles, travel budgets and an eight-type comparison. The Combined tab uses strong job access **>50,000** and
-elevated RSEI burden **≥100**, with independent flags.
-See [website rebuild and publishing instructions](docs/web-mockup.md).
+Serve the checked-in map locally with `python3 -m http.server 8765 --directory site`.
+See the [map guide](docs/web-mockup.md) for rebuild, validation, and publication commands.

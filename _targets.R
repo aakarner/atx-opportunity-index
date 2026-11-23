@@ -161,7 +161,7 @@ list(
   tar_target(combined_benefit_assets, write_combined_benefits(benefits,dam_inputs$population,school_coverage,
     h8_access,tract_h8_crosswalk,benefit_tract,scoring_review_spec,benefit_spec),format="file"),
   tar_target(web_mockup_data, {benefit_assets; combined_benefit_assets; combined_burden_assets; flood_constraint_assets; write_web_mockup_data(h8_components, tract_components,
-    city_boundary, classification_spec, traffic_metadata = traffic_metadata)}, format = "file"),
+    city_boundary, traffic_metadata = traffic_metadata)}, format = "file"),
   tar_target(classification_thresholds, candidate_thresholds(h8_components, classification_spec)),
   tar_target(classification_comparison, compare_classifications(h8_components, tract_components,
     classification_thresholds, rsei_tract_crosswalk, city_boundary)),
