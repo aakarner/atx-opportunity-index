@@ -1,11 +1,11 @@
 # Adopted scoring and equal-theme weights; overall classification updated 2026-11-15.
 combined:
-  version: combined_burdens_2026_11_18_v3
+  version: combined_burdens_2026_11_23_v4
   default: equal_thirds_by_theme
   relative_weights:
     heat_score: 2
     crash_score: 1
-    pedestrian_gap_score: 1
+    major_frontage_score: 1
     industrial_air_score: 1
     traffic_score: 1
   missing_rule: require_all_five_components_no_renormalization
@@ -25,11 +25,11 @@ domain_components:
       adopted_radius_miles: 0.5
       sensitivity_radius_miles: 0.25
     scoring:
-      version: crashes_and_pedestrian_gaps_2026_11_18
+      version: crashes_and_major_frontage_2026_11_23
       crash_method: linear_to_frozen_p95_capped_at_100
       crash_full_burden_density: 6.1118601065110614
       crash_high_burden_density: 4.2772765182635766
-      pedestrian_high_burden_score: 50
+      major_frontage_high_burden_score: 50
       reference: 1029_half_mile_origins_2020_2024_crashes
       reference_quantile_method: R_type_7_unweighted
       crash_first_year: 2020
@@ -91,18 +91,10 @@ heat:
     source_manifest:
       path: data/raw/peter_heat/d90d74f38a/manifest.json
       sha256: 5e0160af4846b8840b8311ee72d2017897209b0a10a0aa8a0cab24a930c5dcc0
-pedestrian:
-  url: https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/Sidewalks_(Public)/FeatureServer/0
-  snapshot_dir: data/raw/austin_pedestrian_inventory/2026-11-09
-  crs: 26914
-  # Original inventory build baseline; adopted combined-domain radius is above.
-  # Matching half-/quarter-mile results are in the radius-comparison analysis.
-  buffer_m: 1609.344
-  measure: planned_length_divided_by_completed_plus_planned_length
-  potential_sidewalks: sensitivity_only
-  observation_boundary: city_full_and_limited_purpose
-  missing_rule: no_classified_length_or_unclassified_length_is_unavailable
-  high_burden_cutoff: 50
+major_frontage:
+  inventory_dir: data/raw/austin_pedestrian_inventory/2026-11-09
+  transport_dir: data/raw/pedestrian_alternatives/2026-11-23
+
 flood:
   role: eligibility_constraint
   source: City of Austin Fully Developed Floodplain

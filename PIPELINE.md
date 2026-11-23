@@ -16,6 +16,8 @@ Rscript scripts/setup_pipeline.R
 Rscript scripts/run_pipeline.R
 ```
 
+Set `FRONTAGE_PYTHON` to a Python environment with GeoPandas 1.x, Shapely 2.1, NumPy and pandas for the street-frontage target. The target reads the archived City sidewalk, street and trail layers. [Frontage inputs and build instructions](scripts/pedestrian/README.md)
+
 Setup explicitly installs missing dependencies in `.R-library/`. Analytical
 runs load packages and fail if a dependency is missing; they never install
 packages. Source-preparation helpers require the additional setup option:
@@ -61,7 +63,7 @@ dimensions, and the output directory.
 | Crash points | `data/processed/crash_injuries/austin_open_data_ksi_crashes.gpkg`, containing fatal and suspected-serious-injury crashes. |
 | City flood eligibility | City of Austin Fully Developed Floodplain polygons from the snapshot in `config/burdens.yml`. |
 | Heat | Pinned 2026 daytime surface-temperature observations in `config/burdens.yml`. |
-| Pedestrian network gaps | November 2026 city pedestrian inventory, evaluated in the same half-mile windows as the crash score. |
+| Unserved major-street frontage | City street network, sidewalk inventory and existing urban trails. Percent of eligible frontage without a sidewalk or parallel path in City-clipped half-mile windows. |
 | Near-road traffic | Prepared H8 distance and corridor overlap in `scripts/aadt/aadt_metrics.csv`. |
 | Destination access | DAM morning accessibility series for driving and transit/walking. |
 | Example sites | `config/example_sites.csv`, containing WGS84 coordinates, labels, and selection notes. |
@@ -194,7 +196,7 @@ location profile as context. See [traffic methods](scripts/aadt/README.md).
 
 **Hexagon scoring.** The map combines five burden measures and applies an
 independent flag for two or more high components. The primary crash and
-pedestrian-gap scores use half-mile circles. Benefits use profile-specific
+major-street frontage scores use half-mile circles. Benefits use profile-specific
 weights and minimums. See the [burden](docs/burdens.md) and [benefit](docs/benefits.md)
 methods for scoring, sensitivity settings, and missing data.
 

@@ -2,8 +2,8 @@
 
 The combined burden score requires five components. Heat contributes one third.
 Industrial air, near-road traffic, fatal and serious-injury crashes, and
-pedestrian network gaps each contribute one sixth. A missing component withholds
-the score. Crashes and gaps use the same observation windows and are scored and
+unserved major-street frontage each contribute one sixth. A missing component withholds
+the score. Crashes and frontage use the same observation windows and are scored and
 mapped individually.
 
 Overall high burden requires **at least two high components**, independent
@@ -17,25 +17,7 @@ Secondary industrial review and limited heat observations remain separate badges
 and do not count toward the two-component threshold. Flood eligibility is separate.
 The public map includes the approved quarter-mile street and 25% traffic-flag
 sensitivities. Flood eligibility stays independent and overrides score colors.
-The exported snapshot has 880 complete scores, **154 high/complete**, **2
-high/incomplete**, **726 below the overall high-burden threshold with complete
-assessments**, and **147 incomplete without two known high components**.
-The 149 incomplete scores lack pedestrian-gap inputs. Individual high-component
-warnings remain present in 518 cells.
-
-| Classification rule | Hexes | Share of 1,029 hexes | Known estimated residents | Share of known population |
-|---|---:|---:|---:|---:|
-| Previous: at least one high component | 518 | 50.34% | 477,692 | 49.57% |
-| Adopted: at least two high components | 156 | 15.16% | 143,916 | 14.93% |
-| Comparison only: at least two high domains | 152 | 14.77% | 138,060 | 14.33% |
-
-The four cells distinguishing the latter two rules have high crashes and gaps
-but no other high components; they contain approximately 5,856 known estimated
-residents. Population shares use approximately 963,741 known estimated residents.
-There are 71 cells with unknown population, including eight in the adopted
-high-burden group; unknowns are excluded from population sums, not treated as zero.
-These are whole-hex ACS-derived estimates, not exact City-boundary counts or
-individual exposure estimates.
+Of the 1,029 half-mile windows, 874 have a complete score. Overall high burden applies to 185 hexagons, including one with an incomplete score. Another 690 have complete scores below the overall threshold, and 154 have incomplete assessments with fewer than two known high components. At least one component is high in 551 hexagons.
 
 Implementation: `R/combined_burdens.R`, `combined_burden_assets` target,
 `site/assets/combined-burdens.json`, and `site/combined-burdens.mjs`. The browser
@@ -45,12 +27,12 @@ drawing the map. Run `Rscript tests/test_combined_burdens.R` and
 `Rscript scripts/run_pipeline.R combined_burden_assets`, or use
 `Rscript scripts/build_combined_burdens.R` to rebuild just the combined export
 from existing component analyses (their policies must match current configuration).
-The version 3 export stores the five component scores and their weights directly. `overall_high` and `high_component_count`
+The version 4 export stores the five component scores and their weights directly. `overall_high` and `high_component_count`
 describe the adopted classification, while `any_high` retains its individual-warning
 meaning. `counts.high` counts overall high classifications; `counts.any_component_high`
 counts cells with at least one warning. Both street radii and both traffic-flag
 settings apply the same two-component rule. The quarter-mile setting identifies
-146 overall high cells; the 25% traffic flag identifies 194 at half mile and 172
+163 overall high cells; the 25% traffic flag identifies 218 at half mile and 198
 at quarter mile. Sensitivities change classification but not score weights.
 The map classification layer, count, and profile badge use the overall rule;
 dashed orange outlines on the combined-score map also require at least two high
@@ -66,44 +48,20 @@ It has no weight and cannot be compensated by benefits or low values elsewhere.
 The policy is recorded in `config/burdens.yml`. No existing benefit inputs,
 profile weights, minima, or descriptive scores change when flood status changes.
 
-## Crashes and pedestrian gaps
+## Crashes and unserved major-street frontage
 
-The city pedestrian-facility inventory distinguishes existing, planned and
-potential facilities. The gap score is 100 times planned length divided by
-existing-plus-planned length. Potential facilities enter a separate inventory
-sensitivity. A window with an empty denominator or unclassified length has an
-unavailable gap score. The [inventory workflow](../scripts/pedestrian/README.md)
-documents the data audit and radius comparisons.
+Both components use straight-line circles around each H3 center, clipped to Austin. The adopted radius is half a mile and the sensitivity radius is a quarter mile.
 
-The primary radius is half a mile, with quarter mile as a sensitivity. Both
-components use the same City-clipped origin windows. The crash component is
-`min(100, 100 * annual_KSI_density / 6.1118601065110614)`, using unique fatal or
-suspected serious-injury crashes across all road users, 2020–2024, per year per
-observed square mile. The anchor is the frozen 95th percentile across the original
-1,029 half-mile origins (unweighted R type-7 quantile), not a safety standard.
-The gap component retains its raw missing-network percentage.
+**Unserved major-street frontage** is the percentage of eligible street-side length without a mapped sidewalk or parallel path. Each side of a collector, arterial or eligible public service road counts separately. A mile with a sidewalk along only one side has one of two frontage miles served and scores 50. Local residential streets are outside the denominator. The component is high at 50 or above. The map profile reports served and unserved percentages and the underlying frontage miles. The measure describes infrastructure along major roads. It does not estimate walking activity or the comfort of walking on a local street.
 
-Independently retain high-component flags at crash density
-`>= 4.2772765182635766` (frozen original 90th percentile) or gaps `>= 50`.
-The quarter-mile sensitivity uses the **same** anchors and flags. Missing either
-component makes the combined score unavailable; a known high component still
-produces a warning, while missing information without a known high component
-produces an incomplete assessment. Neither a zero crash count nor falling below
-the flags establishes safety. Counts, actual observation areas, network lengths
-and inventory completion-date review flags are retained.
+| City-clipped radius | Scored | High frontage burden | No eligible major street | Coverage unknown |
+|---|---:|---:|---:|---:|
+| Half mile | 874 | 358 | 125 | 30 |
+| Quarter mile | 731 | 297 | 271 | 27 |
 
-`R/street_safety.R` implements spatial aggregation, scoring and exports;
-`street_safety` / `street_safety_assets` add it to the targets graph. The standalone
-runner is `Rscript scripts/pedestrian/build_street_safety.R`, followed by
-`Rscript scripts/pedestrian/report_street_safety.R`. Results are in
-`output/components/street-safety/`, including maps, a review report, both radii's
-per-origin scores, GIS layers and frozen policy/provenance metadata. Tests are
-`tests/test_street_safety.R` and `tests/test_street_safety_snapshot.R`.
+Coverage is unknown when a window has eligible frontage, no pedestrian inventory linework and no matched facility. Where the inventory is present, zero matched frontage gives a score of 100. Raw served and eligible lengths are available at both radii. [Source and geometry methods](../scripts/pedestrian/README.md)
 
-The half-mile gap measure is available at 880 of 1,029 origins. The remaining 149
-have 145 empty network denominators and four unclassified inventories. One of
-these origins still has a high crash flag. Both component scores use the same
-anchors at the quarter-mile radius.
+**Crash density** counts unique fatal or suspected serious-injury crashes across all road users in 2020–2024, per year per observed square mile. The score is `min(100, 100 × annual_KSI_density / 6.1118601065110614)`. The high flag starts at 4.2772765182635766. These are the frozen 95th and 90th percentiles across the original 1,029 half-mile origins (unweighted R type-7 quantiles). Both radii use the same anchors.
 
 ## Adopted heat scoring, November 10, 2026
 
@@ -164,30 +122,6 @@ safety 1/3, industrial air 1/6, traffic 1/6) against equal quarters across the f
 domains. The equal-theme preset was adopted. Both require every weighted domain;
 missing data do not cause weights to be redistributed. Component high-burden
 flags, industrial-air secondary review and heat observation flags remain fixed.
-
-Both produce 880 complete scores representing 98.53% of known estimated residents;
-149 composites are unavailable because pedestrian-gap scores are missing. The
-median score is 33.07 under equal themes versus 28.15 under equal domains. Spearman
-rank correlation is 0.9839. Median absolute score change is 4.62 points, and median
-absolute rank change is 1.93 percentile points. The highest-scoring deciles share
-77 of 88 origins (87.5%); upper quartiles share 196 of 220 (89.1%). These tails are
-diagnostics, not proposed overall high-burden flags.
-
-Equal themes raises scores in 806 complete origins and lowers them in 74. The
-score difference is exactly `(heat + street safety - industrial air - traffic)/12`.
-Mean contributions among the complete origins are 17.60 heat, 10.67 street safety,
-3.10 industrial air and 2.22 traffic points under equal themes, versus 13.20, 8.00,
-4.65 and 3.32 under equal domains. This reflects different score distributions,
-not equivalent health effects or a causal influence decomposition.
-
-Under the then-proposed one-component weight-independent warning rule (superseded
-for overall classification on November 15, 2026), 480 origins have known high
-burden with complete assessments, 38 have high burden with incomplete assessments,
-400 have no high flags and complete assessments, and 111 have incomplete
-assessments without a known high flag. The same warnings apply to both presets;
-the secondary industrial band and traffic sensitivity do not trigger primary
-warnings. The four-domain warning count treats the street-safety domain once,
-while retaining its separate crash and pedestrian warnings in the output.
 
 Reproduce with `Rscript scripts/air/compare_burden_weights.R`, then run
 `Rscript tests/test_burden_weight_review.R`. Candidate weights are isolated in

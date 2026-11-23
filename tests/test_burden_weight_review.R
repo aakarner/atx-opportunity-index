@@ -9,11 +9,11 @@ flags<-review_burden_warning(data.frame(a=c(TRUE,FALSE,FALSE),b=c(NA,NA,FALSE)))
 stopifnot(identical(flags$any_high,c(TRUE,NA,FALSE)),!flags$assessment_complete[1])
 x<-read.csv('output/components/burden-weight-review/origin_comparison.csv')
 ok<-is.finite(x$score_equal_themes)&is.finite(x$score_equal_domains)
-stopifnot(nrow(x)==1029,!anyDuplicated(x$h3_id),sum(ok)==880,
+stopifnot(nrow(x)==1029,!anyDuplicated(x$h3_id),sum(ok)==874,
   identical(is.na(x$score_equal_themes),is.na(x$score_equal_domains)),
   all(abs(x$themes_minus_domains[ok]-(x$heat_score[ok]+x$street_safety_score[ok]-x$industrial_air_score[ok]-x$traffic_score[ok])/12)<1e-10))
 for(k in names(s$presets))stopifnot(isTRUE(all.equal(x[[paste0('score_',k)]],review_weighted_burden(x,s$presets[[k]]$relative_weights),tolerance=1e-10)))
-expected<-review_burden_warning(x[,c('heat_high','crash_high','pedestrian_high','industrial_air_high','traffic_high')])
+expected<-review_burden_warning(x[,c('heat_high','crash_high','major_frontage_high','industrial_air_high','traffic_high')])
 stopifnot(identical(x$warning_status,expected$warning_status))
 summary<-read.csv('output/components/burden-weight-review/summary.csv')
 known<-ok & is.finite(x$total_population) & x$total_population>0

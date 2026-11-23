@@ -2,16 +2,16 @@
 suppressPackageStartupMessages(library(sf))
 source('R/combined_burdens.R')
 r<-readRDS('output/components/combined-burdens/analysis.rds');x<-r$results$primary
-stopifnot(nrow(x)==1029,!anyDuplicated(x$id),sum(is.finite(x$combined_burden_score))==880,
-  sum(x$any_high,na.rm=TRUE)==518,sum(x$overall_high,na.rm=TRUE)==156,
-  sum(x$burden_status=='high')==154,sum(x$burden_status=='high_incomplete')==2,
-  sum(x$burden_status=='not_flagged')==726,sum(x$burden_status=='incomplete')==147,
-  sum(is.finite(r$results$sensitivity$combined_burden_score))==800,
+stopifnot(nrow(x)==1029,!anyDuplicated(x$id),sum(is.finite(x$combined_burden_score))==874,
+  sum(x$any_high,na.rm=TRUE)==551,sum(x$overall_high,na.rm=TRUE)==185,
+  sum(x$burden_status=='high')==184,sum(x$burden_status=='high_incomplete')==1,
+  sum(x$burden_status=='not_flagged')==690,sum(x$burden_status=='incomplete')==154,
+  sum(is.finite(r$results$sensitivity$combined_burden_score))==731,
   sum(x$heat_thin_coverage)==257,sum(x$industrial_air_review_band)==231)
-expected<-x$heat_score/3+(x$crash_score+x$pedestrian_gap_score)/6+x$industrial_air_score/6+x$traffic_score/6
+expected<-x$heat_score/3+(x$crash_score+x$major_frontage_score)/6+x$industrial_air_score/6+x$traffic_score/6
 stopifnot(isTRUE(all.equal(expected,x$combined_burden_score,tolerance=1e-10)))
 # Exhaust all five-component combinations, including unavailable components.
-fields<-c('heat_high','crash_high','pedestrian_high','industrial_air_high','traffic_high')
+fields<-c('heat_high','crash_high','major_frontage_high','industrial_air_high','traffic_high')
 combinations<-expand.grid(rep(list(c(FALSE,TRUE,NA)),5));names(combinations)<-fields
 z<-x[rep(1,nrow(combinations)),,drop=FALSE];z[fields]<-combinations
 z$traffic_sensitivity_high<-z$traffic_high
@@ -25,17 +25,17 @@ for(sensitivity in c(FALSE,TRUE)){
       identical(a$any_high[i],if(n>0)TRUE else if(unknown)NA else FALSE))
   }
 }
-# Crashes and gaps count separately, despite sharing a domain.
-z<-x[1,,drop=FALSE];z[fields]<-FALSE;z$crash_high<-TRUE;z$pedestrian_high<-TRUE
+# Crashes and unserved frontage count separately, despite sharing a domain.
+z<-x[1,,drop=FALSE];z[fields]<-FALSE;z$crash_high<-TRUE;z$major_frontage_high<-TRUE
 stopifnot(combined_burden_assessment(z,r$spec$combined)$overall_high)
 # One known component warning survives missing data without becoming overall high.
-z$pedestrian_high<-NA;z$pedestrian_gap_score<-NA_real_
+z$major_frontage_high<-NA;z$major_frontage_score<-NA_real_
 a<-combined_burden_assessment(z,r$spec$combined)
 stopifnot(is.na(a$combined_burden_score),a$burden_status=='incomplete',is.na(a$overall_high),a$any_high)
 z$heat_high<-TRUE
 a<-combined_burden_assessment(z,r$spec$combined)
 stopifnot(is.na(a$combined_burden_score),a$burden_status=='high_incomplete',a$overall_high)
-stopifnot(abs(sum(x$population[x$overall_high %in% TRUE],na.rm=TRUE)-143916.016099)<0.01)
+stopifnot(abs(sum(x$population[x$overall_high %in% TRUE],na.rm=TRUE)-167711.548493)<0.01)
 stopifnot(identical(r$spec$combined,yaml::read_yaml('config/burdens.yml')$combined))
 # Join correctness: compare to each independently prepared source by origin ID.
 for(pair in list(c('heat-burden','heat_score'),c('industrial-air-burden','industrial_air_score'),c('near-road-traffic','traffic_score'))){
@@ -45,7 +45,7 @@ for(pair in list(c('heat-burden','heat_score'),c('industrial-air-burden','indust
 street<-readRDS('output/components/street-safety/analysis.rds')
 for(k in names(r$results)){
  z<-r$results[[k]];s<-street$results[[k]]
- for(field in c('crash_score','pedestrian_gap_score'))
+ for(field in c('crash_score','major_frontage_score'))
    stopifnot(isTRUE(all.equal(z[[field]],s[[field]][match(z$id,s$h3_id)],tolerance=1e-10)))
 }
 cat('Combined burden policy and snapshot checks passed: fixed thirds, missingness, retained warnings and all source joins.\n')
