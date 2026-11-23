@@ -1,4 +1,4 @@
-import {indexBurdens,assessBurden,burdenStyle,burdenLegend,burdenProfile} from './combined-burdens.mjs?v=1a615af5ecec';
+import {indexBurdens,assessBurden,burdenStyle,burdenLegend,burdenProfile} from './combined-burdens.mjs?v=0ce70018a362';
 import {indexFlood,floodProfile,floodLabels,floodColors} from './flood-eligibility.mjs?v=0e510341ebbd';
 import {columnRows,assessBenefits,aggregateTract,normalizedWeights,requiredDomains,combinedStyle,combinedProfile,tractCombinedProfile,statusLabels,statusColors} from './combined-benefits.mjs?v=43217082ab02';
 import {finite, locate, candidates, escapeHTML as esc} from './logic.mjs?v=e2b7c16e95d7';
@@ -6,7 +6,7 @@ import {profileLabels, modeLabels, records, basketColor, palette, differenceColo
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
 let combinedData, combinedOrigins, tractWeights, tractCoverage, assessments=new Map(), tractAssessments=new Map();
 const selection={profile:'families',mode:'walk_transit',minutes:45,display:'combined',weights:null,jobSensitivity:false};
-const DATA_VERSION='483032afcead';
+const DATA_VERSION='078266bdb2cc';
 const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
 let map, metadata, tracts, city, hexes, tractLayer, hexLayer, selected, dimension=location.hash==='#burdens'?'burdens':'benefits', controller, searchSequence=0;
 let floodIndex, excludedLayer, floodplainLayer;
@@ -105,7 +105,7 @@ function renderMap(){
    const results=[...burdenAssessments.values()],scored=results.filter(a=>finite(a.score)).length,high=results.filter(a=>a.overallHigh===true).length;
    if(burdenMeasure==='frontage'){
     const rows=[...currentBurdenRows().values()],available=rows.filter(r=>r.frontage_status==='available').length;
-    $('map-count').textContent=`${available} of ${rows.length} frontage scores · ${rows.filter(r=>r.major_frontage_high===true).length} high · ${rows.length-available} unavailable`;
+    $('map-count').textContent=`${available} of ${rows.length} sidewalk gap scores · ${rows.filter(r=>r.major_frontage_high===true).length} high · ${rows.length-available} unavailable`;
    }else {
     $('map-count').textContent=`${scored} of ${results.length} complete combined scores · ${high} classified overall high burden (2+ high components) · ${results.length-scored} incomplete scores`;
    }

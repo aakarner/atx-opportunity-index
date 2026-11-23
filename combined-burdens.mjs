@@ -1,10 +1,10 @@
 import {finite,escapeHTML as esc} from './logic.mjs?v=e2b7c16e95d7';
 export const burdenLabels={high:'Overall high burden · 2+ high components',high_incomplete:'Overall high burden · incomplete assessment',not_flagged:'Below overall high-burden threshold',incomplete:'Incomplete assessment'};
 export const burdenColors={high:'#b94f39',high_incomplete:'#7d343e',not_flagged:'#dce5e5',incomplete:'#a8b4be'};
-const names={heat:'Heat',crash:'Fatal / serious-injury crashes',frontage:'Unserved major-street frontage',industrial:'Industrial air',traffic:'Near-road traffic'};
+const names={heat:'Heat',crash:'Fatal / serious-injury crashes',frontage:'Sidewalk gaps on major streets',industrial:'Industrial air',traffic:'Near-road traffic'};
 const scoreFields={heat:'heat_score',crash:'crash_score',frontage:'major_frontage_score',industrial:'industrial_air_score',traffic:'traffic_score'};
 const fmt=(v,d=1)=>finite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'Unavailable';
-export const burdenMeasures={combined:'Combined burden score',flags:'Overall high-burden classification',heat:'Heat score',industrial:'Industrial-air score',traffic:'Traffic-exposure score',crash:'Crash score',frontage:'Unserved major-street frontage',heat_quality:'Heat observation quality',industrial_review:'Industrial-air screening bands'};
+export const burdenMeasures={combined:'Combined burden score',flags:'Overall high-burden classification',heat:'Heat score',industrial:'Industrial-air score',traffic:'Traffic-exposure score',crash:'Crash score',frontage:'Sidewalk gaps on major streets',heat_quality:'Heat observation quality',industrial_review:'Industrial-air screening bands'};
 export function assessBurden(row,policy,{trafficSensitivity=false}={}){
  if(policy.classification_rule!=='at_least_two_primary_components_high_independent_of_score'||policy.high_component_minimum!==2)throw Error('Unsupported overall burden classification');
  const r=row||{};
@@ -64,18 +64,18 @@ export function burdenStyle(r,a,measure){
 }
 export function burdenLegend(measure,{quarterMile=false,trafficSensitivity=false}={}){
  const radius=quarterMile?'¼-mile sensitivity':'½-mile neighborhoods';
- let rule='Heat ⅓ · Crashes, unserved major-street frontage, industrial air and traffic ⅙ each',entries=[],note='Higher = greater burden. Dashed orange outlines mark high component burden. Gray = unavailable.';
+ let rule='Heat ⅓ · Crashes, sidewalk gaps on major streets, industrial air and traffic ⅙ each',entries=[],note='Higher = greater burden. Dashed orange outlines mark high component burden. Gray = unavailable.';
  if(measure==='combined')note='Higher = greater burden. Dashed orange outlines mark overall high burden (2+ high components). Gray = unavailable score; a known overall high burden still receives an outline.';
- if(measure==='flags'){rule='Overall high burden requires at least 2 high components';entries=Object.entries(burdenLabels).map(([k,l])=>[burdenColors[k],l]);note='Crashes and unserved major-street frontage count separately. Individual component warnings remain visible in profiles; secondary industrial review and limited heat observations do not count.';}
+ if(measure==='flags'){rule='Overall high burden requires at least 2 high components';entries=Object.entries(burdenLabels).map(([k,l])=>[burdenColors[k],l]);note='Crashes and sidewalk gaps on major streets count separately. Individual component warnings remain visible in profiles; secondary industrial review and limited heat observations do not count.';}
  else if(measure==='heat_quality'){rule='Dates with at least half of hex land observed';entries=[['#d5a448','Fewer than 8 eligible dates'],['#73a7a6','At least 8 eligible dates']];note='Scores are retained when observations are limited.';}
  else if(measure==='industrial_review'){rule='RSEI toxicity-weighted concentration';entries=[['#943958','High burden · ≥351.1'],['#e6a34a','Secondary review · 100 to <351.1'],['#dce5e5','Below review band']];note='Thresholds rounded here; flags use exact frozen values. These are screening bands, not health standards.';}
  else {
-  rule={heat:'Relative daytime surface heat · high at percentile 90',industrial:'Linear to 100 at ToxConc 622.7 · high at 351.1',traffic:'Percent of full hex within 300 m of >50,000-AADT roads',crash:radius+' · annual KSI crashes / observed square mile',frontage:radius+' · % of major-street frontage without a sidewalk or parallel path · high at 50%'}[measure]||rule;
+  rule={heat:'Relative daytime surface heat · high at percentile 90',industrial:'Linear to 100 at ToxConc 622.7 · high at 351.1',traffic:'Percent of full hex within 300 m of >50,000-AADT roads',crash:radius+' · annual KSI crashes / observed square mile',frontage:radius+' · Percentage of major-street length without a mapped sidewalk or parallel path, counting each side separately · high at 50%'}[measure]||rule;
   entries=['0–<20','20–<40','40–<60','60–<80','80–100'].map((l,i)=>[burdenColor(i*20),l]);
  }
- if(measure==='frontage')note='Each street side counts separately. Gray indicates no eligible major street or unknown coverage. Select a hexagon for the reason.';
+ if(measure==='frontage')note='Gray indicates no eligible major street or unknown coverage. Select a hexagon for the reason.';
  if(measure!=='flags')entries.push(['#a8b4be','Unavailable']);
- if(quarterMile||trafficSensitivity)rule+=' · '+[quarterMile?'¼-mile crash and frontage windows':null,trafficSensitivity?'25% traffic-flag sensitivity':null].filter(Boolean).join(' · ');
+ if(quarterMile||trafficSensitivity)rule+=' · '+[quarterMile?'¼-mile windows for crashes and sidewalk gaps':null,trafficSensitivity?'25% traffic-flag sensitivity':null].filter(Boolean).join(' · ');
  return {title:burdenMeasures[measure],rule,entries,note};
 }
 export function burdenProfile(r,a,options={}){
@@ -85,15 +85,15 @@ export function burdenProfile(r,a,options={}){
  const raw={heat:`${fmt(r.dates_half_land,0)} eligible satellite dates · ${fmt(r.quality_hot_pixel_share)}% hot-pixel observations (context only)`,
   crash:`${fmt(r.ksi_count,0)} fatal or serious-injury crashes in 2020–2024 · ${fmt(r.annual_ksi_density,2)} per year per observed square mile`,
   frontage:finite(r.major_coverage_pct)
-   ? `${fmt(r.major_coverage_pct)}% served · ${fmt(r.major_frontage_score)}% unserved · ${fmt(r.major_served_m/1609.344,2)} of ${fmt(r.major_frontage_m/1609.344,2)} frontage miles have a sidewalk or parallel path`
-   : (inventoryNote || 'Frontage unavailable'),
+   ? `${fmt(r.major_coverage_pct)}% served · ${fmt(r.major_frontage_score)}% unserved · ${fmt(r.major_served_m/1609.344,2)} of ${fmt(r.major_frontage_m/1609.344,2)} miles have a mapped sidewalk or parallel path, counting each side separately`
+   : (inventoryNote || 'Sidewalk coverage unavailable'),
   industrial:`RSEI ToxConc ${fmt(r.rsei_tox_conc)} · ${r.industrial_air_review_band?'secondary review band':a.flags.industrial===true?'high burden':a.flags.industrial===false?'below review band':'unavailable'}`,
   traffic:`${fmt(finite(r.traffic_buffer_share)?100*r.traffic_buffer_share:null)}% corridor overlap · ${fmt(r.traffic_distance_ft,0)} ft from hex center to nearest qualifying road`};
- return `<section class="combined-score burden-score"><div class="metric-label">Combined burdens · equal thirds by theme</div><div class="metric-value">${fmt(a.score)}${finite(a.score)?' <small>/ 100</small>':''}</div><p class="small">Higher means greater burden. Heat contributes one third. Crashes, unserved major-street frontage, industrial air and traffic each contribute one sixth.</p><span class="minimum-status ${a.overallHigh===true?'below':a.status==='incomplete'?'incomplete':'neutral'}">${esc(burdenLabels[a.status])}</span><p class="minimum-reason">${esc(warning)} ${a.high.length} known high component${a.high.length===1?'':'s'}; overall high burden requires at least 2. Crashes and unserved major-street frontage count separately.</p>${a.missing.length?`<p class="notice">Missing components: ${a.missing.map(k=>names[k]).join(', ')}. No combined score is assigned; weights are not redistributed.</p>`:''}
+ return `<section class="combined-score burden-score"><div class="metric-label">Combined burdens · equal thirds by theme</div><div class="metric-value">${fmt(a.score)}${finite(a.score)?' <small>/ 100</small>':''}</div><p class="small">Higher means greater burden. Heat contributes one third. Crashes, sidewalk gaps on major streets, industrial air and traffic each contribute one sixth.</p><span class="minimum-status ${a.overallHigh===true?'below':a.status==='incomplete'?'incomplete':'neutral'}">${esc(burdenLabels[a.status])}</span><p class="minimum-reason">${esc(warning)} ${a.high.length} known high component${a.high.length===1?'':'s'}; overall high burden requires at least 2. Crashes and sidewalk gaps on major streets count separately.</p>${a.missing.length?`<p class="notice">Missing components: ${a.missing.map(k=>names[k]).join(', ')}. No combined score is assigned; weights are not redistributed.</p>`:''}
  ${inventoryNote?`<p class="quality-badge">${esc(inventoryNote)}</p>`:''}
- ${options.quarterMile||options.trafficSensitivity?`<p class="notice">Sensitivity active: ${[options.quarterMile?'¼-mile crash and major-street frontage windows':null,options.trafficSensitivity?'traffic flag at 25% overlap':null].filter(Boolean).join(' · ')}. Default uses ½ mile and a 50% traffic flag.</p>`:''}
+ ${options.quarterMile||options.trafficSensitivity?`<p class="notice">Sensitivity active: ${[options.quarterMile?'¼-mile windows for crashes and sidewalk gaps':null,options.trafficSensitivity?'traffic flag at 25% overlap':null].filter(Boolean).join(' · ')}. Default uses ½ mile and a 50% traffic flag.</p>`:''}
  ${r.heat_thin_coverage?'<p class="quality-badge">Limited heat observations: fewer than 8 eligible dates. Score retained.</p>':''}${r.industrial_air_review_band?'<p class="quality-badge">Industrial air: secondary review band. This is separate from a high-burden flag.</p>':''}
  <details class="burden-detail"><summary>Burden components and observations</summary>${Object.entries(a.domains).map(([k,v])=>`<div class="domain-score"><div><strong>${names[k]}</strong><span>${fmt(v)} points · ${fmt(100*a.weights[k])}%</span></div><p>${esc(raw[k])}</p></div>`).join('')}
- <p class="small">Crash and frontage measures use ${fmt(r.street_radius_miles,2)}-mile windows. Observed City area ${fmt(r.observed_area_sqmi,2)} sq. mi (${fmt(finite(r.observed_area_share)?100*r.observed_area_share:null)}% of the circle).</p>
+ <p class="small">Crash and sidewalk gap measures use ${fmt(r.street_radius_miles,2)}-mile windows. Observed City area ${fmt(r.observed_area_sqmi,2)} sq. mi (${fmt(finite(r.observed_area_share)?100*r.observed_area_share:null)}% of the circle).</p>
  <p class="small">Heat: 2026 daytime surface temperatures, not air temperature. Industrial air: 2022 RSEI. Traffic: November 2026 extraction; individual count years unspecified. These are neighborhood screening measures, not health-risk estimates. A zero or unflagged result does not establish safety. Road distance is from the hex center, not this address.</p></details><p class="small">Warnings cannot be canceled by a low average. Benefits and flood eligibility remain separate.</p></section>`;
 }
