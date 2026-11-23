@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {assessBenefits, columnRows} from '../site/combined-benefits.mjs';
 import {assessBurden} from '../site/combined-burdens.mjs';
-import {medianScore, scoreGroup} from '../site/score-comparison.mjs';
+import {medianScore, scoreGroup, thresholdFlags} from '../site/score-comparison.mjs';
 
 const scores = values => values.map(score => ({score}));
 assert.equal(medianScore(scores([null, 10, 0, 12, 3])), 6.5);
@@ -19,6 +19,14 @@ for (let i = 0; i < 4; i++) {
 }
 
 const asset = file => JSON.parse(readFileSync(new URL('../site/assets/' + file, import.meta.url)));
+const missedJobs = {status: 'incomplete', failed: ['jobs'], score: null};
+const unknownBurden = {overallHigh: null, high: ['heat'], score: null};
+const confirmedBurden = {overallHigh: true, high: ['heat', 'crash'], score: null};
+assert.equal(thresholdFlags(undefined, unknownBurden).flagged, false);
+assert.equal(thresholdFlags({status:'meets', failed:[]}, {overallHigh:false, high:['heat']}).flagged, false);
+assert.deepEqual(thresholdFlags(missedJobs, unknownBurden), {flagged:true, missedMinimums:['jobs'], highBurdens:[]});
+assert.deepEqual(thresholdFlags(undefined, confirmedBurden), {flagged:true, missedMinimums:[], highBurdens:['heat','crash']});
+assert.deepEqual(thresholdFlags(missedJobs, confirmedBurden), {flagged:true, missedMinimums:['jobs'], highBurdens:['heat','crash']});
 const benefits = asset('combined-benefits.json'), baskets = asset('benefits.json').spec;
 const origins = columnRows(benefits.origins);
 const burdens = asset('combined-burdens.json');

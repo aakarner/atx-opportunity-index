@@ -51,6 +51,8 @@
 #comparison-legend tbody tr {border-top:1px solid var(--line)}
 #comparison-legend td .swatch {display:inline-block;vertical-align:middle;margin-right:5px}
 .comparison-result {display:flex;gap:8px;align-items:center;margin:8px 0}
+.swatch.threshold-swatch {border:2px dashed #29222f;background:transparent}
+.threshold-reasons {padding-left:1.25rem;font-size:12px;line-height:1.5}
 
 .tract-burden-table {width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
 .tract-burden-table :is(th,td) {padding:5px 3px;border-bottom:1px solid var(--line);text-align:right}

@@ -1,7 +1,7 @@
-import {indexBurdens,assessBurden,burdenStyle,burdenColor,burdenLegend,burdenMeasures,burdenProfile,tractShareLabels,tractBurdenValue,tractBurdenLegend,tractBurdenProfile} from './combined-burdens.mjs';
+import {indexBurdens,assessBurden,burdenStyle,burdenColor,burdenLegend,burdenMeasures,burdenComponentLabels,burdenProfile,tractShareLabels,tractBurdenValue,tractBurdenLegend,tractBurdenProfile} from './combined-burdens.mjs';
 import {indexFlood,floodProfile,floodColors} from './flood-eligibility.mjs';
-import {medianScore,scoreGroup,scoreGroups} from './score-comparison.mjs';
-import {columnRows,assessBenefits,aggregateTract,normalizedWeights,requiredDomains,combinedStyle,combinedProfile,tractCombinedProfile,statusLabels,statusColors} from './combined-benefits.mjs';
+import {medianScore,scoreGroup,scoreGroups,thresholdFlags} from './score-comparison.mjs';
+import {columnRows,assessBenefits,aggregateTract,normalizedWeights,requiredDomains,combinedStyle,combinedProfile,tractCombinedProfile,statusLabels,statusColors,domainLabels} from './combined-benefits.mjs';
 import {finite, locate, candidates, escapeHTML as esc} from './logic.mjs';
 import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile, schoolAssignment} from './benefits.mjs';
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
@@ -12,7 +12,7 @@ const $=id=>document.getElementById(id), fmt=(v,d=0)=>finite(v)?v.toLocaleString
 const mapViews=['benefits','burdens','combined'];
 let map, metadata, tracts, city, hexes, tractLayer, hexLayer, selected, controller, searchSequence=0;
 let dimension=mapViews.includes(location.hash.slice(1))?location.hash.slice(1):'benefits';
-let floodIndex, excludedLayer, floodplainLayer;
+let floodIndex, excludedLayer, floodplainLayer, thresholdLayer;
 const floodplainColor='#1673b8';
 let burdenMeasure='combined', burdenIndex, burdenAssessments=new Map();
 const burdenOptions={quarterMile:false,trafficSensitivity:false};
@@ -23,6 +23,7 @@ const currentTractBurdens=()=>burdenIndex.tracts[burdenOptions.quarterMile?'quar
 const benefitFor=id=>(tractCoverage.has(id)?tractAssessments:assessments).get(id)?.score;
 const burdenFor=id=>tractCoverage.has(id)?currentTractBurdens().get(id)?.combined_burden_score:burdenAssessments.get(id)?.score;
 const groupFor=id=>scoreGroup(benefitFor(id),burdenFor(id),breakpoint('benefit'),breakpoint('burden'));
+const flagsFor=id=>thresholdFlags(assessments.get(id),burdenAssessments.get(id));
 function refreshBurdenAssessments(){
  burdenAssessments=new Map([...currentBurdenRows()].map(([id,r])=>[id,assessBurden(r,burdenIndex.data.policy,burdenOptions)]));
 }
@@ -43,6 +44,15 @@ function status(text,error=false){$('status').textContent=text;$('status').class
 function clearSelection(){refreshProfile=null;selected?.clearLayers();$('profile').innerHTML=emptyProfile;}
 function cancelSearch(){searchSequence++;controller?.abort();controller=null;$('search').disabled=false;$('results').replaceChildren();}
 function profileFrame(title,subtitle,body){$('profile').innerHTML=`<button class="close-profile" aria-label="Close location profile">×</button><span class="eyebrow">${esc(subtitle)}</span><h2>${esc(title)}</h2>${body}`;$('profile').querySelector('.close-profile').addEventListener('click',clearSelection);}
+function thresholdProfile(id){
+ const {missedMinimums,highBurdens}=flagsFor(id);
+ const reasons=[];
+ if(missedMinimums.length)reasons.push(['Benefit minimum missed',missedMinimums.map(k=>domainLabels[k])]);
+ if(highBurdens.length)reasons.push(['Overall high burden',highBurdens.map(k=>burdenComponentLabels[k])]);
+ return '<h4>Hexagon threshold flags</h4>'+(reasons.length
+   ? '<ul class="threshold-reasons">'+reasons.map(([label,components])=>`<li><strong>${label}</strong><br>${esc(components.join(' · '))}</li>`).join('')+'</ul>'
+   : '<p class="small">No confirmed threshold flags.</p>');
+}
 function comparisonProfile(id){
  const tract=tractCoverage.has(id),unit=tract?'tract':'hexagon';
  const group=scoreGroups[groupFor(id)];
@@ -52,7 +62,7 @@ function comparisonProfile(id){
  <h3 class="comparison-result"><span class="swatch" style="background:${group.color}"></span>${group.label}</h3>
  <dl class="components"><div><dt>${tract?'Tract mean benefit score':'Origin benefit score'}</dt><dd>${fmt(benefitFor(id),2)}</dd></div>
  <div><dt>${tract?'Tract mean burden score':'Burden score'}</dt><dd>${fmt(burdenFor(id),2)}</dd></div></dl>
- <p class="small">${rule}</p>`;
+ <p class="small">${rule}</p>${tract?'':thresholdProfile(id)}`;
 }
 function values(row,isHex,point=null,comparisonId=row?.id){
  const scores=(isHex?benefitHex:benefitTracts).get(row?.id);
@@ -160,6 +170,7 @@ function renderMap(){
  $('comparison-controls').hidden=!compare;
  $('comparison-legend').hidden=!compare;
  const isHex=$('hex-mode').checked;
+ $('threshold-control').hidden=!isHex;
  $('map-help').textContent=isHex?'Click a hexagon for its assessment. Turn off hexagons to inspect tract population summaries.':'Click a tract for its population summary. Address searches show the containing hexagon.';
  for(const view of mapViews)$(view).setAttribute('aria-pressed',String(dimension===view));
  if(compare){
@@ -206,6 +217,15 @@ function renderMap(){
  }
  $('legend').insertAdjacentHTML('beforeend',`<div class="legend-row"><span class="swatch" style="background:${floodColors.ineligible}"></span>Flood exclusion · overrides map color</div>`);
  if($('floodplain-overlay').checked)$('legend').insertAdjacentHTML('beforeend',`<div class="legend-row"><span class="swatch" style="background:${floodplainColor}"></span>Actual floodplain · within study hexes</div>`);
+ if(compare && isHex && $('threshold-flags').checked){
+   thresholdLayer.clearLayers();
+   hexLayer.eachLayer(({feature})=>{
+     if(flagsFor(feature.properties.id).flagged)thresholdLayer.addData(feature);
+   });
+   if(!map.hasLayer(thresholdLayer))thresholdLayer.addTo(map);
+   $('legend').insertAdjacentHTML('beforeend',`<div class="legend-row"><span class="swatch threshold-swatch" aria-hidden="true"></span>${fmt(thresholdLayer.getLayers().length)} hexagons with threshold flags</div>
+     <p class="small">A dashed outline marks a missed benefit minimum, at least two high burden components, or both. Select a hexagon for details.</p>`);
+ }else if(map.hasLayer(thresholdLayer))map.removeLayer(thresholdLayer);
  tractLayer.setStyle(f=>style(f.properties));hexLayer.setStyle(f=>({...style(f.properties),fillOpacity:floodIndex.rows.get(f.properties.id)?.excluded ? .9 : .88}));
  if($('hex-mode').checked){if(!map.hasLayer(hexLayer))hexLayer.addTo(map);tractLayer.setStyle({fillOpacity:0});}
  else if(map.hasLayer(hexLayer))map.removeLayer(hexLayer);
@@ -244,7 +264,7 @@ async function init(){
   if([...hexes.keys()].some(id=>!benefitHex.has(id))||tracts.features.some(f=>!benefitTracts.has(f.properties.id)))throw Error('Benefit geography mismatch');
   if(metadata.schema_version!==2||typeof L==='undefined'||typeof h3==='undefined')throw Error('Map library or data version unavailable');
   map=L.map('map',{zoomControl:true,minZoom:8,maxZoom:19,zoomSnap:.25});
-  for(const [name,z] of [['floodplain',450],['exclusions',460],['selection',470]]){const pane=map.createPane(name);pane.style.zIndex=z;pane.style.pointerEvents='none';}
+  for(const [name,z] of [['floodplain',450],['exclusions',460],['thresholdFlags',465],['selection',470]]){const pane=map.createPane(name);pane.style.zIndex=z;pane.style.pointerEvents='none';}
   let basemap={url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'};
   try{const r=await fetch('assets/basemap.json');if(r.ok){const configured=await r.json();if(configured.provider==='CARTO Positron' && configured.url.startsWith('https://basemaps.cartocdn.com/'))basemap=configured;}}catch{/* Source-only previews can use OpenStreetMap. */}
   document.body.classList.toggle('osm-basemap',basemap.provider!=='CARTO Positron');
@@ -255,6 +275,9 @@ async function init(){
   hexLayer=L.geoJSON(hexFeatures,{onEachFeature:(f,l)=>l.on('click',e=>showHex(e.latlng.lng,e.latlng.lat,'Selected map location',false))});
   floodplainLayer=L.geoJSON(data[8],{pane:'floodplain',renderer:L.canvas({pane:'floodplain',padding:.5}),style:{fillColor:floodplainColor,fillOpacity:.65,stroke:false},interactive:false});
   excludedLayer=L.geoJSON(hexFeatures.filter(f=>floodIndex.rows.get(f.properties.id).excluded),{pane:'exclusions',style:{fillColor:floodColors.ineligible,fillOpacity:.9,color:'#142534',weight:1.5},interactive:false}).addTo(map);
+  thresholdLayer=L.geoJSON(null,{pane:'thresholdFlags',interactive:false,style:f=>({
+    className:'threshold-outline',fill:false,color:floodIndex.rows.get(f.properties.id)?.excluded?'#fff':'#29222f',weight:1.8,dashArray:'4 3'
+  })});
   selected=L.featureGroup().addTo(map);
   const reset=()=>map.fitBounds(tractLayer.getBounds(),{paddingTopLeft:window.innerWidth>1000?[360,20]:[15,15],paddingBottomRight:window.innerWidth>1000?[340,20]:[15,15]});
   reset();$('reset-view').addEventListener('click',reset);
@@ -265,6 +288,7 @@ async function init(){
     applyBreakpoints();
   });
   $('reset-cuts').addEventListener('click',()=>{customCuts.benefit=null;customCuts.burden=null;applyBreakpoints();});
+  $('threshold-flags').addEventListener('change',renderMap);
   $('floodplain-overlay').addEventListener('change',renderMap);
   $('burden-measure').addEventListener('change',e=>{burdenMeasure=e.target.value;renderMap();});
   for(const [id,key] of [['street-sensitivity','quarterMile'],['traffic-sensitivity','trafficSensitivity']])$(id).addEventListener('change',e=>{burdenOptions[key]=e.target.checked;refreshBurdenAssessments();renderMap();refreshProfile?.();});

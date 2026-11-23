@@ -37,9 +37,37 @@
     const paths = () => [...byId('map').querySelectorAll('path.leaflet-interactive')];
     const opacity = path => Number(frame.contentWindow.getComputedStyle(path).fillOpacity);
     const groupColors = new Set(Object.values(scoreGroups).map(group => group.color));
+    const flags = byId('threshold-flags');
+    const outlines = () => [...byId('map').querySelectorAll('path.threshold-outline')];
+    check(!flags.checked && outlines().length === 0, 'Flags must start off');
+    const fills = paths().map(p => p.getAttribute('fill'));
+    flags.click();
+    const marked = outlines();
+    check(marked.length === 885 && marked.every(p => p.getAttribute('fill') === 'none' && p.hasAttribute('stroke-dasharray')), 'Expected 885 dashed outlines');
+    check(paths().every((p, i) => p.getAttribute('fill') === fills[i]), 'Flags changed score or flood fills');
+    const cut = byId('benefit-cut');
+    cut.value = '100';
+    cut.dispatchEvent(new Event('input'));
+    check(outlines().length === marked.length && marked.every(p => p.isConnected), 'Score slider changed the flag layer');
+    byId('reset-cuts').click();
+    byId('traffic-sensitivity').click();
+    check(outlines().length === 895, 'Traffic sensitivity did not update outlines');
+    byId('traffic-sensitivity').click();
+    byId('travel-mode').value = 'drive';
+    byId('travel-mode').dispatchEvent(new Event('change'));
+    check(outlines().length === 715, 'Travel mode did not update outlines');
+    byId('travel-mode').value = 'walk_transit';
+    byId('travel-mode').dispatchEvent(new Event('change'));
+    doc.querySelector('[data-example="1"]').click();
+    const reasons = [...doc.querySelectorAll('#score-comparison .threshold-reasons li')].map(li => li.textContent);
+    check(reasons.length === 2 && reasons[0].includes('Jobs') && reasons[1].includes('Sidewalk gaps'), 'Expected both rule explanations for South Austin');
+    byId('clear').click();
+    byId('reset-view').click();
     for (const view of ['combined', 'benefits', 'burdens', 'combined']) {
       byId(view).click();
+      check(outlines().length === (view === 'combined' ? 885 : 0), view + ': unexpected hexagon outlines');
       toggle.click();
+      check(!flags.getClientRects().length && outlines().length === 0, view + ': threshold flags shown on tracts');
       const tracts = paths();
       check(!toggle.checked && tracts.length === counts.tracts, view + ': expected all tract polygons');
       check(tracts.every(path => opacity(path) > 0), view + ': transparent tract fills');
@@ -51,6 +79,8 @@
       check(toggle.checked && tracts.every(path => opacity(path) === 0), view + ': tract fills still visible under hexagons');
       check(paths().filter(path => opacity(path) > 0).length === counts.hexagons, view + ': missing hexagon fills');
     }
+    flags.click();
+    check(!flags.checked && outlines().length === 0, 'Switching off flags must remove outlines');
     result.textContent = 'PASS';
   } catch (error) {
     result.textContent = 'FAIL · ' + error.message;

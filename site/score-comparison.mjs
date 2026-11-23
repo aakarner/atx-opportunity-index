@@ -21,3 +21,9 @@ export function scoreGroup(benefit, burden, benefitCut, burdenCut) {
   if (benefit >= benefitCut) return burden >= burdenCut ? 'highHigh' : 'highLow';
   return burden >= burdenCut ? 'lowHigh' : 'lowLow';
 }
+
+export function thresholdFlags(benefit, burden) {
+  const missedMinimums = benefit?.failed ?? [];
+  const highBurdens = burden?.overallHigh === true ? burden.high : [];
+  return {missedMinimums, highBurdens, flagged: missedMinimums.length > 0 || highBurdens.length > 0};
+}

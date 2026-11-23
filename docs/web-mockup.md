@@ -30,6 +30,13 @@ The legend counts the displayed geography and reports missing score pairs separa
 move either breakpoint on the 0–100 scale. Custom breakpoints stay fixed across
 changes in settings until the user selects **Reset to medians**.
 
+In hexagon view, **Show threshold flags** adds a dashed outline wherever a
+required benefit minimum is known to be missed or at least two burden components
+are known to be high. The control starts off. Selecting a hexagon lists the
+triggering minimums and burden components at its routing origin. A confirmed
+flag can appear even when another component is missing. Moving a score
+breakpoint changes the fill groups independently of the outlines.
+
 **Show actual floodplain** displays the City’s fully developed floodplain in
 every view. Fully covered hexagons use the flood exclusion color. For partial
 overlap, the address profile tests the selected coordinate.
