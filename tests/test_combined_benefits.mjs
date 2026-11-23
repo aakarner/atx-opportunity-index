@@ -2,8 +2,17 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {columnRows,assessBenefits,aggregateTract,normalizedWeights,combinedStyle} from '../site/combined-benefits.mjs';
 const read=f=>JSON.parse(readFileSync(new URL('../site/assets/'+f,import.meta.url)));
-const data=read('combined-benefits.json'),baskets=read('benefits.json').spec,spec=data.spec;
+const data=read('combined-benefits.json'),benefits=read('benefits.json'),baskets=benefits.spec,spec=data.spec;
 const origins=new Map(columnRows(data.origins).map(r=>[r.id,r]));
+for(const cell of columnRows(benefits.hex)){
+ const origin=origins.get(cell.id);
+ for(const [mode,minutes] of Object.entries(baskets.defaults)){
+  const prefix=mode==='walk_transit'?'transit':'drive';
+  for(const key of [...Object.keys(spec.presets),'grocery']){
+   assert.equal(origin[`${prefix}_${key}`],cell[`${mode}_${minutes}_${key}`],`${cell.id}/${mode}/${key}`);
+  }
+ }
+}
 let compared=0;
 for(const r of columnRows(data.reference)){
  const a=assessBenefits(origins.get(r.id),r.profile,r.scenario,spec,baskets);

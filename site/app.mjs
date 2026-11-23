@@ -121,7 +121,7 @@ function renderMap(){
    $('map-count').textContent=isHex?`${counts.meets} meet all minimums · ${counts.below} below · ${counts.incomplete} incomplete hexagons`:'Population summaries over covered areas; no minimum is applied to a tract average.';
  }else if(benefit){
    const diff=selection.display==='difference', n=benefitData.spec.profiles[selection.profile].length;
-   $('legend-title').textContent=diff?'Profile compared with all eight types':profileLabels[selection.profile];
+   $('legend-title').textContent=diff?'Profile compared with all destination types':profileLabels[selection.profile];
    $('legend-rule').textContent=modeLabels[selection.mode]+' · '+selection.minutes+' minutes';
    const entries=diff?differenceColors.map((color,i)=>[color,['Smaller share reached','Same share reached','Larger share reached'][i]]):
      palette.map((color,i)=>[color,i===4?'All '+n+' types':`${i*n/4} to <${(i+1)*n/4} types`]);

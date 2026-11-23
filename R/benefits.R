@@ -69,7 +69,9 @@ benefit_scores <- function(inputs,spec) {
     stopifnot(all(budgets>0 & budgets<=limit),spec$defaults[[mode]] %in% budgets)
     nearest <- data.frame(row.names=ids)
     for (dest in names(spec$destinations)) {
-      x <- r[r$mode==mode & r$scenario==paste0(dest,"_nearest"),]
+      scenario <- spec$scenario_map[[dest]]
+      if (is.null(scenario)) scenario <- paste0(dest,"_nearest")
+      x <- r[r$mode==mode & r$scenario==scenario,]
       stopifnot(nrow(x)==length(ids), all(x$unit=="minutes"))
       x <- x[match(ids,x$h3_id),]
       v <- x$value
@@ -83,13 +85,20 @@ benefit_scores <- function(inputs,spec) {
       report[[paste(mode,profile,"mean_minutes",sep="_")]] <- mean_minutes
     }
     ref <- paste0(mode,"__essential_destinations__")
-    complete_mean <- rowMeans(nearest)
+    # Check historical eight-type export against historical components, even when
+    # current profiles explicitly map to the new center/clinic scenarios.
+    legacy_nearest <- sapply(c("grocery","childcare","pharmacy","urgent_care","hospital","park","library","public_center"), function(d) {
+      z <- r[r$mode==mode & r$scenario==paste0(d,"_nearest"),]
+      z <- z[match(ids,z$h3_id),]
+      v <- z$value; v[z$result_status=="not_reached_within_model"] <- Inf; v
+    })
+    complete_mean <- rowMeans(legacy_nearest)
     complete_mean[!is.finite(complete_mean)] <- NA_real_
     stopifnot(isTRUE(all.equal(complete_mean,report[[paste0(ref,"mean_nearest__8")]],tolerance=1e-6,check.attributes=FALSE)))
     for (budget in unique(c(15,30,60,spec$budgets[[mode]]))) {
       passed <- nearest <= budget
       if (budget %in% c(15,30,60)) stopifnot(isTRUE(all.equal(
-        rowSums(passed),report[[paste0(ref,"category_count__",budget)]],check.attributes=FALSE)))
+        rowSums(legacy_nearest <= budget),report[[paste0(ref,"category_count__",budget)]],check.attributes=FALSE)))
       if (!budget %in% spec$budgets[[mode]]) next
       prefix <- paste(mode,budget,sep="_")
       for (dest in names(nearest)) scored[[paste(prefix,dest,sep="_")]] <- as.numeric(passed[,dest])
@@ -207,7 +216,7 @@ write_benefit_brief <- function(files,spec,tract,site_profiles) {
   root <- dirname(files[1])
   load_csv <- function(name) readr::read_csv(file.path(root,name),show_col_types=FALSE)
   sens <- load_csv("threshold-sensitivity.csv")
-  profile_names <- c(general="All eight", families="Families", older="Older adults",
+  profile_names <- c(general="All types", families="Families", older="Older adults",
                      single="Single adults",supportive="Supportive housing (partial)")
   default_rows <- sens$minutes==unlist(spec$defaults)[sens$mode]
   summary <- transform(sens[default_rows,], Profile=profile_names[profile],
@@ -218,8 +227,8 @@ write_benefit_brief <- function(files,spec,tract,site_profiles) {
   ex <- load_csv("example-site-scores.csv")
   sites <- dplyr::left_join(ex,site_profiles,by="site_id")
   examples <- data.frame(Site=sites$label,
-    "All eight · drive"=sites[[paste("drive", spec$defaults$drive,"general",sep="_")]],
-    "All eight · transit"=sites[[paste("walk_transit",spec$defaults$walk_transit,"general",sep="_")]],
+    "All types · drive"=sites[[paste("drive", spec$defaults$drive,"general",sep="_")]],
+    "All types · transit"=sites[[paste("walk_transit",spec$defaults$walk_transit,"general",sep="_")]],
     "Family · transit"=sites[[paste("walk_transit",spec$defaults$walk_transit,"families",sep="_")]],
     "Elementary assignment"=sites$school_elementary_campus_name,
     "Growth or status"=ifelse(is.na(sites$school_elementary_growth),sites$school_elementary_status,sites$school_elementary_growth),
@@ -227,7 +236,7 @@ write_benefit_brief <- function(files,spec,tract,site_profiles) {
   budget <- subset(sens,profile=="general")
   budget <- budget[order(budget$mode,budget$minutes),]
   budget <- data.frame(Mode=budget$mode,Minutes=budget$minutes,"No types"=budget$zero,
-    "All eight"=budget$full,"Mean types"=round(budget$mean_types,2),check.names=FALSE)
+    "All types"=budget$full,"Mean types"=round(budget$mean_types,2),check.names=FALSE)
   drivers <- load_csv("destination-coverage.csv")
   drivers <- drivers[drivers$minutes==unlist(spec$defaults)[drivers$mode],]
   reach <- data.frame(Destination=unlist(spec$destinations),check.names=FALSE)
@@ -248,9 +257,9 @@ write_benefit_brief <- function(files,spec,tract,site_profiles) {
     report_html_table(budget),
     '<h2>Which destinations drive the count?</h2><p>Share of modeled origins reaching each type at the trial default. A higher count of eligible facilities does not establish availability of a slot, appointment or program.</p>',
     report_html_table(reach),
-    '<h2>How much the housing profile changes the result</h2><p>Each percentage uses all reporting origins as its denominator. The older-adult basket adds libraries and parks to the four types in the single-adult basket. The supportive-housing basket omits behavioral health and supportive services.</p>',
+    '<h2>How much the housing profile changes the result</h2><p>Each percentage uses all reporting origins as its denominator. Older adults and single adults share groceries, pharmacies and urgent care/clinics. Older adults also use senior centers, libraries and parks. Single adults use community/social/recreation centers. The supportive-housing basket omits behavioral health and supportive services.</p>',
     report_html_table(summary),
-    '<p>Compare the fraction of the selected basket reached with the fraction of all eight types reached in the same cell. Higher, same and lower are counts of cells at the default budget. The mean difference is expressed on a 0–1 scale. Smaller baskets can score fully even where several other types are unavailable.</p>',report_html_table(comparisons),
+    '<p>Compare the fraction of the selected basket reached with the fraction of all destination types reached in the same cell. Higher, same and lower are counts of cells at the default budget. The mean difference is expressed on a 0–1 scale. Smaller baskets can score fully even where several other types are unavailable.</p>',report_html_table(comparisons),
     '<h2>Coverage and interpretation</h2>',
     paste0('<p>',nrow(tract),' clipped tracts are in the layer. ',sum(tract$resident_weight==0),
       ' have no positive resident weight in the covered cells. Their daily-access scores are unavailable. ',

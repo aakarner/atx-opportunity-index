@@ -42,6 +42,15 @@ const {records,scoreValue,basketColor,benefitProfile}=await import('../site/bene
 const benefits=read('benefits.json'),schools=read('school-zones.geojson');
 const benefitCells=new Map(records(benefits.hex)),benefitTracts=new Map(records(benefits.tract));
 const selection={profile:'families',mode:'walk_transit',minutes:30,display:'count'};
+// At this origin the historical clinic and pooled center took 53 and 19 minutes.
+const centerClinicOrigin=benefitCells.get('88489e2211fffff');
+const transitDetail=profile=>benefitProfile(centerClinicOrigin,{...selection,profile,minutes:45},
+ benefits.spec,true,schools,null,[]);
+const singleDetail=transitDetail('single');
+assert.ok(singleDetail.includes('<dt>Urgent care/clinics</dt><dd>41 min · within</dd>'));
+assert.ok(singleDetail.includes('<dt>Community/social/recreation centers</dt><dd>16 min · within</dd>'));
+assert.ok(transitDetail('older').includes('<dt>Senior centers</dt><dd>57 min · over</dd>'));
+assert.equal(benefits.spec.profiles.general.length,9);
 assert.equal(benefitCells.size,rows.length);
 assert.equal(benefitTracts.size,tracts.features.length);
 for(const [,row] of benefitCells){

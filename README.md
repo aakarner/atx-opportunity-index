@@ -9,7 +9,7 @@ The repository has one analytical entrypoint: [`_targets.R`](_targets.R).
 
 ## Run
 
-Set `DAM_DATA_DIR` to the local, dated DAM team snapshot (2026-11-03). From the repository root:
+Set `DAM_DATA_DIR` to the local, dated DAM team snapshot (2026-11-17). From the repository root:
 
 ```sh
 Rscript scripts/setup_pipeline.R
