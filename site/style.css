@@ -51,3 +51,7 @@
 #comparison-legend tbody tr {border-top:1px solid var(--line)}
 #comparison-legend td .swatch {display:inline-block;vertical-align:middle;margin-right:5px}
 .comparison-result {display:flex;gap:8px;align-items:center;margin:8px 0}
+
+.tract-burden-table {width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.tract-burden-table :is(th,td) {padding:5px 3px;border-bottom:1px solid var(--line);text-align:right}
+.tract-burden-table th:first-child {text-align:left}

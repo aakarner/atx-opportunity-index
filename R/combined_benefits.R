@@ -40,10 +40,8 @@ write_combined_benefits <- function(benefits,population,schools,h8,crosswalk,tra
     prefix<-paste(source_mode,baskets$defaults[[source_mode]],sep='_')
     for(profile in c(names(spec$presets),'grocery')) origins[[paste(mode,profile,sep='_')]]<-benefits$scores[[paste(prefix,profile,sep='_')]]
   }
-  index<-match(crosswalk$h3_id,ids)
-  weights<-data.frame(tract_id=crosswalk$GEOID,id=crosswalk$h3_id,
-    residents=crosswalk$h8_area_share*origins$population[index],area=crosswalk$overlap_area_m2)
-  stopifnot(!anyNA(index),all(is.na(weights$residents)|weights$residents>=0))
+  weights<-tract_population_weights(crosswalk,population)
+  stopifnot(all(weights$id %in% ids))
   reference<-dplyr::bind_rows(lapply(names(spec$presets),function(profile)
     dplyr::bind_rows(lapply(c('drive','transit','drive30'),function(scenario)
       combined_origin_assessment(origins,profile,scenario,spec,baskets)))))

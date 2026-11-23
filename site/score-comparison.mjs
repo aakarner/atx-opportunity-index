@@ -8,8 +8,8 @@ export const scoreGroups = {
   incomplete: {label: 'Missing score', color: '#b9bec3'}
 };
 
-export function medianScore(assessments) {
-  const scores = Array.from(assessments.values(), assessment => assessment.score)
+export function medianScore(assessments, value = assessment => assessment.score) {
+  const scores = Array.from(assessments.values(), value)
     .filter(finite).sort((a, b) => a - b);
   if (!scores.length) return null;
   const middle = Math.floor(scores.length / 2);

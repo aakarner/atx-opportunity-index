@@ -19,6 +19,14 @@ The public map includes the approved quarter-mile street and 25% traffic-flag
 sensitivities. Flood eligibility stays independent and overrides score colors.
 Of the 1,029 half-mile windows, 874 have a complete score. Overall high burden applies to 185 hexagons, including one with an incomplete score. Another 690 have complete scores below the overall threshold, and 154 have incomplete assessments with fewer than two known high components. At least one component is high in 551 hexagons.
 
+### Census tract estimates
+
+Tracts use the same population weights as combined benefits. Each hexagon contributes its estimated residents multiplied by the share of its full area inside the city-clipped tract. Each component mean uses hexagons with that component observed. The combined mean uses hexagons with all five scores. The map reports the resident share covered by each mean and the tract area with known population weights. A zero denominator gives an unavailable estimate.
+
+High-burden shares count residents in hexagons already classified as high and divide by all represented residents with known weights. A hexagon with two known high components counts as high even if its combined score is missing. The unknown classification share is reported separately. A tract with no classifiable resident weight has an unavailable high-burden share. Both street radii and both traffic-flag thresholds follow these rules. Flood eligibility remains a hexagon or address assessment.
+
+The public JSON includes both radii under `tracts`. The pipeline also writes `tract_primary.csv` and `tract_sensitivity.csv` in `output/components/combined-burdens/`. Each row has the tract GEOID in `id`. Fields ending in `_pct` are percentages of represented residents. Area coverage fields are fractions of the clipped tract area.
+
 Implementation: `R/combined_burdens.R`, `combined_burden_assets` target,
 `site/assets/combined-burdens.json`, and `site/combined-burdens.mjs`. The browser
 recomputes every assessment and checks its agreement with the R export before
@@ -27,7 +35,7 @@ drawing the map. Run `Rscript tests/test_combined_burdens.R` and
 `Rscript scripts/run_pipeline.R combined_burden_assets`, or use
 `Rscript scripts/build_combined_burdens.R` to rebuild just the combined export
 from existing component analyses (their policies must match current configuration).
-The version 4 export stores the five component scores and their weights directly. `overall_high` and `high_component_count`
+The version 5 export stores the five component scores and their weights directly. `overall_high` and `high_component_count`
 describe the adopted classification, while `any_high` retains its individual-warning
 meaning. `counts.high` counts overall high classifications; `counts.any_component_high`
 counts cells with at least one warning. Both street radii and both traffic-flag

@@ -37,6 +37,27 @@ a<-combined_burden_assessment(z,r$spec$combined)
 stopifnot(is.na(a$combined_burden_score),a$burden_status=='high_incomplete',a$overall_high)
 stopifnot(abs(sum(x$population[x$overall_high %in% TRUE],na.rm=TRUE)-167711.548493)<0.01)
 stopifnot(identical(r$spec$combined,yaml::read_yaml('config/burdens.yml')$combined))
+# Include a high/incomplete hexagon in the confirmed-high share but omit it
+# from the combined score mean. Population outside an overlap supplies no weight.
+cells <- x[rep(1, 5), ]
+cells$id <- letters[1:5]
+cells$combined_burden_score <- c(20, NA, NA, 100, 100)
+cells$heat_score <- c(10, 50, NA, 100, 100)
+cells$overall_high <- c(FALSE, TRUE, NA, TRUE, TRUE)
+cells$traffic_sensitivity_status <- c("high", "high_incomplete", "incomplete", "high", "high")
+weights <- data.frame(tract_id=c("mixed","mixed","mixed","mixed","zero"), id=cells$id,
+  residents=c(20, 30, 50, NA, 0))
+coverage <- data.frame(id=c("empty","mixed","zero"), area_coverage=c(0,.8,1),
+  resident_weight_area_share=c(0,.6,1))
+fixture <- list(results=list(primary=cells), spec=r$spec)
+tracts <- burden_tract_estimates(fixture, weights, coverage)$primary
+mixed <- tracts[tracts$id == "mixed", ]
+stopifnot(identical(tracts$id,coverage$id), mixed$resident_weight==100,
+  mixed$combined_burden_score==20, mixed$combined_burden_score_coverage_pct==20,
+  mixed$heat_score==34, mixed$heat_score_coverage_pct==50, mixed$overall_high_pct==30,
+  mixed$overall_unknown_pct==50, mixed$traffic_sensitivity_overall_high_pct==50,
+  all(is.na(tracts$combined_burden_score[tracts$resident_weight==0])),
+  all(is.na(tracts$overall_high_pct[tracts$resident_weight==0])))
 # Join correctness: compare to each independently prepared source by origin ID.
 for(pair in list(c('heat-burden','heat_score'),c('industrial-air-burden','industrial_air_score'),c('near-road-traffic','traffic_score'))){
  s<-readRDS(file.path('output/components',pair[1],'analysis.rds'))$scores

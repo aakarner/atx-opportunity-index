@@ -15,7 +15,7 @@ routing origin for map scores. See [benefit methods](benefits.md).
 
 **Burdens** opens directly at `/#burdens`. The selector includes the combined
 score, overall classification, five component scores, heat observation quality,
-and industrial-air screening bands. Heat contributes one third. Crashes,
+and industrial-air screening bands. Turn off **Show hexagons** to map tract means or the share of represented residents in flagged hexagons. Select a tract to see all five component estimates and their coverage. Heat contributes one third. Crashes,
 sidewalk gaps on major streets, industrial air, and near-road traffic contribute one sixth each.
 An unavailable component withholds the combined score. Two known high components
 are sufficient to flag a hexagon, even when another observation is missing.
@@ -24,10 +24,9 @@ radius and 25% traffic-overlap flag are available as sensitivities. See
 [burden methods](burdens.md).
 
 **Combined** opens directly at `/#combined`. It compares the active housing
-profile’s benefit score at each hexagon’s routing origin with its combined burden
-score. Each breakpoint defaults to the unweighted median of the available scores
-for that measure under the current settings. Ties count as high. The legend
-counts all study hexagons and reports missing score pairs separately. Users can
+profile’s benefit and burden scores for the displayed hexagons or tracts. Each breakpoint defaults to the unweighted median of the available scores
+for that measure and geography under the current settings. Ties count as high.
+The legend counts the displayed geography and reports missing score pairs separately. Users can
 move either breakpoint on the 0–100 scale. Custom breakpoints stay fixed across
 changes in settings until the user selects **Reset to medians**.
 

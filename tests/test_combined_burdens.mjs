@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {indexBurdens,assessBurden,burdenColor,burdenStyle,burdenProfile,burdenLegend,burdenMeasures} from '../site/combined-burdens.mjs';
+import {indexBurdens,assessBurden,burdenColor,burdenStyle,burdenProfile,burdenLegend,burdenMeasures,tractBurdenValue,tractBurdenProfile,tractBurdenLegend} from '../site/combined-burdens.mjs';
+import {columnRows} from '../site/combined-benefits.mjs';
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const data=read('site/assets/combined-burdens.json'),ids=read('site/assets/hexagons.json').map(r=>r.id);
 const html=readFileSync('site/index.html','utf8');
@@ -8,7 +9,9 @@ const selector=html.match(/<select id="burden-measure">([\s\S]*?)<\/select>/)[1]
 const options=Object.fromEntries([...selector.matchAll(/<option value="([^"]+)">([^<]+)<\/option>/g)].map(m=>[m[1],m[2]]));
 assert.deepEqual(options,burdenMeasures);
 assert.deepEqual(Object.keys(options).sort(),['combined','flags','heat','industrial','traffic','crash','frontage','heat_quality','industrial_review'].sort());
-const index=indexBurdens(data,ids),close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
+const benefits=read('site/assets/combined-benefits.json');
+const tractIds=read('site/assets/tracts.geojson').features.map(f=>f.properties.id);
+const index=indexBurdens(data,ids,tractIds),close=(a,b)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<1e-8,`${a} != ${b}`);
 assert.deepEqual(data.counts.statuses,{high:184,high_incomplete:1,not_flagged:690,incomplete:154});
 assert.equal(data.counts.high,185);assert.equal(data.counts.any_component_high,551);
 for(const key of ['primary','quarter_mile']){
@@ -77,6 +80,46 @@ for(let code=0;code<3**5;code++){
  }
 }
 for(const mutation of [x=>x.schema_version=1,x=>x.policy.high_component_minimum=1,x=>delete x.policy.classification_rule,x=>x.primary.overall_high[0]=!x.primary.overall_high[0],x=>x.primary.major_served_m[0]=-1,x=>x.primary.high_component_count[0]=99,x=>x.policy.relative_weights.heat_score=1,x=>x.policy.relative_weights.street_safety_score=2,x=>x.primary.id[0]=x.primary.id[1],x=>x.primary.combined_burden_score[0]=999,x=>x.primary.heat_high[0]=!x.primary.heat_high[0]]){
- const invalid=structuredClone(data);mutation(invalid);assert.throws(()=>indexBurdens(invalid,ids));
+ const invalid=structuredClone(data);mutation(invalid);assert.throws(()=>indexBurdens(invalid,ids,tractIds));
 }
+// Independently reproduce both radii from the population overlaps used for tract benefits.
+const overlaps=Map.groupBy(columnRows(benefits.tract_weights),r=>r.tract_id);
+const components={heat:'heat_score',industrial:'industrial_air_score',crash:'crash_score',frontage:'major_frontage_score',traffic:'traffic_score',combined:'combined_burden_score'};
+const flags={heat:'heat_high',industrial:'industrial_air_high',crash:'crash_high',frontage:'major_frontage_high',traffic:'traffic_high'};
+function same(actual,expected){if(expected===null)assert.equal(actual,null);else close(actual,expected);}
+for(const radius of ['primary','quarter_mile']){
+ for(const coverage of columnRows(benefits.tracts)){
+  const tract=index.tracts[radius].get(coverage.id);
+  const pairs=(overlaps.get(coverage.id)||[]).filter(w=>w.residents>0).map(w=>({w:w.residents,row:index[radius].get(w.id)}));
+  const sum=(items,term)=>items.reduce((n,p)=>n+term(p),0);
+  const total=sum(pairs,p=>p.w);
+  close(tract.resident_weight,total);
+  close(tract.area_coverage,coverage.area_coverage);
+  close(tract.resident_weight_area_share,coverage.resident_weight_area_share);
+  for(const [measure,field] of Object.entries(components)){
+   const valid=pairs.filter(p=>p.row[field]!==null),scored=sum(valid,p=>p.w);
+   same(tractBurdenValue(tract,measure),scored?sum(valid,p=>p.w*p.row[field])/scored:null);
+   same(tract[field+'_coverage_pct'],total?100*scored/total:null);
+  }
+  function share(predicate){
+   if(!pairs.some(p=>predicate(p.row)!==null))return null;
+   return 100*sum(pairs.filter(p=>predicate(p.row)===true),p=>p.w)/total;
+  }
+  for(const field of [...Object.values(flags),'traffic_sensitivity_high']){
+   same(tract[field+'_pct'],share(r=>r[field]));
+  }
+  for(const trafficSensitivity of [false,true]){
+   const high=r=>assessBurden(r,data.policy,{trafficSensitivity}).overallHigh;
+   same(tractBurdenValue(tract,'flags',{trafficSensitivity}),share(high));
+   same(tract[trafficSensitivity?'traffic_sensitivity_overall_unknown_pct':'overall_unknown_pct'],share(r=>high(r)===null));
+  }
+  same(tractBurdenValue(tract,'heat_quality'),share(r=>r.heat_thin_coverage));
+  same(tractBurdenValue(tract,'industrial_review'),share(r=>r.industrial_air_review_band));
+ }
+}
+for(const measure of Object.keys(burdenMeasures))assert.ok(tractBurdenLegend(measure,{}).entries.length);
+assert.match(tractBurdenProfile(index.tracts.primary.get(tractIds[0])),/Tract burden components/);
+assert.match(tractBurdenProfile(undefined),/Unavailable/);
+assert.throws(()=>indexBurdens(data,ids,tractIds.slice(1)),/tract geography/);
+console.log('Verified all tract means, resident coverage, classifications and sensitivities against the benefit population weights.');
 console.log('Combined burdens: 1,029 origins, R/JS agreement, both radii and traffic flags, fixed weights, missingness, component warnings and display checks passed.');

@@ -17,6 +17,16 @@ build_tract_h8_crosswalk <- function(tracts, h8) {
   sf::st_drop_geometry(overlaps)
 }
 
+tract_population_weights <- function(crosswalk, population) {
+  index <- match(crosswalk$h3_id, population$h3_id)
+  stopifnot(!anyNA(index), !anyDuplicated(population$h3_id))
+  weights <- data.frame(tract_id = crosswalk$GEOID, id = crosswalk$h3_id,
+    residents = crosswalk$h8_area_share * population$total_population[index],
+    area = crosswalk$overlap_area_m2)
+  stopifnot(all(is.na(weights$residents) | (is.finite(weights$residents) & weights$residents >= 0)))
+  weights
+}
+
 aggregate_job_access <- function(tracts, h8, crosswalk) {
   metrics <- c("access_total_jobs", "access_low_wage_jobs", "access_middle_wage_jobs", "access_high_wage_jobs")
   jobs <- sf::st_drop_geometry(h8)

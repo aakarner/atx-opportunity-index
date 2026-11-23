@@ -22,7 +22,7 @@ for (scenario in names(analysis$results)) {
   maps <- lapply(names(components), function(field) component_map(geometry, field))
   radius <- unique(rows$radius_miles)
   plot <- wrap_plots(maps, guides = "collect") +
-    plot_annotation(title = paste(radius, "mile neighborhoods"),
+    plot_annotation(title = paste0(radius, "-mile windows around hexagon centers"),
       caption = "Gray indicates missing observations. Each component contributes one sixth of the overall burden score.")
   basename <- if (scenario == "primary") "primary_map" else "sensitivity_maps"
   ggsave(file.path(root, paste0(basename, ".png")), plot, width = 12, height = 8, dpi = 160)
@@ -46,7 +46,7 @@ html <- paste0('<!doctype html><html lang="en"><meta charset="utf-8"><title>Cras
   ' fatal or serious-injury crashes per year per observed square mile. The high flag starts at ',
   round(policy$crash_high_burden_density, 3), '. The sidewalk gap score is the percentage of major-street length without a mapped sidewalk or parallel path, counting each side separately. ',
   'The high flag starts at ', policy$major_frontage_high_burden_score, '%. Each high component counts toward the overall threshold of two.</p>',
-  '<h2>Half-mile neighborhoods</h2><img src="primary_map.png" alt="Half-mile crash and sidewalk gap scores">',
+  '<h2>Half-mile windows around hexagon centers</h2><img src="primary_map.png" alt="Half-mile crash and sidewalk gap scores">',
   '<h2>Quarter-mile sensitivity</h2><img src="sensitivity_maps.png" alt="Quarter-mile crash and sidewalk gap scores">',
   '<h2>Coverage and flags</h2>', report_html_table(summary),
   '<p><a href="primary.csv">Half-mile data</a> · <a href="sensitivity.csv">Quarter-mile data</a> · ',

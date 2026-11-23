@@ -19,11 +19,11 @@ export function assessBurden(row,policy,{trafficSensitivity=false}={}){
  return {score,status,overallHigh,domains,flags,high,missing,weights:Object.fromEntries(Object.keys(domains).map(k=>[k,weights[scoreFields[k]]/total]))};
 }
 function rows(columns){const ids=columns.id;if(!Array.isArray(ids))throw Error('Missing burden origin IDs');for(const v of Object.values(columns))if(!Array.isArray(v)||v.length!==ids.length)throw Error('Mismatched burden columns');return ids.map((_,i)=>Object.fromEntries(Object.entries(columns).map(([k,v])=>[k,v[i]])));}
-export function indexBurdens(data,ids){
- if(data.schema_version!==4||data.policy?.default!=='equal_thirds_by_theme')throw Error('Unsupported burden policy');
+export function indexBurdens(data,ids,tractIds=data.tracts?.primary?.id){
+ if(data.schema_version!==5||data.policy?.default!=='equal_thirds_by_theme')throw Error('Unsupported burden policy');
  const w=data.policy.relative_weights;
  if(Object.keys(w).length!==5||w.heat_score!==2||w.crash_score!==1||w.major_frontage_score!==1||w.industrial_air_score!==1||w.traffic_score!==1)throw Error('Burden weights differ from adopted preset');
- const result={data};
+ const result={data,tracts:{}};
  for(const key of ['primary','quarter_mile']){
   const records=rows(data[key]),map=new Map(records.map(r=>[r.id,r]));
   if(map.size!==records.length||map.size!==ids.length||ids.some(id=>!map.has(id)))throw Error('Burden geography mismatch');
@@ -49,6 +49,10 @@ export function indexBurdens(data,ids){
    if(a.status!==r.burden_status||b.status!==r.traffic_sensitivity_status)throw Error('Combined burden status mismatch');
   }
   result[key]=map;
+  const estimates=rows(data.tracts[key]);
+  const byTract=new Map(estimates.map(r=>[r.id,r]));
+  if(byTract.size!==estimates.length || byTract.size!==tractIds.length || tractIds.some(id=>!byTract.has(id)))throw Error('Burden tract geography mismatch');
+  result.tracts[key]=byTract;
  }
  return result;
 }
@@ -63,7 +67,7 @@ export function burdenStyle(r,a,measure){
  return {fillColor:color,fillOpacity:.88,color:flagged?'#98422c':'#fff',weight:flagged?1.7:.5,dashArray:flagged?'4 2':null};
 }
 export function burdenLegend(measure,{quarterMile=false,trafficSensitivity=false}={}){
- const radius=quarterMile?'¼-mile sensitivity':'½-mile neighborhoods';
+ const radius=quarterMile?'¼-mile windows':'½-mile windows';
  let rule='Heat ⅓ · Crashes, sidewalk gaps on major streets, industrial air and traffic ⅙ each',entries=[],note='Higher = greater burden. Dashed orange outlines mark high component burden. Gray = unavailable.';
  if(measure==='combined')note='Higher = greater burden. Dashed orange outlines mark overall high burden (2+ high components). Gray = unavailable score; a known overall high burden still receives an outline.';
  if(measure==='flags'){rule='Overall high burden requires at least 2 high components';entries=Object.entries(burdenLabels).map(([k,l])=>[burdenColors[k],l]);note='Crashes and sidewalk gaps on major streets count separately. Individual component warnings remain visible in profiles; secondary industrial review and limited heat observations do not count.';}
@@ -77,6 +81,52 @@ export function burdenLegend(measure,{quarterMile=false,trafficSensitivity=false
  if(measure!=='flags')entries.push(['#a8b4be','Unavailable']);
  if(quarterMile||trafficSensitivity)rule+=' · '+[quarterMile?'¼-mile windows for crashes and sidewalk gaps':null,trafficSensitivity?'25% traffic-flag sensitivity':null].filter(Boolean).join(' · ');
  return {title:burdenMeasures[measure],rule,entries,note};
+}
+export const tractShareLabels={
+ flags:'Residents in hexagons with confirmed overall high burden',
+ heat_quality:'Residents in hexagons with limited heat observations',
+ industrial_review:'Residents in the secondary industrial-air review band'
+};
+function overallField(options){
+ return options.trafficSensitivity?'traffic_sensitivity_overall':'overall';
+}
+export function tractBurdenValue(row,measure,options={}){
+ const fields={...scoreFields,combined:'combined_burden_score',flags:overallField(options)+'_high_pct',
+  heat_quality:'heat_thin_coverage_pct',industrial_review:'industrial_air_review_band_pct'};
+ return row?.[fields[measure]]??null;
+}
+export function tractBurdenLegend(measure,options){
+ const share=tractShareLabels[measure];
+ const labels=['0–<20','20–<40','40–<60','60–<80','80–100'];
+ const entries=labels.map((label,i)=>[burdenColor(20*i),label+(share?'%':' points')]);
+ entries.push(['#a8b4be','Unavailable']);
+ const rule=share?'Percent of represented residents. Flags are evaluated at each hexagon.':'Resident-weighted mean of available hexagon scores.';
+ const notes=[options.quarterMile?'¼-mile street windows':'½-mile street windows',
+  options.trafficSensitivity?'25% traffic flag':'50% traffic flag'];
+ return {title:share||('Tract mean · '+burdenMeasures[measure]),rule,entries,
+  note:notes.join(' · ')+'. Select a tract for population and area coverage.'};
+}
+const percent=value=>finite(value)?fmt(value)+'%':'Unavailable';
+export function tractBurdenProfile(row,options={}){
+ const overall=overallField(options);
+ const highFields={heat:'heat_high_pct',crash:'crash_high_pct',frontage:'major_frontage_high_pct',
+  industrial:'industrial_air_high_pct',traffic:options.trafficSensitivity?'traffic_sensitivity_high_pct':'traffic_high_pct'};
+ const components=Object.entries(scoreFields).map(([key,field])=>
+  `<tr><th scope="row">${names[key]}</th><td>${fmt(row?.[field])}</td><td>${percent(row?.[highFields[key]])}</td><td>${percent(row?.[field+'_coverage_pct'])}</td></tr>`
+ ).join('');
+ return `<section class="combined-score burden-score"><div class="metric-label">Combined burdens · Tract population summary</div>
+  <div class="metric-value">${fmt(row?.combined_burden_score)}${finite(row?.combined_burden_score)?' <small>/ 100</small>':''}</div>
+  <p class="small">Resident-weighted mean for hexagons with all five scores. Each component mean uses the residents with data for that component.</p>
+  <dl class="components"><div><dt>Residents with a complete score</dt><dd>${percent(row?.combined_burden_score_coverage_pct)}</dd></div>
+  <div><dt>Residents in hexagons with confirmed overall high burden</dt><dd>${percent(row?.[overall+'_high_pct'])}</dd></div>
+  <div><dt>Residents with unknown overall classification</dt><dd>${percent(row?.[overall+'_unknown_pct'])}</dd></div>
+  <div><dt>Estimated residents represented</dt><dd>${fmt(row?.resident_weight,0)}</dd></div>
+  <div><dt>Tract area covered by hexagons</dt><dd>${percent(row?.area_coverage*100)}</dd></div>
+  <div><dt>Tract area with known population weights</dt><dd>${percent(row?.resident_weight_area_share*100)}</dd></div></dl>
+  <details><summary>Tract burden components</summary><table class="tract-burden-table"><thead><tr><th>Measure</th><th>Mean score</th><th>Residents in high-burden hexagons</th><th>Residents with scores</th></tr></thead><tbody>${components}</tbody></table>
+  <dl class="components"><div><dt>${tractShareLabels.heat_quality}</dt><dd>${percent(row?.heat_thin_coverage_pct)}</dd></div>
+  <div><dt>${tractShareLabels.industrial_review}</dt><dd>${percent(row?.industrial_air_review_band_pct)}</dd></div></dl></details>
+  <p class="small">Resident shares use the known population in overlapping hexagons. Overall high burden starts at two high components in the same hexagon. Street windows use ${options.quarterMile?'¼':'½'} mile. The traffic flag starts at ${options.trafficSensitivity?25:50}% overlap.</p></section>`;
 }
 export function burdenProfile(r,a,options={}){
  if(!r)return '<section class="combined-score burden-score"><div class="metric-label">Combined burdens</div><p>Unavailable for this location. No burden flags can be inferred.</p></section>';
@@ -95,5 +145,5 @@ export function burdenProfile(r,a,options={}){
  ${r.heat_thin_coverage?'<p class="quality-badge">Limited heat observations: fewer than 8 eligible dates. Score retained.</p>':''}${r.industrial_air_review_band?'<p class="quality-badge">Industrial air: secondary review band. This is separate from a high-burden flag.</p>':''}
  <details class="burden-detail"><summary>Burden components and observations</summary>${Object.entries(a.domains).map(([k,v])=>`<div class="domain-score"><div><strong>${names[k]}</strong><span>${fmt(v)} points · ${fmt(100*a.weights[k])}%</span></div><p>${esc(raw[k])}</p></div>`).join('')}
  <p class="small">Crash and sidewalk gap measures use ${fmt(r.street_radius_miles,2)}-mile windows. Observed City area ${fmt(r.observed_area_sqmi,2)} sq. mi (${fmt(finite(r.observed_area_share)?100*r.observed_area_share:null)}% of the circle).</p>
- <p class="small">Heat: 2026 daytime surface temperatures, not air temperature. Industrial air: 2022 RSEI. Traffic: November 2026 extraction; individual count years unspecified. These are neighborhood screening measures, not health-risk estimates. A zero or unflagged result does not establish safety. Road distance is from the hex center, not this address.</p></details><p class="small">Warnings cannot be canceled by a low average. Benefits and flood eligibility remain separate.</p></section>`;
+ <p class="small">Heat: 2026 daytime surface temperatures, not air temperature. Industrial air: 2022 RSEI. Traffic: November 2026 extraction; individual count years unspecified. These measures describe conditions at the hexagon scale. A zero or unflagged result does not establish safety. Road distance is from the hex center, not this address.</p></details><p class="small">Warnings cannot be canceled by a low average. Benefits and flood eligibility remain separate.</p></section>`;
 }
