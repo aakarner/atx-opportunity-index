@@ -4,7 +4,7 @@
 # to 2023 employment. These snapshots do not describe current-day service.
 
 lodes_year <- 2023
-city_boundary_year <- 2024
+municipal_config_path <- "config/pipeline.yml"
 h3_resolution <- 8L
 
 analysis_county_fips <- c(

@@ -9,12 +9,14 @@ previous tract analytical output.
 
 ## Setup and execution
 
-Run from the repository root:
+Set `DAM_DATA_DIR` to the dated 2026-11-17 DAM snapshot. Run from the repository root:
 
 ```sh
 Rscript scripts/setup_pipeline.R
 Rscript scripts/run_pipeline.R
 ```
+
+Set `FRONTAGE_PYTHON` to a Python environment with GeoPandas 1.x, Shapely 2.1, NumPy and pandas for the street-frontage target. The target reads the archived City sidewalk, street and trail layers. [Frontage inputs and build instructions](scripts/pedestrian/README.md)
 
 Setup explicitly installs missing dependencies in `.R-library/`. Analytical
 runs load packages and fail if a dependency is missing; they never install
@@ -51,12 +53,19 @@ dimensions, and the output directory.
 | Source | Current input and treatment |
 | --- | --- |
 | Census ACS | 2024 five-year tract estimates and margins of error for Travis, Williamson, and Hays counties; county JSON responses and manifests cached under `data/raw/census/`. |
-| Census geography | 2024 1:500,000 cartographic tract boundaries and full TIGER/Line place boundaries; Austin place GEOID `4805000`. Source shapefile components and manifests are tracked files. |
+| Census geography | 2024 1:500,000 cartographic tract boundaries. Source shapefile components and manifests are tracked files. |
+| Municipal geography | City of Austin GIS full- and limited-purpose limits, excluding ETJ; pinned October 19, 2026 snapshot includes Dog’s Head. See `docs/municipal-boundary.md`. |
 | City displacement | Downloads or reuses raw `data/raw/austin_open_data_displacement_risk/city_of_austin_displacement_risk_areas_2022.geojson`; published categories join by tract GEOID. |
+| EPA industrial air | National RSEI v2.3.12 2022 aggregated air microdata; cached in `data/raw/epa_rsei/`, extracted and area-averaged inside the graph. |
 | H8 job access | `accessibility/output/h8_job_accessibility.csv`, including resident-worker weights and employment/routing metadata. |
-| AISD schools | `data/processed/school_indicators/aisd_growth_assignments_2025_26.gpkg`, with attendance zones, matched growth scores, and availability flags. |
-| FEMA flood | `data/processed/flood_hazard/austin_fema_floodplain.gpkg`. |
+| Elementary schools (nine districts) | `data/processed/school_indicators/elementary_growth_assignments_2026_27.gpkg`, with attendance zones, matched growth scores, and availability flags. |
+| FEMA flood context | `data/processed/flood_hazard/austin_fema_floodplain.gpkg`. |
 | Crash points | `data/processed/crash_injuries/austin_open_data_ksi_crashes.gpkg`, containing fatal and suspected-serious-injury crashes. |
+| City flood eligibility | City of Austin Fully Developed Floodplain polygons from the snapshot in `config/burdens.yml`. |
+| Heat | Pinned 2026 daytime surface-temperature observations in `config/burdens.yml`. |
+| Sidewalk gaps on major streets | City street network, sidewalk inventory and existing urban trails. Percent of major-street length without a mapped sidewalk or parallel path, counting each side separately in City-clipped half-mile windows. |
+| Near-road traffic | Prepared H8 distance and corridor overlap in `scripts/aadt/aadt_metrics.csv`. |
+| Destination access | DAM morning accessibility series for driving and transit/walking. |
 | Example sites | `config/example_sites.csv`, containing WGS84 coordinates, labels, and selection notes. |
 
 The `census` configuration specifies `acs_year`, `boundary_year`, `state_fips`,
@@ -76,7 +85,7 @@ target-caching behavior as Census acquisition.
 Input validation checks identifiers, geometry, metadata, and the supported
 measurement settings. The current access fields represent 45 minutes and H3
 resolution 8; area calculations use EPSG:5070. Source contracts currently require
-Austin and the Travis/Williamson/Hays county set, 2024 ACS and boundaries,
+Austin and the Travis/Williamson/Hays county set, 2024 ACS and tract boundaries, the separately pinned municipal snapshot,
 2022 displacement categories, and 2020–2024 crash points. Changing those settings
 requires reviewing the related source contracts and measurement definitions.
 Source SHA-256 checksums identify
@@ -98,7 +107,7 @@ relative image links work. The same directory contains:
   source context, and coverage/aggregation flags.
 - `site_profiles.csv`: example-site profiles and tract identifiers.
 - `maps/`: low-wage transit-job access, FEMA floodplain area share, annual tract
-  KSI crash density, AISD growth by school level, and an example-location map.
+  KSI crash density, assigned elementary-school growth, and an example-location map.
 - `indicator_registry.csv`: roles, units, vintages, readiness, and limitations.
 - `source_manifest.csv`: input paths, file sizes, and SHA-256 checksums.
 - `qa_summary.csv` and `runtime.txt`: analytical checks and runtime information.
@@ -110,7 +119,7 @@ has moved into the graph.
 ## Measurement and interpretation
 
 **Geography and ACS.** Reporting tracts have positive area overlap with the Austin
-place boundary. The cartographic tract shapes are clipped to the full place
+municipal boundary. The cartographic tract shapes are clipped to this
 boundary; their generalized edges are not parcel boundaries. ACS attributes
 remain published whole-tract estimates after clipping. Summing those attributes
 does not produce an Austin city population total.
@@ -141,20 +150,20 @@ cell or a nearest-origin fallback, report its distance, and apply a maximum
 distance. This approximates access without fresh routing from the site.
 
 **Schools.** Site assignments query attendance-zone polygons and retain score
-availability and assignment ambiguity. The current baseline matches 2025–26
-assignments and growth from TEA's 2026 accountability release. Coverage is AISD
-only; there is no tract school composite yet. Campus-wide growth is descriptive,
-not a causal measure of school effectiveness. Missing scores remain missing.
-See `docs/schools.md` for matching and exclusions.
+availability and assignment ambiguity. The map pairs 2026–27 elementary assignments across nine districts with 2025–26
+academic growth. Family benefits use economically disadvantaged student growth.
+Missing scores and conflicting assignments remain unavailable. See
+[school methods](docs/schools.md) for matching and exclusions.
 
-**Flood.** Tracts report the fraction of City-clipped area intersecting the FEMA
+**Flood eligibility.** The City fully developed floodplain is a separate hard development constraint: full-hex coverage or actual address-point intersection means ineligible. Partial hexes require address checks. It has no burden-score weight. Power outages are out of scope. See [the current burden scope and flood rule](docs/burdens.md).
+
+**Legacy FEMA context.** Tracts report the fraction of City-clipped area intersecting the FEMA
 1%-annual-chance floodplain snapshot. Sites report point overlap. No mapped
-overlap does not establish absence of flood risk. Improved City flood measures
-remain pending.
+overlap does not establish absence of flood risk. This FEMA summary is retained only as legacy context; it does not drive the City flood-eligibility rule.
 
-**Street safety.** Tract crash measures are recomputed from crash points. Each
+**Crash density in the tract and example-site report.** Tract crash measures are recomputed from crash points. Each
 tract receives an internal representative point after projection to EPSG:5070.
-Its configured buffer is intersected with the actual Austin place boundary.
+Its configured buffer is intersected with the shared Austin municipal boundary.
 Unique crash IDs within that window are divided by the configured number of
 years, including zero-crash years, and by the City-observed window area in square
 miles. Site profiles use the same observation boundary around their coordinates.
@@ -168,11 +177,28 @@ risk designation. It remains distinct from missing or unrecognized categories
 and tracts outside published coverage. This is policy context rather than a
 neutral environmental measure or an eligibility screen.
 
-**Incomplete components.** Heat, industrial pollution, traffic pollution,
-pedestrian barriers, improved City flood measures, other destinations, and
-driving access remain incomplete. Missing components never count as zero burden
-or a passed screen. The pipeline does not create composite scores, clusters,
-policy thresholds, or site exclusions.
+**Industrial pollution.** EPA RSEI 2022 v2.3.12 air geographic microdata are acquired
+and extracted inside the graph. Native 810 m cells supply area-weighted H8/tract
+concentrations and containing-cell site profiles. No population multiplier or
+health threshold is applied. Source integrity, provenance, and spatial coverage
+are checked. See [docs/rsei.md](docs/rsei.md) for the source contract, interpretation,
+outputs, and the separate candidate-classification review.
+
+**Traffic proximity.** `inputs.traffic` points to the corrected H8 CSV. Its
+metadata checksum, municipal boundary, measurement settings, and exact H8 IDs
+are validated before joining. Run `Rscript scripts/aadt/aadt_read.R` to rebuild
+the prepared source. Both measurements enter H8 exports and site profiles.
+Tracts use intersection-area-weighted H8 means over the covered area, with
+coverage reported separately. No-coverage tracts retain missing values. Buffer
+fractions are full-H8 measurements averaged to tracts, so these are approximate
+spatial summaries. The public traffic-exposure score uses corridor coverage. Distance appears in the
+location profile as context. See [traffic methods](scripts/aadt/README.md).
+
+**Hexagon scoring.** The map combines five burden measures and applies an
+independent flag for two or more high components. The primary crash and
+sidewalk gap scores use half-mile circles. Benefits use profile-specific
+weights and minimums. See the [burden](docs/burdens.md) and [benefit](docs/benefits.md)
+methods for scoring, sensitivity settings, and missing data.
 
 ## Preparing the remaining inputs
 
@@ -240,3 +266,8 @@ Remaining migrations include prepared job/school/flood/crash inputs and
 environment locking. New access and burden components can join the same tract
 and site reporting interfaces. Keep expensive
 preparation and routing upstream of aggregation and policy comparisons.
+
+The `web_mockup_data` file target exports the selected access/RSEI components,
+city and tract geometry, and source metadata to `site/assets/` for the GitHub Pages
+client. Rebuild with `Rscript scripts/run_pipeline.R web_mockup_data`; see
+[website instructions](docs/web-mockup.md) for preview, checks, and publication.

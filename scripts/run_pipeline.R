@@ -4,7 +4,7 @@ if (dir.exists(".R-library")) .libPaths(c(normalizePath(".R-library"), .libPaths
 if (!requireNamespace("targets", quietly = TRUE)) stop("Run Rscript scripts/setup_pipeline.R first.")
 requested <- commandArgs(trailingOnly = TRUE)
 if (length(requested)) {
-  targets::tar_make(names = tidyselect::all_of(requested))
+  do.call(targets::tar_make, list(names = requested))
 } else {
   targets::tar_make()
 }

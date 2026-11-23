@@ -8,7 +8,7 @@ Sys.setenv(TZ = "America/Chicago")
 
 source("scripts/prepare/packages.R")
 setup_project_packages(c(
-  "dplyr", "h3jsr", "readr", "sf", "tidyr", "tigris", "r5r"
+  "dplyr", "h3jsr", "readr", "sf", "tidyr", "r5r", "yaml", "httr2", "jsonlite", "digest"
 ))
 
 if (!file.exists(lodes_jobs_path)) {
@@ -35,53 +35,15 @@ destinations <- jobs %>%
     high_wage_jobs
   )
 
-if (file.exists(origins_path)) {
-  origins <- read_csv(origins_path, show_col_types = FALSE)
-  if (
-    any(origins$h3_resolution != h3_resolution) ||
-    any(origins$city_boundary_year != city_boundary_year)
-  ) {
-    stop("Cached H8 origins do not match the configured resolution/boundary year.")
-  }
-  origins <- select(origins, id, lon, lat)
-} else {
-  austin_boundary <- places(
-    state = "TX",
-    year = city_boundary_year,
-    class = "sf"
-  ) %>%
-    filter(NAME == "Austin") %>%
-    st_transform(4326) %>%
-    st_make_valid()
-
-  if (nrow(austin_boundary) != 1) {
-    stop("Expected exactly one City of Austin boundary.")
-  }
-
-  origin_ids <- polygon_to_cells(
-    st_geometry(austin_boundary),
-    res = h3_resolution
-  ) %>%
-    unlist(use.names = FALSE) %>%
-    unique()
-  origin_points <- cell_to_point(origin_ids)
-  origin_coordinates <- st_coordinates(origin_points)
-
-  origins <- data.frame(
-    id = origin_ids,
-    lon = origin_coordinates[, "X"],
-    lat = origin_coordinates[, "Y"]
-  )
-
-  write_csv(
-    mutate(
-      origins,
-      h3_resolution = h3_resolution,
-      city_boundary_year = city_boundary_year
-    ),
-    origins_path
-  )
-}
+source("R/municipal_boundary.R")
+austin_boundary <- load_municipal_boundary(municipal_config_path)
+origin_ids <- municipal_h8_ids(austin_boundary,h3_resolution)
+origin_coordinates <- st_coordinates(cell_to_point(origin_ids))
+origins <- data.frame(id=origin_ids,lon=origin_coordinates[,"X"],lat=origin_coordinates[,"Y"])
+# Regenerate the inexpensive origin list from the shared, pinned footprint.
+write_csv(mutate(origins,h3_resolution=h3_resolution,
+  city_boundary_snapshot=austin_boundary$boundary_snapshot,
+  city_boundary_sha256=austin_boundary$boundary_sha256),origins_path)
 
 source("accessibility/01-setup/r5r_setup.R")
 on.exit(stop_r5(r5r_network), add = TRUE)
@@ -135,7 +97,9 @@ access_results <- access_long %>%
     network_snapshot = osm_snapshot_date,
     gtfs_snapshot = gtfs_snapshot_date,
     jobs_year = lodes_year,
-    departure_datetime = departure_datetime_text
+    departure_datetime = departure_datetime_text,
+    city_boundary_snapshot = austin_boundary$boundary_snapshot,
+    city_boundary_sha256 = austin_boundary$boundary_sha256
   )
 
 write_csv(access_results, accessibility_output_path)

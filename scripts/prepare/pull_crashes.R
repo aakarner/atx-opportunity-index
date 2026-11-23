@@ -13,7 +13,7 @@
 #   2. Uses stable, authenticated pagination and validates the returned count.
 #   3. Saves a dated raw-data snapshot and pagination manifest.
 #   4. Derives fatal, suspected-serious-injury, KSI, and mode-specific flags.
-#   5. Clips valid crash points to the 2024 Census City of Austin boundary.
+#   5. Clips valid crash points to the configured City GIS municipal boundary.
 #   6. Writes processed spatial files and QA/QC summaries.
 #
 # Authentication:
@@ -22,9 +22,8 @@
 #   Never place the token or secret directly in this script or commit them.
 #
 source("scripts/prepare/packages.R")
-setup_project_packages(c("tidyverse", "sf", "tigris", "httr2", "scales"))
+setup_project_packages(c("tidyverse", "sf", "httr2", "scales", "yaml", "jsonlite", "digest"))
 
-options(tigris_use_cache = TRUE)
 options(timeout = max(300, getOption("timeout")))
 
 # ---- User-facing settings ----------------------------------------------------
@@ -42,9 +41,8 @@ soda3_endpoint <- paste0(
   "/query.json"
 )
 
-city_name <- "Austin"
-state_abbr <- "TX"
-city_boundary_year <- 2024
+source("R/municipal_boundary.R")
+municipal_boundary <- load_municipal_boundary()
 
 # This window matches the processed-input contract and 2024 ACS five-year
 # estimates used by the component pipeline, which rebuilds tract/site measures.
@@ -64,7 +62,9 @@ dir.create(qaqc_dir, showWarnings = FALSE, recursive = TRUE)
 
 app_token <- Sys.getenv("AUSTIN_OPEN_DATA_APP_TOKEN", unset = "")
 
-if (!nzchar(app_token)) {
+raw_snapshot_path <- file.path(raw_dir,paste0("austin_open_data_crash_level_records_",min(analysis_years),"_",max(analysis_years),".csv"))
+use_cached <- file.exists(raw_snapshot_path) && !tolower(Sys.getenv("REFRESH_AUSTIN_CRASHES","false")) %in% c("1","true","yes")
+if (!use_cached && !nzchar(app_token)) {
   stop(
     "AUSTIN_OPEN_DATA_APP_TOKEN is not set. Set it in the process environment ",
     "and rerun this script. Do not add the token to the script or repository."
@@ -177,107 +177,117 @@ coalesce_count <- function(x) {
 
 # ---- Pull paginated SODA3 records -------------------------------------------
 
-cat("Querying expected Austin crash record count...\n")
+if(use_cached) {
+  cat("Reusing the complete raw crash snapshot for municipal re-clipping.\n")
+  crashes_api_raw <- read_csv(raw_snapshot_path,col_types=cols(.default=col_character()))
+  expected_records <- nrow(crashes_api_raw)
+  page_manifest <- read_csv(file.path(qaqc_dir,"austin_open_data_pagination_manifest.csv"),show_col_types=FALSE)
+  if(sum(page_manifest$records_returned)!=expected_records || anyDuplicated(crashes_api_raw$id) ||
+     !all(selected_fields %in% names(crashes_api_raw)))stop("Cached crash source failed schema/count checks.")
+  retrieved_at_utc <- format(file.info(raw_snapshot_path)$mtime,tz="UTC",usetz=TRUE)
+} else {
+  cat("Querying expected Austin crash record count...\n")
 
-count_result <- perform_soda3_query(
-  count_query,
-  page_number = 1L,
-  requested_page_size = 1L
-)
-
-if (!"expected_records" %in% names(count_result) || nrow(count_result) != 1) {
-  stop("SODA3 count query did not return one expected_records value.")
-}
-
-expected_records <- as.integer(count_result$expected_records[[1]])
-
-if (is.na(expected_records) || expected_records < 1) {
-  stop("SODA3 count query returned an invalid record count: ", expected_records)
-}
-
-cat("Expected records: ", scales::comma(expected_records), "\n", sep = "")
-
-pages <- list()
-page_manifest <- list()
-page_number <- 1L
-
-repeat {
-  cat("Downloading SODA3 page ", page_number, "...\n", sep = "")
-
-  page <- perform_soda3_query(
-    data_query,
-    page_number = page_number,
-    requested_page_size = page_size
+  count_result <- perform_soda3_query(
+    count_query,
+    page_number = 1L,
+    requested_page_size = 1L
   )
 
-  page_records <- nrow(page)
-
-  page_manifest[[page_number]] <- tibble(
-    page_number = page_number,
-    page_size_requested = page_size,
-    records_returned = page_records,
-    first_id = if (page_records > 0) as.character(first(page$id)) else NA_character_,
-    last_id = if (page_records > 0) as.character(last(page$id)) else NA_character_
-  )
-
-  if (page_records == 0) {
-    break
+  if (!"expected_records" %in% names(count_result) || nrow(count_result) != 1) {
+    stop("SODA3 count query did not return one expected_records value.")
   }
 
-  pages[[page_number]] <- page
+  expected_records <- as.integer(count_result$expected_records[[1]])
 
-  if (page_records < page_size) {
-    break
+  if (is.na(expected_records) || expected_records < 1) {
+    stop("SODA3 count query returned an invalid record count: ", expected_records)
   }
 
-  page_number <- page_number + 1L
+  cat("Expected records: ", scales::comma(expected_records), "\n", sep = "")
 
-  if (page_number > 100L) {
-    stop("Pagination exceeded 100 pages; stopping to prevent an unbounded pull.")
+  pages <- list()
+  page_manifest <- list()
+  page_number <- 1L
+
+  repeat {
+    cat("Downloading SODA3 page ", page_number, "...\n", sep = "")
+
+    page <- perform_soda3_query(
+      data_query,
+      page_number = page_number,
+      requested_page_size = page_size
+    )
+
+    page_records <- nrow(page)
+
+    page_manifest[[page_number]] <- tibble(
+      page_number = page_number,
+      page_size_requested = page_size,
+      records_returned = page_records,
+      first_id = if (page_records > 0) as.character(first(page$id)) else NA_character_,
+      last_id = if (page_records > 0) as.character(last(page$id)) else NA_character_
+    )
+
+    if (page_records == 0) {
+      break
+    }
+
+    pages[[page_number]] <- page
+
+    if (page_records < page_size) {
+      break
+    }
+
+    page_number <- page_number + 1L
+
+    if (page_number > 100L) {
+      stop("Pagination exceeded 100 pages; stopping to prevent an unbounded pull.")
+    }
   }
-}
 
-crashes_api_raw <- bind_rows(pages)
-page_manifest <- bind_rows(page_manifest)
+  crashes_api_raw <- bind_rows(pages)
+  page_manifest <- bind_rows(page_manifest)
 
-missing_fields <- setdiff(selected_fields, names(crashes_api_raw))
+  missing_fields <- setdiff(selected_fields, names(crashes_api_raw))
 
-if (length(missing_fields) > 0) {
-  stop(
-    "Austin Open Data response is missing required fields: ",
-    str_c(missing_fields, collapse = ", ")
+  if (length(missing_fields) > 0) {
+    stop(
+      "Austin Open Data response is missing required fields: ",
+      str_c(missing_fields, collapse = ", ")
+    )
+  }
+
+  if (nrow(crashes_api_raw) != expected_records) {
+    stop(
+      "Pagination QA failed: expected ", expected_records,
+      " records but downloaded ", nrow(crashes_api_raw), "."
+    )
+  }
+
+  if (anyDuplicated(crashes_api_raw$id) > 0) {
+    stop("Pagination QA failed: duplicate Austin Vision Zero id values were returned.")
+  }
+
+  retrieved_at_utc <- format(Sys.time(), tz = "UTC", usetz = TRUE)
+  raw_snapshot_path <- file.path(
+    raw_dir,
+    paste0(
+      "austin_open_data_crash_level_records_",
+      min(analysis_years),
+      "_",
+      max(analysis_years),
+      ".csv"
+    )
+  )
+
+  cat("Writing raw API snapshot...\n")
+  readr::write_csv(crashes_api_raw, raw_snapshot_path)
+  readr::write_csv(
+    page_manifest,
+    file.path(qaqc_dir, "austin_open_data_pagination_manifest.csv")
   )
 }
-
-if (nrow(crashes_api_raw) != expected_records) {
-  stop(
-    "Pagination QA failed: expected ", expected_records,
-    " records but downloaded ", nrow(crashes_api_raw), "."
-  )
-}
-
-if (anyDuplicated(crashes_api_raw$id) > 0) {
-  stop("Pagination QA failed: duplicate Austin Vision Zero id values were returned.")
-}
-
-retrieved_at_utc <- format(Sys.time(), tz = "UTC", usetz = TRUE)
-raw_snapshot_path <- file.path(
-  raw_dir,
-  paste0(
-    "austin_open_data_crash_level_records_",
-    min(analysis_years),
-    "_",
-    max(analysis_years),
-    ".csv"
-  )
-)
-
-cat("Writing raw API snapshot...\n")
-readr::write_csv(crashes_api_raw, raw_snapshot_path)
-readr::write_csv(
-  page_manifest,
-  file.path(qaqc_dir, "austin_open_data_pagination_manifest.csv")
-)
 
 # ---- Standardize fields and derive crash flags ------------------------------
 
@@ -394,19 +404,9 @@ crashes_analysis <- crashes %>%
 
 # ---- Spatial filter to the common Austin boundary ---------------------------
 
-cat("Pulling the 2024 Census City of Austin boundary...\n")
+cat("Pulling the configured City GIS municipal boundary...\n")
 
-austin_boundary <- tigris::places(
-  state = state_abbr,
-  year = city_boundary_year
-) %>%
-  filter(NAME == city_name) %>%
-  st_transform(4326) %>%
-  st_make_valid()
-
-if (nrow(austin_boundary) != 1) {
-  stop("Expected one City of Austin boundary; found ", nrow(austin_boundary), ".")
-}
+austin_boundary <- municipal_boundary
 
 valid_points <- crashes_analysis %>%
   filter(coordinate_status == "valid_coordinate") %>%
@@ -469,7 +469,7 @@ qaqc_summary <- tibble(
     "retrieved_at_utc",
     "raw_snapshot_path",
     "analysis_years",
-    "city_boundary_year",
+    "city_boundary_snapshot",
     "expected_api_records",
     "downloaded_api_records",
     "pagination_pages_with_records",
@@ -481,7 +481,7 @@ qaqc_summary <- tibble(
     "valid_coordinate_records",
     "missing_coordinate_records",
     "outside_texas_bbox_records",
-    "valid_points_outside_2024_austin_boundary",
+    "valid_points_outside_municipal_boundary",
     "austin_crash_records",
     "austin_ksi_crash_records",
     "austin_fatal_crash_records",
@@ -498,7 +498,7 @@ qaqc_summary <- tibble(
     retrieved_at_utc,
     raw_snapshot_path,
     str_c(range(analysis_years), collapse = "-"),
-    as.character(city_boundary_year),
+    municipal_boundary$boundary_snapshot,
     as.character(expected_records),
     as.character(nrow(crashes_api_raw)),
     as.character(sum(page_manifest$records_returned > 0)),
@@ -560,7 +560,9 @@ readr::write_csv(
 
 cat("\nAustin Open Data crash ingest complete.\n")
 cat("Downloaded API records: ", scales::comma(nrow(crashes_api_raw)), "\n", sep = "")
-cat("Crashes within the 2024 Austin boundary: ", scales::comma(nrow(crashes_austin)), "\n", sep = "")
+cat("Crashes within the configured Austin municipal boundary: ", scales::comma(nrow(crashes_austin)), "\n", sep = "")
 cat("Austin KSI crashes: ", scales::comma(nrow(ksi_austin)), "\n", sep = "")
 cat("Processed files written to: ", processed_dir, "\n", sep = "")
 cat("QA/QC files written to: ", qaqc_dir, "\n", sep = "")
+
+jsonlite::write_json(list(boundary_sha256=municipal_boundary$boundary_sha256, boundary_snapshot=municipal_boundary$boundary_snapshot),file.path(processed_dir,"austin_open_data_ksi_crashes.gpkg.boundary.json"),auto_unbox=TRUE,pretty=TRUE)

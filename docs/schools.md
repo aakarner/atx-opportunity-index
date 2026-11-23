@@ -1,4 +1,140 @@
-# AISD school opportunity: preparation and methods
+# Assigned elementary-school growth
+
+The map uses 2026–27 elementary attendance zones across nine districts and 2025–26 growth outcomes. See the [active nine-district methods and reproduction steps](#active-prototype-nine-districts-2026-11-10). The AISD analyses below document the original source and indicator comparisons.
+
+## Economically disadvantaged subgroup comparison (October 12, 2026)
+
+The public [2026 accountability downloads](https://rptsvr1.tea.texas.gov/perfreport/account/acct_download?year=2026)
+contain **2025–26 campus achievement and academic growth for economically
+disadvantaged students**. These are available before the full 2025–26 TAPR.
+The raw export headers explicitly identify SY 2025–26. No older performance
+year or newer attendance boundary is substituted in this comparison.
+
+```sh
+Rscript scripts/prepare/pull_school_subgroups.R
+Rscript scripts/compare_school_subgroups.R
+Rscript tests/test_school_subgroups.R
+```
+
+These are separate preparation and comparison steps. They do not change the
+targets pipeline's selected overall-growth indicator. The existing normalized
+campus panel and 2025–26 scored zones must already exist. Downloads are cached
+under `data/raw/tea_accountability/subgroups_2026/`; subsequent runs are offline.
+
+### Variables and eligibility
+
+Three statewide files are retrieved and filtered to AISD: `D1_STAAR1` (reading
+achievement), `D1_STAAR2` (math achievement), and `D2_A` (academic growth).
+Reading/math achievement each include 120 AISD records; growth includes 122.
+The baseline campus panel contains 122 records. Missing source records remain
+missing after joining, rather than silently dropping campuses.
+
+| Measure | Economically disadvantaged source fields | Interpretation |
+|---|---|---|
+| Reading achievement | `CDE00AR01226R`, numerator `CDE00AR01226N`, denominator `CDE00AR01026D` | Percentage of assessments at Meets Grade Level or above |
+| Math achievement | `CDE00AM01226R`, numerator `CDE00AM01226N`, denominator `CDE00AM01026D` | Percentage of assessments at Meets Grade Level or above |
+| Reading academic growth | `CDE00AR0200026R`, with `N` and `D` suffix variants | Annual-growth plus accelerated-learning points per evaluated test, multiplied by 100 |
+| Math academic growth | `CDE00AM0200026R`, with `N` and `D` suffix variants | Same construction for math |
+| Combined subgroup growth (calculated here) | Sum the two growth numerators and divide by the sum of their denominators, multiply by 100 | Count-weighted pooled growth; retain unrounded value and round half up to whole points for comparison |
+
+The pooled measure is calculated from points and counts, never an unweighted
+average of rounded subject scores. Both published subgroup subject scores and
+their numerators/denominators must be available with positive denominators;
+masked results are not reconstructed. Applying this pooling method to the
+all-student subject data reproduces the saved overall growth scores for every
+eligible AISD campus. The fresh all-student combined scores also match the
+saved baseline, so the comparison does not mix revisions of the overall measure.
+
+Raw growth is not a conventional percentage of students. The export contains
+bonus-driven subgroup values above 100: for example, Clayton's subgroup math
+growth is 103 from 10.25 points and 10 evaluated tests. Preserve these values
+rather than treating them as errors or capping them silently. Numerators and
+denominators count points and tests; pooling subjects does not count unique
+children. Achievement and growth use different evaluated-test sets.
+
+The primary comparison uses the same complete campus sample for all five
+subgroup measures and overall growth, separately by school level, among campuses
+in the **2025–26 attendance zones**. Existing alternative-setting, pairing,
+unrated, and other campus exclusions remain. Blazier is excluded for paired
+accountability. A secondary comparison includes all eligible AISD campuses;
+campus membership alone does not establish residential enrollment eligibility.
+
+All 76 eligible zoned elementary campuses, 16 middle campuses, and 11 high
+campuses have the full comparison data. Twelve elementary campuses have fewer
+than 20 evaluated subgroup tests in at least one subject/measure; requiring
+20 in each denominator leaves 64 elementary campuses and all middle/high
+campuses. The comparison also reports thresholds of 10 and 30. These are
+analytical sensitivity thresholds, not TEA suppression rules or guarantees of
+statistical reliability. Single combined-campus observations do not support
+rank correlations.
+
+### Initial findings
+
+Spearman rank correlations with the existing overall-growth measure, using
+all complete eligible attendance-zone campuses:
+
+| Level | Campuses | Subgroup reading achievement | Subgroup math achievement | Pooled subgroup growth |
+|---|---:|---:|---:|---:|
+| Elementary | 76 | 0.760 | 0.650 | 0.754 |
+| Middle | 16 | 0.945 | 0.839 | 0.827 |
+| High | 11 | 0.819 | 0.566 | 0.852 |
+
+For elementary schools with at least 20 tests in every subgroup denominator,
+the corresponding correlations are 0.690, 0.558, and 0.746 (n=64). Subgroup
+outcomes therefore retain much of the overall pattern while materially changing
+some campus rankings. For example, Davis has overall growth 69 versus pooled
+subgroup growth 41 (49 subgroup growth tests in each subject); Gorzycki has
+77 versus 58 (93 reading and 88 math tests). Becker has 79 versus 49 but only
+21 subgroup growth tests in each subject, underscoring uncertainty even just
+above a minimum-size threshold. These are same-year comparisons between
+populations, not changes over time or causal estimates of school effectiveness.
+
+### Schoolwide free meals and economic-disadvantage classification
+
+Community Eligibility Provision (CEP) provides free meals to everyone at a
+participating school, but does **not** classify everyone as economically
+disadvantaged in PEIMS. TEA requires individual economic-disadvantage codes
+based on direct certification and household income information; AISD also
+distinguishes income-verification forms from meal applications.
+See [TEA CEP reporting guidance](https://tea.texas.gov/sites/default/files/T1AFAQ.pdf)
+and [AISD's explanation](https://www.austinisd.org/nutrition-food-services/applications-payments).
+
+The comparison uses TEA's subgroup code, not a campus CEP flag. It retains
+subgroup/all-student test shares separately for every subject and measure,
+alongside the baseline economically disadvantaged enrollment percentage.
+These shares differ because their populations differ. Where almost all evaluated
+tests belong to the subgroup, overall and subgroup scores will tend to be close.
+Income-form coverage and classification practices remain potential limitations;
+this analysis does not audit individual eligibility or infer historical CEP
+participation from today's school list.
+
+### Outputs and checks
+
+Prepared outputs in `data/processed/school_indicators/` are
+`aisd_subgroup_outcomes_2026_long.csv` (published fields, tokens, counts, rates,
+and small-group flags) and `aisd_subgroup_comparison_2026.csv` (campus comparison,
+pooled growth, test shares, eligibility, and baseline reconciliation).
+`data/qaqc/school_subgroups/` records source URLs, checksums, field definitions,
+the baseline checksum, and masked/small-group exceptions.
+
+`output/school_subgroups/` contains the complete campus comparison, coverage,
+metric correlations and denominator sensitivities, campus percentile shifts,
+largest pooled-growth rank shifts with minimum 20, the scatterplot
+`subgroup_vs_overall_growth.png`, and `summary.txt`. Percentiles are recomputed
+within each common school-level sample, using average ranks for ties. Higher
+percentiles mean higher scores. Do not interpret percentile shifts as score-point
+differences or treat the school-level groups as a single ranking.
+
+Validation checks source year, unique campus IDs, expected fields, rate/count
+arithmetic, score bounds (allowing growth bonuses), subgroup shares, saved/fresh
+overall-score agreement, and the pooling method. Focused tests cover weighted
+pooling, masked values, zero denominators, and scores above 100. An independent
+Python calculation reproduced all 120 reported rank correlations with at least
+five campuses, as well as sample counts. The suggested next methodological
+decision is whether subgroup achievement, subgroup growth, or a combination
+best represents the intended opportunity concept; no new weights are selected.
+
+## Existing source preparation
 
 Run the preparation scripts from the repository root after package setup:
 
@@ -334,3 +470,159 @@ unchanged assignments, and area conservation. The production run also validates
 boundary year, unique source IDs, geometry, campus uniqueness, and area balance.
 This completes the campus/zone join and change audit, not the final weighted
 school-access indicator or its tract aggregation.
+
+## Initial expanded prototype: five districts, elementary only (2026-11-09)
+
+The active pipeline now uses the assigned neighborhood elementary school only.
+Middle and high school outcomes do not enter the education measure. The older
+AISD-only, three-level analyses above remain historical source/comparison work.
+The family profile still has three benefit domains (destinations, education,
+jobs); removing secondary schools does not change those domain weights.
+
+Preparation, from the repository root:
+
+```sh
+python3 scripts/prepare/pull_elementary_boundaries.py
+Rscript scripts/prepare/build_elementary_access.R
+# With DAM_DATA_DIR set to the dated team snapshot:
+Rscript scripts/run_pipeline.R scoring_comparison web_mockup_data review_report
+Rscript tests/test_benefit_scoring_review.R
+```
+
+The new builder retains the existing AISD 2026–27 elementary polygons and adds:
+
+| District | Current-use evidence | Original layer label |
+| --- | --- | --- |
+| Round Rock | District school-boundary page embeds Metrostudy app `664b1d4bdb2448aa86307343b34ba9d0` | `Round Rock ISD 2526`; the separate Everett polygon fills a hole in the main layer |
+| Pflugerville | Current Find My School locator, linked from enrollment | `Elementary Schools 2025-26`; future 2027–28 closure proposals excluded |
+| Del Valle | District-linked SchoolSearch comparison map | `Current` elementary scenario; Options A/B excluded |
+| Manor | Enrollment-linked Infofinder locator explicitly announces 2026–27; district attendance page says changes effective fall 2024 | `24-25 Elementary Schools` |
+
+These are the districts' currently published locators checked November 9, 2026,
+not newly certified effective-year GIS exports. Legacy layer names and the
+current-use basis remain visible in the output and web profile. Raw snapshots,
+URLs, checksums and evidence are in
+`data/raw/elementary_boundaries/2026_27/source_manifest.json`.
+
+Names are matched within district using exact normalized names and explicit
+aliases. Published campus codes independently verify Manor and Del Valle
+matches. The unmatched `OPPORTUNITY CENTER` polygon in Pflugerville's source
+remains unscored; it is not assigned a nearby elementary school's score.
+Same-campus pieces are dissolved where appropriate. Different-campus overlaps
+remain ambiguous, and no nearest-school fallback is used. Geometry repair is
+limited to invalid output polygons and audited in square meters.
+
+`elementary_growth_assignments_2026_27.gpkg` contains only `elementary`.
+Overall growth remains TEA's published raw combined growth score. Economically
+disadvantaged growth pools published reading/math numerator and denominator
+values and rounds to whole points, using the same rules as the AISD comparison.
+Masked values are not reconstructed. Paired accountability records and excluded
+campuses stay unavailable. Small growth-test samples are flagged; thresholds of
+10, 20 and 30 remain sensitivities rather than adopted exclusion rules. School
+outcomes describe campuses, not causal effects or guaranteed enrollment.
+
+The scoring review exports `school_population_coverage.csv`,
+`school_coverage_by_status.csv`, and `school_origin_population.csv`. Coverage is
+reported for all represented residents and children under 18, with explicit
+missing-weight counts. The same block weights reproduce DAM's total population
+and allocate ACS child population. Both crosswalk region partitions are used;
+they are disjoint. Geographic assignment and available scores have separate
+coverage measures. The `*_mean` compatibility fields in the scoring CSVs now
+contain the single elementary value. Percentile sensitivities use a pooled,
+fixed, five-district elementary reference, not separate district ranks.
+
+## Active prototype: nine districts (2026-11-10)
+
+The elementary measure now includes **Eanes, Leander, Hays, and Lake Travis**
+in addition to the five districts above. These are all nine districts containing
+prototype H8 routing origins in the City's independent school-district layer.
+The expansion adds 58 distinct elementary campuses (5 Eanes, 29 Leander,
+17 Hays, 7 Lake Travis), for 200 matched campuses and 214 source/dissolved
+polygons. All 58 added campuses have usable overall and economically
+disadvantaged growth. The existing 156 polygons retain their campus attributes
+and scores. Scoring thresholds, weights, exclusions and growth vintage are
+unchanged; the optional percentile reference now includes all nine districts.
+
+| Added district | Attendance source and treatment |
+| --- | --- |
+| Eanes | [District boundary page](https://www.eanesisd.net/district/maps) links SchoolSearch, whose `School Year 2026-27 / Elementary` collection contains five zones. Published campus codes independently verify name matches. Closed Valley View is absent. |
+| Leander | [District zone finder](https://www.leanderisd.org/attendancezones/) links PASA's ArcGIS app. Its elementary layer was edited August 4, 2026 and contains 29 zones, excluding Faubion following its conversion. The service/field names still say 24–25; those legacy labels are retained, not treated as effective years. |
+| Hays | [District map link](https://www.hayscisd.net/zonemap) points to Google My Maps. The exported KML folder `Elementary School Zones 2026-2027` supplies 17 campus zones. A separate Tom Green move-in polygon explicitly remains Sunfield before January 2027 and is assigned to Sunfield in this November 10 snapshot. Grandfathered attendance options are not modeled. |
+| Lake Travis | The [current district attendance page](https://www.ltisdschools.org/families/school-attendance-zones/elementary-school-attendance-zones-detail) still links the map approved April 19, 2023, effective 2023–24. No usable public current vector download was found. Its seven zones are extracted from the official georeferenced PDF and explicitly marked **approximate** in the map/profile. |
+
+### Lake Travis extraction and limits
+
+The PDF contains a colored raster map plus geographic control points in Texas
+Central State Plane feet. Extraction uses the seven legend colors, preserves
+image-strip placement and orientation, and converts the raster to polygons.
+The raster has approximately **2.36-meter pixels**; an affine fit to the four
+embedded controls has a maximum residual of **0.39 meters**. These values
+describe extraction resolution and control fit, not certified boundary accuracy.
+The source checksum is pinned: a changed PDF requires review before extraction.
+
+Gray/black cartographic marks are filled only when surrounded by one zone color.
+White areas and marks touching multiple colors remain unassigned. Six independent
+district-published campus points fall in their expected zone. Serene Hills lies
+inside an unassigned cartographic-symbol hole, 81 meters from its expected zone;
+this is recorded explicitly rather than filled by proximity. The extracted map
+was also visually checked against the PDF and the independent district footprint.
+The older district inventory and current attendance-map footprints differ at
+some edges; no snapping or arbitrary district precedence is imposed.
+
+### Coverage and remaining gaps
+
+Recognized elementary assignments increase from **864 to 998 of 1,029 origins**.
+Among known population weights, assignment coverage increases from **95.03% to
+99.36% of represented residents**, and **93.56% to 99.28% of children under 18**:
+about 41,670 additional represented residents and 9,844 children. These are
+population estimates, not enrollment counts. The same 71 origins have unknown
+population weights and are excluded from the population denominators.
+
+Usable education-score coverage (after campus exclusions) rises from **91.99%
+to 96.32% of represented residents**, and **90.45% to 96.17% of children**.
+Browser point assignment agrees with R at all 1,029 origins; the 12,348
+origin/profile/travel-scenario score comparisons pass. Existing districts'
+campus attributes and scores, non-education inputs, and non-family profile
+scores remain unchanged. The benchmark chart now derives its axis range from
+the data so the new growth-35 observation is displayed rather than clipped.
+
+Nine origins have conflicting assignments and 22 remain outside the published
+zone coverage. Another 29 origins have a recognized assignment but an excluded
+paired-accountability score. No missing score is replaced with zero. All nine
+districts are represented, but this does not establish complete geographic or
+score coverage. Lake Travis's independent district footprint contains six
+origins; four receive a source-map assignment, while two remain outside the
+extracted map at its edges. A roughly 0.0057 km² Bastrop intersection with the
+municipal boundary contains no prototype origins and is documented without
+claiming Bastrop attendance coverage. Elgin, Dripping Springs and Lago Vista
+have no municipal area or prototype origins in this inventory.
+
+`data/qaqc/elementary_access/` now includes `district_footprint_inventory.csv`,
+`origin_assignment_audit.csv`, `remaining_assignment_gaps.csv`,
+`district_geometry.csv`, `input_manifest.csv`, and Lake Travis control/campus
+validation CSVs. The source manifest records official URLs, snapshot dates,
+checksums and effective-year qualifications. The independent district inventory
+is an audit aid, not a substitute for attendance boundaries.
+
+### Reproduction
+
+After the existing AISD and TEA preparation, run from the repository root:
+
+```sh
+python3 scripts/prepare/pull_elementary_boundaries.py
+# Use a Python environment with pypdf, numpy and Pillow:
+python3 scripts/prepare/extract_lake_travis_pdf.py
+Rscript scripts/prepare/build_lake_travis_pdf.R
+Rscript scripts/prepare/build_elementary_access.R
+# With DAM_DATA_DIR set to the dated team snapshot:
+Rscript scripts/run_pipeline.R scoring_comparison web_mockup_data review_report
+Rscript scripts/prepare/audit_elementary_coverage.R
+python3 tests/test_elementary_boundary_formats.py
+Rscript tests/test_expanded_elementary_access.R
+Rscript tests/test_benefit_scoring_review.R
+```
+
+The PDF conversion also requires R's `terra` package. Source snapshots are
+cached; the Hays move-in rule is explicitly dated November 10, 2026 and must be
+revisited for a January 2027 or later assignment snapshot. Rebuilding the
+repository's map assets does not itself publish the website.

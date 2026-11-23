@@ -1,0 +1,37 @@
+{
+  "old_area_km2": 862.3190043811,
+  "new_area_km2": 868.7278346722,
+  "added_area_km2": 12.5315268883,
+  "removed_area_km2": 6.1226965971,
+  "old_hex_count": 1021,
+  "new_hex_count": 1029,
+  "added_hexes": ["884898c801fffff", "884898c969fffff", "88489e2249fffff", "88489e3091fffff", "88489e3095fffff", "88489e3097fffff", "88489e30a3fffff", "88489e30b1fffff", "88489e30b3fffff", "88489e30b5fffff", "88489e30b7fffff", "88489e30b9fffff", "88489e30bbfffff", "88489e30bdfffff", "88489e3285fffff", "88489e32e1fffff"],
+  "removed_hexes": ["884898d95bfffff", "88489e3683fffff", "88489e36b9fffff", "88489e368bfffff", "88489e3041fffff", "88489e3681fffff", "88489e3687fffff", "884898d9cbfffff"],
+  "unchanged_shared_origins": 1013,
+  "old_tracts": 275,
+  "new_tracts": 270,
+  "removed_tract_fragments": [
+    {
+      "id": "48453002436",
+      "old_clipped_area_km2": 0.00080392555282
+    },
+    {
+      "id": "48491020515",
+      "old_clipped_area_km2": 0.00066615250128
+    },
+    {
+      "id": "48491020507",
+      "old_clipped_area_km2": 7.2498261976e-05
+    },
+    {
+      "id": "48209010815",
+      "old_clipped_area_km2": 0.00011556313553
+    },
+    {
+      "id": "48209010913",
+      "old_clipped_area_km2": 8.0184297894e-05
+    }
+  ],
+  "dogs_head_hex": "88489e30bbfffff",
+  "dogs_head_access": 115
+}

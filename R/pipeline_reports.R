@@ -56,7 +56,7 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
       title = "Mapped 1%-annual-chance floodplain",
       subtitle = "Share of each City-clipped tract within the existing FEMA flood snapshot",
       legend = "Mapped overlap (% of tract area)",
-      caption = paste("Physical area overlap, not population exposure. FEMA snapshot; City flood data remain pending.",
+      caption = paste("FEMA floodplain overlap by tract area. The City fully developed floodplain determines site eligibility.",
                       "Zero mapped overlap does not establish absence of flood risk. Grey = missing.", sep = "\n")),
     ksi_crashes = list(field = "annual_ksi_crash_density", scale = 1,
       title = "Fatal and serious-injury crash density",
@@ -68,6 +68,22 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
                       " km of an internal tract point, normalized to City-observed area."),
                       "Describes nearby recorded crashes; not an individual risk estimate. Grey = missing.", sep = "\n"))
   )
+  specs$rsei_air <- list(field = "rsei_tox_conc", scale = 1,
+    title = "Industrial air-toxic burden",
+    subtitle = "EPA RSEI 2022 v2.3.12; area-weighted toxicity-weighted air concentration",
+    legend = "Toxicity-weighted concentration",
+    caption = "Modeled TRI-related air contributions, not all pollution or a health-risk estimate.
+810 m source grid averaged to City-clipped tracts; no population multiplier. Grey = missing.")
+  specs$traffic_distance <- list(field = "traffic_distance_ft", scale = 1,
+    title = "Distance to high-volume traffic",
+    subtitle = "Area-weighted mean H8 center distance to the nearest road carrying more than 50,000 vehicles/day",
+    legend = "Mean H8 distance (feet)",
+    caption = "Means describe covered tract area. Smaller distances indicate closer traffic proximity.\nUncovered area is excluded; coverage is reported in the component table. Grey = unavailable.")
+  specs$traffic_overlap <- list(field = "traffic_buffer_share", scale = 100,
+    title = "Proximity to high-volume traffic",
+    subtitle = "Area-weighted mean H8 coverage within 300 m of roads carrying more than 50,000 vehicles/day",
+    legend = "Mean H8 buffer coverage (%)",
+    caption = "Full-cell coverage fractions averaged over covered tract area; approximate spatial summary.\nTraffic proximity is a screening proxy. Grey = unavailable.")
   paths <- character()
   for (name in names(specs)) {
     spec <- specs[[name]]
@@ -98,7 +114,7 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
     zone
   })
   schools <- do.call(rbind, school_panels)
-  schools$level <- factor(schools$level, levels = c("Elementary", "Middle", "High"))
+  schools$level <- factor(schools$level, levels = tools::toTitleCase(names(school_zones)))
   outlines <- do.call(rbind, lapply(levels(schools$level), function(level) {
     sf::st_sf(level = factor(level, levels = levels(schools$level)), geometry = boundary)
   }))
@@ -111,11 +127,12 @@ write_component_maps <- function(tract_components, school_zones, sites, output_d
                                  name = "Campus academic growth score (0–100)") +
     ggplot2::guides(fill = ggplot2::guide_colourbar(barwidth = grid::unit(11, "cm"),
                                                   title.position = "top")) +
-    ggplot2::labs(title = "Assigned-school academic growth · AISD only",
+    ggplot2::labs(title = "Assigned elementary-school academic growth · nine districts",
       subtitle = paste0("Attendance zones: ", school_spec$assignment_year, " · growth: ", school_spec$growth_year,
                          " · TEA ", school_spec$accountability_year, " accountability release · clipped to Austin"),
-      caption = paste("Campus-wide descriptive growth scores; not causal estimates of school effectiveness. Other districts are not yet integrated.",
-                      "Grey = unavailable or excluded score. Near-white = outside the mapped AISD assignment coverage; outline = Austin.", sep = "\n"))
+      caption = paste("Campus-wide descriptive growth scores; not causal estimates of school effectiveness. Nine districts included.",
+                      "Lake Travis uses approximate boundaries from its currently linked map, labeled effective 2023–24.",
+                      "Grey = unavailable or excluded score. Near-white = outside the mapped elementary assignment coverage; outline = Austin.", sep = "\n"))
   school_path <- file.path(map_dir, "aisd_school_growth.png")
   ggplot2::ggsave(school_path, p, width = max(width, 12), height = height, dpi = dpi, bg = "white")
   paths <- c(paths, aisd_school_growth = school_path)
@@ -175,12 +192,12 @@ site_report_labels <- function(fields, job_spec, crash_spec) {
     transit_jobs_45min = paste("Jobs reachable by transit in", job_spec$cutoff_minutes, "minutes"),
     transit_low_wage_jobs_45min = paste("Low-wage jobs reachable by transit in", job_spec$cutoff_minutes, "minutes"),
     fema_point_intersects = "Point intersects mapped FEMA floodplain",
-    flood_screen = "Flood interpretation", ksi_crashes_in_window = paste0("KSI crashes, ", crash_spec$first_year,
+    flood_screen = "FEMA floodplain context", ksi_crashes_in_window = paste0("KSI crashes, ", crash_spec$first_year,
                                                                           "–", crash_spec$last_year),
     crash_observed_area_sqmi = "City-observed buffer area (square miles)",
     crash_buffer_meters = "Crash buffer radius (m)", crash_observation_years = "Crash observation period (years)",
     crash_observed_window_share = "Share of crash buffer within City observation area",
-    annual_ksi_crash_density = "Annual KSI crashes per square mile", overall_screen = "Screening completeness")
+    annual_ksi_crash_density = "Annual KSI crashes per square mile", overall_screen = "City flood eligibility")
   for (level in c("elementary", "middle", "high")) {
     prefix <- paste0("school_", level, "_")
     labels[paste0(prefix, c("campus_id", "campus_name", "growth", "status"))] <-
@@ -196,7 +213,7 @@ write_review_report <- function(site_profiles, registry, manifest, qa, maps, out
                                 job_spec, school_spec, crash_spec) {
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
   map_titles <- c(low_wage_jobs = "Transit access to low-wage jobs", fema_floodplain = "FEMA floodplain overlap",
-                  ksi_crashes = "Recorded fatal and serious-injury crashes", aisd_school_growth = "AISD assigned-school growth",
+                  ksi_crashes = "Recorded fatal and serious-injury crashes", aisd_school_growth = "Assigned elementary-school growth",
                   example_locations = "Illustrative screening locations")
   map_html <- vapply(maps, function(path) {
     # All current maps are generated inside this report's maps/ directory.
@@ -237,10 +254,12 @@ a{color:#075a75}p{max-width:960px}.kicker{font-size:.85rem;letter-spacing:.09em;
 <p class="kicker">Austin Opportunity Index · component pipeline</p>
 <h1>Benefits, burdens, and illustrative site profiles</h1>
 <div class="notice"><p><strong>Provisional component review.</strong> Tract geography and ACS context are rebuilt from Census sources, crash measures from recorded crash points, and displacement context from the City source. Job access, schools, flood, and crash points use prepared snapshots. These products do not constitute a completed opportunity index, adopted screening rules, or recommendations about housing locations.</p>
-<p>No composite score, clustering, or site exclusion is applied. Heat, RSEI pollution, traffic pollution, City flood data, and additional destination access remain pending; missing components are unknown, never evidence of zero burden.</p></div>
+<p>These tract maps show individual measures. Site profiles report City flood eligibility. The <a href="https://aakarner.github.io/atx-opportunity-index/">interactive map</a> shows combined benefits, five burden components and the overall high-burden classification. <a href="benefits/review.html">Review destination access and school examples</a>.</p></div>
 <p>The same evidence supports tract summaries and finer-scale demonstration profiles. See the indicator registry, source checksums, and QA below for the current scope.</p>
 <p><a href="tract_components.csv">Tract component table (CSV)</a> · <a href="tract_components.gpkg">Tract geometries and components (GeoPackage)</a> · <a href="site_profiles.csv">Site profiles (CSV)</a></p>
-<h2>Component maps</h2><p>Each map retains its own units. Grey represents missing or unusable values. The school map also distinguishes areas outside the current AISD assignment coverage. Click any map to open its full-size image.</p>
+<p>Industrial pollution uses EPA RSEI 2022 v2.3.12 air toxicity-weighted concentrations. Tracts use area-weighted means; sites query the native 810 m cell. These are modeled TRI-related contributions, not total pollution, measured exposure, or health-risk estimates. <a href="rsei_and_h8.gpkg">Native EPA grid and H8 components</a> · <a href="h8_components.csv">H8 table</a></p>
+<p>Traffic indicators describe distance from the H8 center to roads carrying more than 50,000 vehicles/day and the fraction of each full hexagon within 300 m of those roads. Tract values are area-weighted H8 means over covered tract area, with coverage reported separately. Site profiles use the containing H8 measurements. Traffic observation years are unspecified in the TxDOT extract; the registry records its extraction date.</p>
+<h2>Component maps</h2><p>Each map retains its own units. Grey represents missing or unusable values. The school map also distinguishes areas outside the current elementary assignment coverage. Click any map to open its full-size image.</p>
 <div class="maps">', paste(map_html, collapse = "\n"), '</div>
 <h2>Illustrative site profiles</h2>
 <p>These configured origins are examples, not actual housing proposals. Job access uses the containing H8 cell or a nearest-origin fallback and is approximate; no new routing is performed. Review the reported origin distance and coverage flags. Tract context remains distinct from measurements made at a point or around it. The access measure counts jobs reachable in ',
@@ -248,7 +267,7 @@ report_html_escape(job_spec$cutoff_minutes), ' minutes, using ', report_html_esc
 ' jobs and network snapshot ', report_html_escape(job_spec$network_snapshot), '.</p>
 <p>A point outside the mapped FEMA floodplain has no mapped overlap in that snapshot; this does not establish absence of flood risk. School growth is a campus-wide descriptive score, not a causal estimate of effectiveness. The school baseline uses ',
 report_html_escape(school_spec$assignment_year), ' assignments and ', report_html_escape(school_spec$growth_year),
-' growth, from the TEA ', report_html_escape(school_spec$accountability_year), ' accountability release. Coverage is currently AISD only.</p>
+' growth, from the TEA ', report_html_escape(school_spec$accountability_year), ' accountability release. Coverage includes elementary assignments in Austin, Round Rock, Pflugerville, Del Valle, Manor, Eanes, Leander, Hays and Lake Travis; source gaps and overlaps remain unscored.</p>
 <p>Site crash density describes the City-observed portion of a ',
 report_html_escape(format(crash_spec$buffer_meters / 1000, digits = 5, trim = TRUE)), '-kilometer buffer, using crashes from ',
 report_html_escape(crash_spec$first_year), '–', report_html_escape(crash_spec$last_year),

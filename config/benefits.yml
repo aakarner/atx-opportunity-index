@@ -1,0 +1,30 @@
+snapshot: '2026-11-17'
+source_commit: 7a0506cda6c0e6a8b45e59e183ecc3571d6b73de
+budgets:
+  drive: [5, 10, 15]
+  walk_transit: [30, 45, 60]
+defaults:
+  drive: 15
+  walk_transit: 45
+destinations:
+  grocery: Grocery
+  childcare: Childcare
+  pharmacy: Pharmacy
+  urgent_care: Urgent care/clinics
+  hospital: Hospital
+  park: Park
+  library: Library
+  public_center: Community/social/recreation centers
+  senior_center: Senior centers
+profiles:
+  general: [grocery, childcare, pharmacy, urgent_care, hospital, park, library, public_center, senior_center]
+  families: [grocery, childcare, park, library]
+  older: [grocery, pharmacy, urgent_care, senior_center, library, park]
+  single: [grocery, pharmacy, urgent_care, public_center]
+  supportive: [grocery, pharmacy, urgent_care]
+
+# Explicit mapping prevents silently relabeling historical input series.
+scenario_map:
+  public_center: community_social_recreation_nearest
+  senior_center: senior_center_nearest
+  urgent_care: urgent_care_clinic_nearest

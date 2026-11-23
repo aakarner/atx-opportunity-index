@@ -1,15 +1,15 @@
 # Austin Opportunity Index
 
-A reproducible framework for describing neighborhood benefits and burdens in
-Austin, with tract-level maps and more detailed profiles of example sites.
-Benefits focus on access to opportunities; burdens remain separate physical
-conditions. Demographic, housing, and displacement measures provide context.
+The [interactive map](https://aakarner.github.io/atx-opportunity-index/) describes
+access to opportunities, environmental burdens, and flood eligibility for housing
+locations in Austin. It covers 1,029 H3 resolution 8 hexagons and includes tract
+summaries of benefits. Demographic, housing, and displacement measures provide context.
 
 The repository has one analytical entrypoint: [`_targets.R`](_targets.R).
 
 ## Run
 
-From the repository root:
+Set `DAM_DATA_DIR` to the local, dated DAM team snapshot (2026-11-17). From the repository root:
 
 ```sh
 Rscript scripts/setup_pipeline.R
@@ -21,7 +21,7 @@ maps, site profiles, indicator registry, source manifest, and quality checks.
 The same directory contains CSV tables and a tract GeoPackage.
 
 The pipeline acquires Census and City displacement sources, rebuilds tract
-geometry and ACS context, computes tract crash density, and joins published
+geometry and ACS context, computes tract crash density, acquires EPA RSEI industrial-air microdata, and joins published
 displacement categories. Job access, schools, flood polygons, and crash points
 currently use prepared input files. Initial source downloads need network
 access; Census acquisition also requires a configured API key. Later runs reuse
@@ -30,19 +30,11 @@ cached sources. See
 
 ## Current scope
 
-- **Benefits:** transit job access, including wage groups, and AISD assigned-school
-  academic growth. Other destinations and driving access are pending.
-- **Burdens:** mapped FEMA floodplain overlap and recorded severe-crash density.
-  Heat, industrial pollution, traffic pollution, and improved City flood measures
-  are pending.
-- **Context:** selected tract demographic, housing, and displacement attributes.
-- **Outputs:** tract component maps and three editable site examples. Site
-  profiles query the underlying spatial data where available and report the
-  limits of approximating access with existing H8 origins.
-
-Components retain their own units. The pipeline does not yet assign composite
-scores or apply site exclusions, and missing burdens remain unknown. Example
-locations are demonstrations, not proposed housing developments.
+- **Benefits.** Housing profiles combine destination access, jobs, and assigned elementary-school growth for families. The map shows the weighted score and minimum status for each travel mode. [Benefit methods](docs/benefits.md)
+- **Burdens.** Heat contributes one third of the score. Industrial air, near-road traffic, fatal and serious-injury crashes, and sidewalk gaps on major streets each contribute one sixth. At least two high components flag a hexagon for overall high burden. [Burden methods](docs/burdens.md)
+- **Combined.** Compare hexagon benefit and burden scores using four high/low groups. Each score has its own adjustable breakpoint, initially set at its median.
+- **Flood eligibility.** The City of Austin fully developed floodplain determines flood eligibility. Partial overlap with a hexagon requires a check at the selected address.
+- **Context.** The tract component report includes demographics, housing, displacement, and three editable example sites. The examples illustrate how to interpret the data.
 
 ## Repository layout
 
@@ -66,3 +58,8 @@ work affected by those changes and reuses unchanged calculations.
 See [`PIPELINE.md`](PIPELINE.md) for the complete run guide,
 [`docs/schools.md`](docs/schools.md) for the school measures, and
 [`docs/glossary.md`](docs/glossary.md) for project terminology.
+
+## Map preview and publication
+
+Serve the checked-in map locally with `python3 -m http.server 8765 --directory site`.
+See the [map guide](docs/web-mockup.md) for rebuild, validation, and publication commands.

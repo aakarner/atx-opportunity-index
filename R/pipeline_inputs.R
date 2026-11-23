@@ -20,7 +20,7 @@ require_spatial <- function(x, label) {
 
 read_pipeline_config <- function(path) {
   cfg <- yaml::read_yaml(path)
-  required <- c("jobs", "schools", "flood", "crashes", "sites")
+  required <- c("jobs", "schools", "flood", "crashes", "sites", "traffic")
   if (!all(required %in% names(cfg$inputs))) stop("Incomplete pipeline input configuration.")
   if (!identical(cfg$geography$h3_resolution, 8L)) stop("This migration supports H8 origins only.")
   if (cfg$geography$equal_area_crs != 5070) stop("Area and distance calculations require EPSG:5070.")
@@ -35,7 +35,7 @@ read_pipeline_config <- function(path) {
     stop("Current routing and spatial inputs require Austin and the Travis, Williamson, and Hays county set.")
   }
   if (census$acs_year != 2024 || census$boundary_year != 2024) {
-    stop("Current source contracts use 2024 ACS and boundaries; review geography and indicator definitions before changing vintages.")
+    stop("Current source contracts use 2024 ACS and tract boundaries; review geography and indicator definitions before changing vintages.")
   }
   if (!all(c("source_year", "path", "url", "refresh") %in% names(cfg$displacement)) ||
       cfg$displacement$source_year != 2022) stop("Expected the City 2022 displacement source configuration.")
@@ -49,6 +49,8 @@ read_pipeline_config <- function(path) {
   if (!grepl("^output/[A-Za-z0-9_-]+$", cfg$output_dir)) {
     stop("Use a dedicated output subdirectory (default: output/components).")
   }
+  validate_municipal_spec(cfg$municipal_boundary)
+  validate_rsei_spec(cfg$rsei)
   cfg
 }
 
@@ -103,20 +105,21 @@ read_job_access <- function(path, spec) {
 }
 
 read_school_zones <- function(path, spec) {
-  levels <- c("elementary", "middle", "high")
+  levels <- if(is.null(spec$levels)) c("elementary", "middle", "high") else unlist(spec$levels)
   setNames(lapply(levels, function(level) {
     x <- sf::st_read(path, layer = level, quiet = TRUE)
     require_spatial(x, paste(level, "school zones"))
     require_unique_id(x, "source_object_id", level)
     require_columns(x, c("campus_id", "campus_name", "usable_growth", "score_status",
                          "school_level", "assignment_school_year", "growth_school_year", "accountability_year"), level)
-    if (anyNA(x[c("campus_id", "campus_name", "score_status", "school_level", "assignment_school_year",
+    if (anyNA(x[c("campus_name", "score_status", "school_level", "assignment_school_year",
                    "growth_school_year", "accountability_year")]) ||
         any(x$school_level != level) || any(x$assignment_school_year != spec$assignment_year) ||
         any(x$growth_school_year != spec$growth_year) || any(x$accountability_year != spec$accountability_year)) {
       stop("School assignment/score vintage mismatch: ", level)
     }
-    if (any(!is.na(x$usable_growth) & (!is.finite(x$usable_growth) | x$usable_growth < 0 | x$usable_growth > 100)) ||
+    if (any(is.na(x$campus_id) & x$score_status == "Available") ||
+        any(!is.na(x$usable_growth) & (!is.finite(x$usable_growth) | x$usable_growth < 0 | x$usable_growth > 100)) ||
         any(is.na(x$usable_growth) != (x$score_status != "Available"))) stop("Invalid school score/status.")
     x
   }), levels)

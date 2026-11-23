@@ -53,6 +53,9 @@ rsconnect/
 
 # Generated output files
 /output/
+/Rplots.pdf
+__pycache__/
+*.py[cod]
 *.png
 *.rds
 *.csv
@@ -70,3 +73,6 @@ data/
 /_targets/
 /.R-library/
 !config/*.csv
+
+# Generated browser basemap configuration; included only in the Pages artifact.
+/site/assets/basemap.json

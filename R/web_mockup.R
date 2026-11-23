@@ -1,0 +1,52 @@
+# Small public snapshot for a static GitHub Pages client. No private site inputs.
+web_component_rows <- function(x, geography) {
+  is_hex <- geography == "hex"
+  x <- sf::st_drop_geometry(x)
+  fields <- if (is_hex) c("access_total_jobs", "access_low_wage_jobs", "access_middle_wage_jobs", "access_high_wage_jobs") else
+    c("transit_jobs_45min", "transit_low_wage_jobs_45min", "transit_middle_wage_jobs_45min", "transit_high_wage_jobs_45min")
+  out <- data.frame(id=if(is_hex) x$h3_id else x$GEOID,
+    jobs_total=x[[fields[1]]], jobs_low=x[[fields[2]]], jobs_middle=x[[fields[3]]], jobs_high=x[[fields[4]]],
+    rsei=x$rsei_tox_conc, rsei_cancer=x$rsei_cancer_tox_conc, rsei_noncancer=x$rsei_noncancer_tox_conc,
+    rsei_coverage=x$rsei_coverage_share,
+    traffic_distance_ft=x$traffic_distance_ft, traffic_buffer_share=x$traffic_buffer_share,
+    traffic_coverage_share=if(is_hex) as.numeric(is.finite(x$traffic_distance_ft) & is.finite(x$traffic_buffer_share)) else x$traffic_coverage_share,
+    access_method=if(is_hex) "H8 origin estimate" else x$access_aggregation_method,
+    stringsAsFactors=FALSE)
+  stopifnot(!anyDuplicated(out$id))
+  out
+}
+
+write_web_mockup_data <- function(h8, tracts, city, directory="site/assets", traffic_metadata=NULL) {
+  dir.create(directory, recursive=TRUE, showWarnings=FALSE)
+  hex <- web_component_rows(h8, "hex")
+  tract <- web_component_rows(tracts, "tract")
+  city_projected <- sf::st_geometry(sf::st_transform(city,5070))
+  covered <- suppressWarnings(sf::st_intersection(sf::st_union(sf::st_geometry(sf::st_transform(h8,5070))),city_projected))
+  metadata <- list(boundary=list(snapshot=city$boundary_snapshot,source=city$boundary_source,
+    sha256=city$boundary_sha256,area_km2=as.numeric(sf::st_area(city_projected))/1e6,
+    hex_coverage_share=sum(as.numeric(sf::st_area(covered)))/sum(as.numeric(sf::st_area(city_projected)))),
+    schema_version=2L, h3_resolution=8L,
+    jobs_year=unique(h8$jobs_year), network_snapshot=unique(h8$network_snapshot),
+    gtfs_snapshot=unique(h8$gtfs_snapshot), departure_datetime=unique(as.character(h8$departure_datetime)),
+    rsei_year=unique(h8$rsei_year), rsei_version=unique(h8$rsei_version),
+    traffic=list(source="TxDOT AADT", extract_dates=traffic_metadata$source_extract_dates,
+      threshold_aadt=50000, threshold_operator=">", buffer_m=300,
+      distance_units="feet", overlap_units="fraction",
+      tract_method="Area-weighted H8 means over covered tract area",
+      coverage="Share of tract area represented by H8 cells with both measurements"),
+    counts=list(hexagons=nrow(hex), tracts=nrow(tract)))
+  json <- function(x, filename) {
+    p <- file.path(directory,filename)
+    jsonlite::write_json(x,p,auto_unbox=TRUE,na="null",null="null",digits=15,pretty=FALSE)
+    p
+  }
+  geo <- function(x, filename) {
+    p <- file.path(directory,filename)
+    sf::st_write(sf::st_transform(x,4326),p,driver="GeoJSON",delete_dsn=TRUE,quiet=TRUE,
+      layer_options="COORDINATE_PRECISION=7")
+    p
+  }
+  tract_sf <- sf::st_sf(tract,geometry=sf::st_geometry(tracts),crs=sf::st_crs(tracts))
+  c(json(metadata,"metadata.json"),json(hex,"hexagons.json"),geo(tract_sf,"tracts.geojson"),
+    geo(city[,c("NAME","boundary_snapshot","boundary_source","boundary_sha256"),drop=FALSE],"city.geojson"))
+}

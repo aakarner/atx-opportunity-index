@@ -105,36 +105,36 @@ pipeline_qa <- function(tracts, jobs, schools, sites) {
       sum(tracts$displacement_coverage_status == "Outside published coverage"),
       sum(tracts$displacement_coverage_status %in% c("Missing source category", "Unrecognized source category")),
       nrow(tracts), school_counts, nrow(sites)),
-    status = c("info", "pass", rep("info", 8), "pass", rep("info", 4)))
+    status = c("info", "pass", rep("info", 8), "pass", rep("info", length(school_counts)+1)))
 }
 
-indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, displacement_spec) {
-  data.frame(
-    indicator = c("Transit job access by wage", "Assigned-school academic growth", "Mapped FEMA floodplain",
-      "Severe-crash density", "Industrial air-toxic burden",
-      "Heat exposure", "Tree canopy", "Near-road traffic pollution", "Pedestrian barriers",
-      "Non-job destination access", "Driving access", "Demographic and market context"),
-    role = c("benefit", "benefit", "burden", "burden", rep("burden", 2),
-      "mitigation_context", rep("burden", 2), "benefit", "benefit", "overlay"),
-    status = c("available", "AISD_only", "FEMA_snapshot_only", "tract_and_site_source_query",
-      rep("not_integrated", 7), "source_derived_tract_context"),
-    units = c("Jobs reachable in 45 minutes", "Raw academic growth score (0-100)",
-      "Share of mapped reporting area / point intersection", "KSI crashes per year per square mile",
-      "Toxicity-weighted concentration", "Source to be selected",
-      "Canopy coverage", "Source to be selected", "Source to be selected", "Destinations reachable",
-      "Destinations reachable", "Indicator-specific"),
-    vintage = c(paste(job_spec$employment_year, "jobs; network", job_spec$network_snapshot),
-      paste(school_spec$assignment_year, "assignments;", school_spec$growth_year, "growth; TEA",
-            school_spec$accountability_year), "Cached FEMA layer; mixed study dates",
-      paste(crash_spec$first_year, crash_spec$last_year, sep = "-"),
-      rep("Not yet integrated", 7), paste(census_spec$acs_year, "ACS; City", displacement_spec$source_year, "displacement")),
-    limitation = c("Pinned summer morning service; resident-worker tract weighting; not new site routing",
-      "Campus-wide outcomes; AISD only; missing scores stay missing; no tract school composite",
-      "Mapped overlap only; no coverage certification or City Atlas 14 replacement; no overlap does not imply no risk",
-      "City-observed window around tract representative point or site; low counts do not establish pedestrian safety",
-      "Missing data cannot count as a passed screen", "Physical heat measure still needed",
-      "Protective feature; not an independent second heat burden", "Traffic activity proxy not yet built",
-      "Route quality and crossings not yet assessed", "Awaiting screened destination layers and routing inputs",
-      "Awaiting validated H8 travel-time matrix", "Whole-tract ACS attributes despite City-clipped geometry"),
-    stringsAsFactors = FALSE)
+indicator_registry <- function(job_spec, school_spec, crash_spec, census_spec, displacement_spec, dam_snapshot) {
+  entry <- function(indicator, role, status, units, vintage, limitation) {
+    data.frame(indicator, role, status, units, vintage, limitation, stringsAsFactors = FALSE)
+  }
+  rbind(
+    entry("Transit job access by wage", "benefit", "available", "Jobs reachable in 45 minutes",
+      paste(job_spec$employment_year, "jobs; network", job_spec$network_snapshot),
+      "Pinned summer morning service; resident-worker tract weighting"),
+    entry("Assigned-school academic growth", "benefit", "expanded_districts_elementary_only",
+      "Raw academic growth points", paste(school_spec$assignment_year, "assignments;",
+        school_spec$growth_year, "growth; TEA", school_spec$accountability_year),
+      "Nine districts; missing scores and conflicting assignments remain unavailable"),
+    entry("Mapped FEMA floodplain", "legacy_context", "FEMA_snapshot_only",
+      "Share of tract area / point intersection", "Cached FEMA layer; mixed study dates",
+      "Site eligibility uses the City fully developed floodplain"),
+    entry("Severe-crash density", "burden", "H8_tract_and_site",
+      "KSI crashes per year per observed square mile", paste(crash_spec$first_year, crash_spec$last_year, sep = "-"),
+      "City-clipped windows; primary H8 scores use a half mile. Crash density does not measure risk per trip"),
+    entry("Heat exposure", "burden", "H8_scored", "Relative daytime surface-temperature percentile",
+      "May–September 2026 satellite observations", "Limited observation flag below eight eligible dates"),
+    entry("Sidewalk gaps on major streets", "burden", "H8_scored", "Percentage of major-street length without a mapped sidewalk or parallel path, counting each side separately",
+      "November 2026 City street, sidewalk and urban trail inventories", "City-clipped half-mile circles. Count each outside street side separately. No eligible frontage or no inventory evidence yields no estimate"),
+    entry("Non-job destination access", "benefit", "available", "Destination types reached",
+      paste("DAM release", dam_snapshot), "Counts depend on housing profile, travel mode and time budget"),
+    entry("Driving access", "benefit", "available", "Jobs and destination types reached",
+      paste("DAM release", dam_snapshot), "Prepared morning drive matrices"),
+    entry("Demographic and market context", "overlay", "source_derived_tract_context", "Indicator-specific",
+      paste(census_spec$acs_year, "ACS; City", displacement_spec$source_year, "displacement"),
+      "Whole-tract ACS attributes despite city-clipped geometry"))
 }

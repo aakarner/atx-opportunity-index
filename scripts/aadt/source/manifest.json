@@ -1,0 +1,19 @@
+{
+  "service_url": "https://services.arcgis.com/KTcxiTD9dsQw4r7Z/arcgis/rest/services/TxDOT_AADT/FeatureServer/0",
+  "retrieved_utc": "2026-11-09 17:57:18 UTC",
+  "source_edit_time_ms": 1793576292945,
+  "threshold_aadt": 50000,
+  "query_crs": 26914,
+  "query_bounds": [581943.283067301, 3308799.40001073, 661241.118500793, 3396403.30732931],
+  "feature_count": 439,
+  "pages": ["roads_001.geojson", "roads_002.geojson", "roads_003.geojson", "roads_004.geojson", "roads_005.geojson"],
+  "sha256": {
+    "metadata.json": "84d371490046d498899dc38d18a66784f4da0d56faeba555d6e00a18b62c1df1",
+    "object_ids.json": "4f9d9f0dc01d7c01c66636556df24ea0c60ac0c0ec8009cb455961e4e7484f7e",
+    "roads_001.geojson": "0181cc1ebefada1e88a40b7db8a6609cc0cb32d0725fc0c274365fe9257eb719",
+    "roads_002.geojson": "02d5f67a5e91d8343dc5713554296ed8958d5387322d24f192cb8644d5cf9a37",
+    "roads_003.geojson": "f661cf246aec146233f0c53b33c1b0bdd3292bc3c83ae8953188af7eab1e60e3",
+    "roads_004.geojson": "0f9675400a2bc2cb03c2e6cedbb1ed98f0b18860ceb62d7bde4def4a8806fa65",
+    "roads_005.geojson": "9059ad08e5a0a2d98323db243a5c4a0c8a362e965174b7e86309f001262b1a87"
+  }
+}

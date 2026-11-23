@@ -1,0 +1,12 @@
+{
+  "source": "City of Austin BOUNDARIES_jurisdictions",
+  "service_url": "https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/BOUNDARIES_jurisdictions/FeatureServer/0",
+  "query_url": "https://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/BOUNDARIES_jurisdictions/FeatureServer/0/query?where=CITY_NAME%20%3D%20%27CITY%20OF%20AUSTIN%27%20AND%20JURISDICTION_TYPE%20IN%20%28%27FULL%27%2C%27LTD%27%29&outFields=OBJECTID%2CCITY_NAME%2CJURISDICTION_TYPE%2CJURISDICTION_LABEL&outSR=4326&orderByFields=OBJECTID&f=geojson",
+  "snapshot_date": "2026-10-19",
+  "retrieved_utc": "2026-10-19 17:37:21 UTC",
+  "jurisdiction_types": ["FULL", "LTD"],
+  "feature_count": 90,
+  "object_ids": [1, 4, 5, 11, 12, 14, 16, 20, 40, 42, 43, 45, 47, 49, 52, 54, 63, 65, 71, 72, 99, 109, 131, 133, 136, 140, 141, 156, 157, 158, 159, 163, 166, 173, 189, 190, 193, 195, 196, 197, 201, 202, 203, 204, 210, 214, 216, 217, 218, 219, 220, 221, 222, 224, 226, 228, 229, 230, 231, 232, 233, 235, 239, 240, 241, 242, 244, 250, 254, 266, 273, 276, 290, 295, 297, 319, 320, 321, 322, 338, 349, 350, 356, 368, 372, 373, 374, 375, 377, 380],
+  "source_edit_time_ms": 1792365647655,
+  "sha256": "4014001aff7acdf05f8126814998e53a72b0deb3e60caa72e217e2f226a5c4a0"
+}
