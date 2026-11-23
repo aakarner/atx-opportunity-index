@@ -3,7 +3,7 @@ import {indexFlood,floodProfile,floodColors} from './flood-eligibility.mjs?v=0e5
 import {medianScore,scoreGroup,scoreGroups} from './score-comparison.mjs?v=b1158c6da54c';
 import {columnRows,assessBenefits,aggregateTract,normalizedWeights,requiredDomains,combinedStyle,combinedProfile,tractCombinedProfile,statusLabels,statusColors} from './combined-benefits.mjs?v=43217082ab02';
 import {finite, locate, candidates, escapeHTML as esc} from './logic.mjs?v=e2b7c16e95d7';
-import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile, schoolAssignment} from './benefits.mjs?v=64a350d0f21b';
+import {profileLabels, modeLabels, records, basketColor, palette, differenceColors, benefitProfile, schoolAssignment} from './benefits.mjs?v=78dfb70f686e';
 let benefitData, schools, benefitHex, benefitTracts, benefitSeries, refreshProfile;
 let combinedData, combinedOrigins, tractWeights, tractCoverage, assessments=new Map(), tractAssessments=new Map();
 const selection={profile:'families',mode:'walk_transit',minutes:45,display:'combined',weights:null,jobSensitivity:false};
@@ -303,7 +303,7 @@ function setupBenefitControls(){
  function note(){
    const names=spec.profiles[selection.profile].map(key=>spec.destinations[key]);
    $('group-note').textContent=names.join(' · ')+(selection.profile==='supportive'?'. Partial service inventory.':'')+
-     (selection.mode==='walk_transit'?' · Provisional morning transit coverage.':'');
+     (selection.mode==='walk_transit'?' · Morning transit coverage.':'');
    $('budget-note').textContent=`Destinations and jobs: ${spec.defaults[selection.mode]} minutes ${modeLabels[selection.mode].toLowerCase()}.`;
  }
  function update(){
